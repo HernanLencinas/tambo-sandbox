@@ -1,0 +1,86 @@
+{
+  "name": "tambo-sandbox",
+  "displayName": "TAMBO",
+  "description": "TAMBO Sandbox",
+  "version": "1.0.0",
+  "publisher": "HernanLencinas",
+  "icon": "resources/logos/tambo.png",
+  "engines": {
+    "vscode": "^1.94.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [
+    "*",
+    "onDidSaveTextDocument" 
+  ],
+  "main": "./dist/extension.js",
+  "contributes": {
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "tambo-sandbox",
+          "title": "TAMBO",
+          "icon": "resources/logos/tambo.png"
+        }
+      ]
+    },
+    "views": {
+      "tambo-sandbox": [
+        {
+          "id": "tambo_viewport_environments",
+          "name": "Ambientes"
+        },
+        {
+          "id": "tambo_viewport_help",
+          "name": "Ayuda"
+        }
+      ]
+    },
+    "viewsWelcome": [
+      {
+        "view": "tambo_viewport_environments",
+        "contents": "¡BIENVENIDO A TAMBO!\n\nParece que aún no has configurado tu conexión al Sandbox.\n\nPara comenzar, debes registrar una nueva conexión hacia uno de los ambientes de Tambo. Puedes hacerlo utilizando nuestro asistente de configuración.\n\n[Asistente de Conexión](command:tambo.openAirflowConsole)\n\nEl asistente te guiará paso a paso en el proceso de registro.\n\nSi tienes alguna pregunta o necesitas ayuda, no dudes en contactarnos a través de nuestro correo automation@teco.com.ar.\n\n¡Gracias por elegir Tambo!"
+      },
+      {
+        "view": "tambo_viewport_help",
+        "contents": "¡BIENVENIDO A TAMBO SANDBOX!\n\nAquí encontrarás una amplia fuente de información y accesos esenciales que te serán de gran utilidad en el desarrollo de tus proyectos de automatización.\n\n1. [Pregunta 1](command:cmd)\n2. [Pregunta 2](command:tambo.cmdAddEnvs)\n3. [Pregunta 3](command:tambo.cmd)\n4. [Pregunta 4](command:tambo.cmd)\n\nSi necesitas información adicional o asistencia, te invitamos a acceder a [iTicket](command:tambo.openItickets) y generar una nueva solicitud. Nos comprometemos a procesar tu solicitud rápidamente y a ponernos en contacto contigo lo antes posible. No dudes en aprovechar esta plataforma para obtener la información que necesitas o solicitar la ayuda que requieres. Estamos aquí para ayudarte y atender tus inquietudes.\n\n"
+      }
+    ],
+    "commands": [
+      {
+        "command": "tambo.cmdConnectAirflow",
+        "title": "Tambo Airflow: Abrir consola"
+      }
+    ]
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run package",
+    "compile": "webpack",
+    "watch": "webpack --watch",
+    "package": "webpack --mode production --devtool hidden-source-map",
+    "compile-tests": "tsc -p . --outDir out",
+    "watch-tests": "tsc -p . -w --outDir out",
+    "pretest": "npm run compile-tests && npm run compile && npm run lint",
+    "lint": "eslint src --ext ts"
+  },
+  "devDependencies": {
+    "@types/mocha": "^10.0.2",
+    "@types/node": "18.x",
+    "@types/vscode": "^1.94.0",
+    "@typescript-eslint/eslint-plugin": "^6.7.3",
+    "@typescript-eslint/parser": "^6.7.3",
+    "@vscode/test-electron": "^2.3.4",
+    "eslint": "^8.50.0",
+    "glob": "^10.3.3",
+    "https-proxy-agent": "^7.0.5",
+    "mocha": "^10.2.0",
+    "node-fetch": "^3.3.2",
+    "simple-git": "^3.27.0",
+    "ts-loader": "^9.4.4",
+    "typescript": "^5.2.2",
+    "webpack": "^5.88.2",
+    "webpack-cli": "^5.1.4"
+  }
+}
