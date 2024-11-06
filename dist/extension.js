@@ -6319,6 +6319,61 @@ module.exports = require("node:events");
 "use strict";
 module.exports = require("child_process");
 
+/***/ }),
+/* 19 */
+/***/ ((module) => {
+
+"use strict";
+module.exports = require("path");
+
+/***/ }),
+/* 20 */
+/***/ ((__unused_webpack_module, exports, __webpack_require__) => {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.Connection = void 0;
+const vscode = __webpack_require__(1);
+class Connection {
+    async wizard() {
+        const gitlabUsername = await vscode.window.showInputBox({
+            prompt: 'Usuario de Gitlab: ',
+            placeHolder: ''
+        });
+        const gitlabToken = await vscode.window.showInputBox({
+            prompt: 'Token de Gitlab: ',
+            placeHolder: '',
+            password: true
+        });
+        if (gitlabUsername && gitlabToken) {
+            // Obtén la configuración actual
+            const configuration = vscode.workspace.getConfiguration('tambo.sandbox.config');
+            const connection = configuration.get('gitlab', []);
+            // Agrega el nuevo entorno a la configuración
+            connection.push({
+                gitlabUsername,
+                gitlabToken,
+            });
+            // Actualiza la configuración con los nuevos valores
+            await configuration.update('gitlab', connection, vscode.ConfigurationTarget.Global);
+            vscode.window.showInformationMessage(`TAMBO: Se configuro la conexion a Sandbox`);
+        }
+        /*         const gitlabUsername = vscode.window.showInputBox({
+                    prompt: 'Ingrese su nombre de usuario de GitLab: ',
+                    placeHolder: ''
+                });
+        
+                const gitlabToken = vscode.window.showInputBox({
+                    prompt: 'Ingrese su token de acceso de GitLab: ',
+                    placeHolder: '',
+                    password: true
+                }); */
+    }
+}
+exports.Connection = Connection;
+
+
 /***/ })
 /******/ 	]);
 /************************************************************************/
@@ -6358,7 +6413,54 @@ exports.activate = activate;
 exports.deactivate = deactivate;
 const vscode = __webpack_require__(1);
 const simple_git_1 = __webpack_require__(2);
+const fs = __webpack_require__(5);
+const path = __webpack_require__(19);
+const os = __webpack_require__(14);
+const connection_1 = __webpack_require__(20);
 function activate(context) {
+    const connection = new connection_1.Connection();
+    const cmdConnectionWizard = vscode.commands.registerCommand('tambosandbox.connectionWizard', async () => {
+        connection.wizard();
+    });
+    context.subscriptions.push(cmdConnectionWizard);
+    /// CAPTURAR EL EVENTO DE GUARDADO ///	
+    let saveListener = vscode.workspace.onDidSaveTextDocument(async (document) => {
+        vscode.window.showInformationMessage('Capturando eventos');
+        pushRepository();
+    });
+    context.subscriptions.push(saveListener);
+    /// CLONAR REPOSITORIO ///
+    const cmdCloneRepository = vscode.commands.registerCommand('tambosandbox.cloneRepository', async () => {
+        cloneRepository();
+    });
+    context.subscriptions.push(cmdCloneRepository);
+}
+function deactivate() { }
+function cloneRepository() {
+    const git = (0, simple_git_1.default)();
+    const repoUrl = 'https://git.cloudvalley.telecom.com.ar/automatizacion/ansible-test.git';
+    const tempDir = path.join(os.tmpdir(), 'vscode-tambosandbox');
+    // Verificar si la carpeta existe y eliminarla si es necesario
+    if (fs.existsSync(tempDir)) {
+        fs.rmSync(tempDir, { recursive: true, force: true });
+    }
+    // Clonar el repositorio
+    git.clone(repoUrl, tempDir)
+        .then(() => {
+        // Abrir el nuevo espacio de trabajo
+        vscode.workspace.updateWorkspaceFolders(0, null, { uri: vscode.Uri.file(tempDir), name: 'TAMBOSANDBOX' });
+        // Establecer el rootPath en el explorador de archivos
+        const newWorkspace = vscode.workspace.workspaceFolders?.find(folder => folder.uri.fsPath === tempDir);
+        if (newWorkspace) {
+            vscode.workspace.updateWorkspaceFolders(0, null, { uri: newWorkspace.uri, name: 'TAMBOSANDBOX' });
+        }
+        vscode.window.showInformationMessage('Repositorio Clonado.');
+    })
+        .catch((error) => {
+        vscode.window.showErrorMessage(`Error al Clonar: ${error}`);
+    });
+}
+function pushRepository() {
     // Configuración de simple-git
     const options = {
         baseDir: vscode.workspace.rootPath,
@@ -6366,53 +6468,19 @@ function activate(context) {
         config: ['core.autocrlf=false'],
     };
     const git = (0, simple_git_1.default)(options);
-    // Capturar el evento de guardado
-    let saveListener = vscode.workspace.onDidSaveTextDocument(async (document) => {
-        try {
-            // Realiza git add para todos los cambios
-            await git.add('.');
-            // Crea el commit automáticamente
-            await git.commit('Auto-commit desde VSCode');
-            // Realiza el push de los cambios
-            await git.push();
-            vscode.window.showInformationMessage('TAMBO: Repositorio Actualizado');
-        }
-        catch (error) {
-            vscode.window.showErrorMessage(`TAMBO: Error al Actualizar - ${error}`);
-        }
-    });
-    context.subscriptions.push(saveListener);
-    /* 	const git: SimpleGit = simpleGit();
-    
-        const repoUrl = 'https://git.cloudvalley.telecom.com.ar/automatizacion/ansible-test.git';
-        const tempDir = path.join(os.tmpdir(), 'vscode-tambosandbox');
-    
-        // Verificar si la carpeta existe y eliminarla si es necesario
-        if (fs.existsSync(tempDir)) {
-            fs.rmSync(tempDir, { recursive: true, force: true });
-        }
-    
-        // Clonar el repositorio
-        git.clone(repoUrl, tempDir)
-            .then(() => {
-    
-                // Abrir el nuevo espacio de trabajo
-                vscode.workspace.updateWorkspaceFolders(0, null, { uri: vscode.Uri.file(tempDir), name: 'TAMBOSANDBOX' });
-    
-                // Establecer el rootPath en el explorador de archivos
-                const newWorkspace = vscode.workspace.workspaceFolders?.find(folder => folder.uri.fsPath === tempDir);
-                if (newWorkspace) {
-                    vscode.workspace.updateWorkspaceFolders(0, null, { uri: newWorkspace.uri, name: 'TAMBOSANDBOX' });
-                }
-    
-                vscode.window.showInformationMessage('Repositorio Clonado.');
-    
-            })
-            .catch((error) => {
-                vscode.window.showErrorMessage(`Error al Clonar: ${error}`);
-            }); */
+    try {
+        // Realiza git add para todos los cambios
+        git.add('.');
+        // Crea el commit automáticamente
+        git.commit('Auto-commit desde VSCode');
+        // Realiza el push de los cambios
+        git.push();
+        vscode.window.showInformationMessage('TAMBO: Repositorio Actualizado');
+    }
+    catch (error) {
+        vscode.window.showErrorMessage(`TAMBO: Error al Actualizar - ${error}`);
+    }
 }
-function deactivate() { }
 /* 	// Configuración de simple-git
     const options: Partial<SimpleGitOptions> = {
         baseDir: vscode.workspace.rootPath,
