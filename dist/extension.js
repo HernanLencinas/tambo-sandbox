@@ -6335,6 +6335,7 @@ module.exports = require("path");
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.Connection = void 0;
 const vscode = __webpack_require__(1);
+const utils_1 = __webpack_require__(21);
 class Connection {
     async wizard() {
         const gitlabUsername = await vscode.window.showInputBox({
@@ -6348,31 +6349,133 @@ class Connection {
         });
         if (gitlabUsername && gitlabToken) {
             // Obtén la configuración actual
-            const configuration = vscode.workspace.getConfiguration('tambo.sandbox.config');
-            const connection = configuration.get('gitlab', []);
-            // Agrega el nuevo entorno a la configuración
-            connection.push({
-                gitlabUsername,
-                gitlabToken,
-            });
+            const configuration = vscode.workspace.getConfiguration('tambo.sandbox.gitlab');
             // Actualiza la configuración con los nuevos valores
-            await configuration.update('gitlab', connection, vscode.ConfigurationTarget.Global);
-            vscode.window.showInformationMessage(`TAMBO: Se configuro la conexion a Sandbox`);
+            await configuration.update('username', gitlabUsername, vscode.ConfigurationTarget.Global);
+            await configuration.update('token', (0, utils_1.encrypt)(gitlabToken), vscode.ConfigurationTarget.Global);
+            vscode.window.showInformationMessage(`TAMBO: Se configuro la conexion con TAMBO Sandbox`);
         }
-        /*         const gitlabUsername = vscode.window.showInputBox({
-                    prompt: 'Ingrese su nombre de usuario de GitLab: ',
-                    placeHolder: ''
-                });
-        
-                const gitlabToken = vscode.window.showInputBox({
-                    prompt: 'Ingrese su token de acceso de GitLab: ',
-                    placeHolder: '',
-                    password: true
-                }); */
+    }
+    load(context) {
+        try {
+            const provider = new ConnectionsViewProvider(context);
+            context.subscriptions.push(vscode.window.registerWebviewViewProvider(ConnectionsViewProvider.viewType, provider));
+        }
+        catch (error) {
+            console.error("Tambo: ", error);
+        }
     }
 }
 exports.Connection = Connection;
+class ConnectionsViewProvider {
+    constructor(context) {
+        this.context = context;
+    }
+    resolveWebviewView(webviewView, context, token) {
+        // Configurar el contenido de la WebView
+        webviewView.webview.options = {
+            enableScripts: true, // Permitir scripts en el WebView
+        };
+        webviewView.webview.html = this.getWebviewContent();
+        // Comunicación entre WebView y la extensión
+        webviewView.webview.onDidReceiveMessage((message) => {
+            switch (message.command) {
+                case 'buttonClicked':
+                    vscode.window.showInformationMessage('¡Botón clickeado desde la vista!');
+                    break;
+            }
+        });
+    }
+    getWebviewContent() {
+        return `
+				<!DOCTYPE html>
+				<html lang="en">
+				<head>
+					<meta charset="UTF-8">
+					<meta name="viewport" content="width=device-width, initial-scale=1.0">
+					<title>Connections View</title>
+					<style>
+						body {
+							font-family: Arial, sans-serif;
+							padding: 10px;
+						}
+						button {
+                            background-color: #0e639c; /* Azul VS Code */
+                            color: #ffffff; /* Texto blanco */
+                            border: none;
+                            padding: 10px 16px;
+                            border-radius: 3px; /* Esquinas redondeadas */
+                            font-size: 14px;
+                            cursor: pointer;
+                            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2); /* Sombra sutil */
+                            transition: background-color 0.2s, box-shadow 0.2s;
+						}
+					</style>
+				</head>
+				<body>
+					<button id="connectButton">Conectar</button>
+	
+					<script>
+						const vscode = acquireVsCodeApi();
+	
+						document.getElementById('connectButton').addEventListener('click', () => {
+							vscode.postMessage({ command: 'buttonClicked', action: 'connect' });
+						});
+	
+					</script>
+				</body>
+				</html>
+			`;
+    }
+}
+ConnectionsViewProvider.viewType = 'tambo_viewport_connections';
 
+
+/***/ }),
+/* 21 */
+/***/ ((__unused_webpack_module, exports, __webpack_require__) => {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.encrypt = encrypt;
+exports.decrypt = decrypt;
+const crypto = __webpack_require__(22);
+// file deepcode ignore HardcodedSecret: <please specify a reason of ignoring this>, file deepcode ignore HardcodedNonCryptoSecret: <please specify a reason of ignoring this>
+const secretKey = 'MY1SUPER2KEY3ENCRYPTED4PUBLIC376';
+function encrypt(text) {
+    if (text === undefined) {
+        throw new Error('Text to encrypt is undefined');
+    }
+    const iv = crypto.randomBytes(12);
+    const cipher = crypto.createCipheriv('aes-256-gcm', Buffer.from(secretKey), iv);
+    let encrypted = cipher.update(text, 'utf8', 'hex');
+    encrypted += cipher.final('hex');
+    const tag = cipher.getAuthTag();
+    const result = iv.toString('hex') + encrypted + tag.toString('hex');
+    return result;
+}
+function decrypt(text) {
+    if (text === undefined) {
+        throw new Error('Text to decrypt is undefined');
+    }
+    const iv = Buffer.from(text.slice(0, 24), 'hex');
+    const encryptedText = text.slice(24, -32);
+    const tag = Buffer.from(text.slice(-32), 'hex');
+    const decipher = crypto.createDecipheriv('aes-256-gcm', Buffer.from(secretKey), iv);
+    decipher.setAuthTag(tag);
+    let decrypted = decipher.update(encryptedText, 'hex', 'utf8');
+    decrypted += decipher.final('utf8');
+    return decrypted;
+}
+
+
+/***/ }),
+/* 22 */
+/***/ ((module) => {
+
+"use strict";
+module.exports = require("crypto");
 
 /***/ })
 /******/ 	]);
@@ -6418,22 +6521,24 @@ const path = __webpack_require__(19);
 const os = __webpack_require__(14);
 const connection_1 = __webpack_require__(20);
 function activate(context) {
+    // CARGAR CONFIGURACION DE CONEXION A TAMBO SANDBOX
     const connection = new connection_1.Connection();
+    connection.load(context);
     const cmdConnectionWizard = vscode.commands.registerCommand('tambosandbox.connectionWizard', async () => {
         connection.wizard();
     });
     context.subscriptions.push(cmdConnectionWizard);
     /// CAPTURAR EL EVENTO DE GUARDADO ///	
-    let saveListener = vscode.workspace.onDidSaveTextDocument(async (document) => {
+    /* let saveListener = vscode.workspace.onDidSaveTextDocument(async (document: vscode.TextDocument) => {
         vscode.window.showInformationMessage('Capturando eventos');
         pushRepository();
     });
-    context.subscriptions.push(saveListener);
+    context.subscriptions.push(saveListener); */
     /// CLONAR REPOSITORIO ///
-    const cmdCloneRepository = vscode.commands.registerCommand('tambosandbox.cloneRepository', async () => {
+    /* const cmdCloneRepository = vscode.commands.registerCommand('tambosandbox.cloneRepository', async () => {
         cloneRepository();
     });
-    context.subscriptions.push(cmdCloneRepository);
+    context.subscriptions.push(cmdCloneRepository); */
 }
 function deactivate() { }
 function cloneRepository() {

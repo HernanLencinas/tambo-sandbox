@@ -9,26 +9,28 @@ import { Connection } from './connection';
 
 export function activate(context: vscode.ExtensionContext) {
 
-
+	// CARGAR CONFIGURACION DE CONEXION A TAMBO SANDBOX
 	const connection = new Connection();
+	connection.load(context);
+
 
 	const cmdConnectionWizard = vscode.commands.registerCommand('tambosandbox.connectionWizard', async () => {
-        connection.wizard();
-    });
-    context.subscriptions.push(cmdConnectionWizard);
+		connection.wizard();
+	});
+	context.subscriptions.push(cmdConnectionWizard);
 
 	/// CAPTURAR EL EVENTO DE GUARDADO ///	
-	let saveListener = vscode.workspace.onDidSaveTextDocument(async (document: vscode.TextDocument) => {
+	/* let saveListener = vscode.workspace.onDidSaveTextDocument(async (document: vscode.TextDocument) => {
 		vscode.window.showInformationMessage('Capturando eventos');
 		pushRepository();
 	});
-	context.subscriptions.push(saveListener);
+	context.subscriptions.push(saveListener); */
 
 	/// CLONAR REPOSITORIO ///
-	const cmdCloneRepository = vscode.commands.registerCommand('tambosandbox.cloneRepository', async () => {
+	/* const cmdCloneRepository = vscode.commands.registerCommand('tambosandbox.cloneRepository', async () => {
 		cloneRepository();
 	});
-	context.subscriptions.push(cmdCloneRepository);
+	context.subscriptions.push(cmdCloneRepository); */
 
 }
 
@@ -116,3 +118,4 @@ function pushRepository() {
 		}
 	});
 	context.subscriptions.push(saveListener); */
+

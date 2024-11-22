@@ -21,7 +21,7 @@
       "activitybar": [
         {
           "id": "tambo-sandbox",
-          "title": "TAMBO",
+          "title": "TAMBO SANDBOX",
           "icon": "resources/logos/tambo.png"
         }
       ]
@@ -29,19 +29,21 @@
     "views": {
       "tambo-sandbox": [
         {
-          "id": "tambo_viewport_environments",
-          "name": "Ambientes"
+          "id": "tambo_viewport_connections",
+          "name": "Conexion",
+          "type": "webview"
         },
         {
           "id": "tambo_viewport_help",
-          "name": "Ayuda"
+          "name": "Ayuda",
+          "visibility": "collapsed"
         }
       ]
     },
     "viewsWelcome": [
       {
-        "view": "tambo_viewport_environments",
-        "contents": "¡BIENVENIDO A TAMBO!\n\nParece que aún no has configurado tu conexión al Sandbox.\n\nPara comenzar deberas primero registrar una nueva conexión. Puedes hacerlo utilizando nuestro asistente de configuración.\n\n[Asistente de Conexión](command:tambosandbox.connectionWizard)\n\nEl asistente te guiará paso a paso en el proceso de registro.\n\nSi tienes alguna pregunta o necesitas ayuda, no dudes en contactarnos a través de nuestro correo frameautomation@teco.com.ar.\n"
+        "view": "tambo_viewport_connections",
+        "contents": "¡BIENVENIDO A TAMBO SANDBOX!\n\nParece que aún no has configurado tu conexión al Sandbox.\n\nPara comenzar deberas primero registrar una nueva conexión. Puedes hacerlo utilizando nuestro asistente de configuración.\n\n[Asistente de Conexión](command:tambosandbox.connectionWizard)\n\nEl asistente te guiará paso a paso en el proceso de registro.\n\nSi tienes alguna pregunta o necesitas ayuda, no dudes en contactarnos a través de nuestro correo frameautomation@teco.com.ar.\n"
       },
       {
         "view": "tambo_viewport_help",
@@ -66,10 +68,15 @@
       "type": "object",
       "title": "TAMBO Sandbox",
       "properties": {
-        "tambo.sandbox.config.gitlab": {
-          "type": "array",
-          "default": [],
-          "description": "Informacion de conexion"
+        "tambo.sandbox.gitlab.username": {
+          "type": "string",
+          "default": "",
+          "description": "Gitlab Username"
+        },
+        "tambo.sandbox.gitlab.token": {
+          "type": "string",
+          "default": "",
+          "description": "Gitlab Token"
         }
       }
     }
