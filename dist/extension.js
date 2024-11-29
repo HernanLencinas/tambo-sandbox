@@ -6378,6 +6378,32 @@ class Connection {
             vscode.window.showErrorMessage('Error al conectar con la API TAMBO: ' + error);
         }
     }
+    async validateGitlabConnection() {
+        try {
+            const configuration = vscode.workspace.getConfiguration('tambo.sandbox.gitlab');
+            const username = configuration.get('username');
+            const encryptedToken = configuration.get('token');
+            const token = encryptedToken ? (0, utils_1.decrypt)(encryptedToken) : null;
+            console.log(token);
+            if (!username || !token) {
+                vscode.window.showErrorMessage('No se encontraron credenciales de GitLab configuradas.');
+                return;
+            }
+            const response = await axios_1.default.get('https://gitlab.com/api/v4/user', {
+                // eslint-disable-next-line @typescript-eslint/naming-convention
+                headers: { Authorization: `Bearer ${token}` },
+            });
+            if (response.status === 200 && response.data.username === username) {
+                console.log('TAMBOSANDBOX: Gitlab, ping exitoso.');
+            }
+            else {
+                console.log('TAMBOSANDBOX: Gitlab, autenticacion fallida.');
+            }
+        }
+        catch (error) {
+            console.log(`TAMBOSANDBOX: validateGitlabConnection ${error}`);
+        }
+    }
 }
 exports.Connection = Connection;
 class ConnectionsViewProvider {
@@ -6405,6 +6431,14 @@ class ConnectionsViewProvider {
                         webviewView.webview.postMessage({ command: 'updateStatus', status: 'offline' });
                     }
                     break;
+                case 'checkGitlabStatus':
+                    try {
+                        const connection = new Connection();
+                        await connection.validateGitlabConnection();
+                    }
+                    catch (error) {
+                        vscode.window.showErrorMessage('Error conectando con gitlab');
+                    }
                 case 'buttonClicked':
                     if (message.action === 'create') {
                         vscode.window.showInformationMessage('Creando sandbox...');
@@ -6608,6 +6642,7 @@ class ConnectionsViewProvider {
 
         function updateStatus() {
             vscode.postMessage({ command: 'checkApiStatus' });
+            vscode.postMessage({ command: 'checkGitlabStatus' });
         }
 
         updateStatus();

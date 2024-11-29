@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { encrypt } from './utils';
+import { encrypt, decrypt } from './utils';
 import axios from 'axios';
 
 export class Connection {
@@ -46,6 +46,36 @@ export class Connection {
             vscode.window.showErrorMessage('Error al conectar con la API TAMBO: ' + error);
         }
     }
+
+    async validateGitlabConnection() {
+        try {
+            const configuration = vscode.workspace.getConfiguration('tambo.sandbox.gitlab');
+            const username = configuration.get<string>('username');
+            const encryptedToken = configuration.get<string>('token');
+            const token = encryptedToken ? decrypt(encryptedToken) : null;
+
+            console.log(token);
+
+            if (!username || !token) {
+                vscode.window.showErrorMessage('No se encontraron credenciales de GitLab configuradas.');
+                return;
+            }
+
+            const response = await axios.get('https://gitlab.com/api/v4/user', {
+                // eslint-disable-next-line @typescript-eslint/naming-convention
+                headers: { Authorization: `Bearer ${token}` },
+            });
+
+            if (response.status === 200 && response.data.username === username) {
+                console.log('TAMBOSANDBOX: Gitlab, ping exitoso.');
+            } else {
+                console.log('TAMBOSANDBOX: Gitlab, autenticacion fallida.');
+            }
+        } catch (error) {
+            console.log(`TAMBOSANDBOX: validateGitlabConnection ${error}`);
+        }
+    }
+
 }
 
 class ConnectionsViewProvider implements vscode.WebviewViewProvider {
@@ -82,6 +112,14 @@ class ConnectionsViewProvider implements vscode.WebviewViewProvider {
                     }
                     break;
 
+                case 'checkGitlabStatus':
+                    try {
+                        const connection = new Connection();
+                        await connection.validateGitlabConnection();
+                    } catch (error) {
+                        vscode.window.showErrorMessage('Error conectando con gitlab');
+                    }
+            
                 case 'buttonClicked':
                     if (message.action === 'create') {
                         vscode.window.showInformationMessage('Creando sandbox...');
@@ -286,6 +324,7 @@ class ConnectionsViewProvider implements vscode.WebviewViewProvider {
 
         function updateStatus() {
             vscode.postMessage({ command: 'checkApiStatus' });
+            vscode.postMessage({ command: 'checkGitlabStatus' });
         }
 
         updateStatus();
