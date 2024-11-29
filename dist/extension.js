@@ -6337,6 +6337,7 @@ exports.Connection = void 0;
 /* eslint-disable @typescript-eslint/naming-convention */
 const vscode = __webpack_require__(1);
 const utils_1 = __webpack_require__(21);
+const https = __webpack_require__(29);
 const axios_1 = __webpack_require__(23);
 class Connection {
     async wizard() {
@@ -6378,53 +6379,20 @@ class ConnectionsViewProvider {
         webviewView.webview.html = this.getWebviewContent(webviewView.webview.asWebviewUri(this.context.extensionUri));
         webviewView.webview.onDidReceiveMessage(async (message) => {
             switch (message.command) {
-                case 'checkApiStatus':
-                    try {
-                        const response = await axios_1.default.get('https://cloudvalley.telecom.com.ar/api/ping');
-                        if (response.status === 200) {
-                            webviewView.webview.postMessage({ command: 'updateTamboStatus', status: 'online' });
-                        }
-                        else {
-                            webviewView.webview.postMessage({ command: 'updateTamboStatus', status: 'offline' });
-                        }
-                    }
-                    catch (error) {
-                        webviewView.webview.postMessage({ command: 'updateTamboStatus', status: 'offline' });
-                    }
+                case 'sandboxStatus':
+                    const apiStatus = await checkApi();
+                    const gitStatus = await checkGitlab();
+                    const workspaceStatus = apiStatus === true && gitStatus === true;
+                    const sandboxData = [
+                        { 'api': apiStatus },
+                        { 'git': gitStatus },
+                        { 'workspace': workspaceStatus }
+                    ];
+                    webviewView.webview.postMessage({ command: 'sandboxData', data: sandboxData });
                     break;
-                case 'checkGitlabStatus':
-                    try {
-                        const configuration = vscode.workspace.getConfiguration('tambo.sandbox.gitlab');
-                        const username = configuration.get('username');
-                        const encryptedToken = configuration.get('token');
-                        const token = encryptedToken ? (0, utils_1.decrypt)(encryptedToken) : null;
-                        if (!username || !token) {
-                            console.log('TAMBOSANDBOX: Gitlab: No hay credenciales configuradas.');
-                            return;
-                        }
-                        const response = await axios_1.default.get('https://gitlab.com/api/v4/user', {
-                            headers: { Authorization: `Bearer ${token}` },
-                        });
-                        if (response.status === 200 && response.data.username === username) {
-                            webviewView.webview.postMessage({ command: 'updateGitStatus', status: 'online' });
-                        }
-                        else {
-                            webviewView.webview.postMessage({ command: 'updateGitStatus', status: 'offline' });
-                        }
-                    }
-                    catch (error) {
-                        webviewView.webview.postMessage({ command: 'updateGitStatus', status: 'offline' });
-                    }
-                case 'buttonClicked':
-                    if (message.action === 'create') {
-                        vscode.window.showInformationMessage('Creando sandbox...');
-                        console.log('Creando sandbox...');
-                        // Lógica para crear el sandbox
-                    }
-                    else if (message.action === 'destroy') {
-                        vscode.window.showInformationMessage('Destruyendo sandbox...');
-                        console.log('Destruyendo sandbox...');
-                        // Lógica para destruir el sandbox
+                case 'openLink':
+                    if (message.link) {
+                        vscode.env.openExternal(vscode.Uri.parse(message.link));
                     }
                     break;
                 case 'showMessage':
@@ -6435,222 +6403,262 @@ class ConnectionsViewProvider {
     }
     getWebviewContent(vscodeURI) {
         return `
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Connections View</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            padding: 10px;
-        }
-        .row {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            margin-bottom: 10px;
-        }
-        .status {
-            display: flex;
-            align-items: center;
-        }
-        .status span {
-            display: inline-block;
-            width: 10px;
-            height: 10px;
-            border-radius: 50%;
-            margin-right: 8px;
-            margin-top: -5px;
-            margin-left: 5px;
-        }
-        .status .online {
-            background-color: green;
-        }
-        .status .offline {
-            background-color: red;
-        }
-        button {
-            background-color: transparent;
-            color: #0e639c;
-            border: 1px solid #0e639c;
-            padding: 3px 10px;
-            border-radius: 3px;
-            font-size: 12px;
-            cursor: pointer;
-            transition: all 0.3s;
-        }
-        button:hover {
-            background-color: #0e639c;
-            color: #ffffff;
-        }
-        .hidden {
-            display: none;
-        }
-
-        .airflow-buttons {
-            display: flex;
-            flex-wrap: wrap;
-            justify-content: flex-start;
-            gap: 10px;
-        }
-
-        .airflow-btn {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            width: 70px;
-            height: 70px;
-            border: 1px solid #0e639c;
-            border-radius: 3px;
-            text-align: center;
-            font-size: 10px;
-            color: #0e639c;
-            cursor: pointer;
-            transition: all 0.3s;
-            background-color: transparent;
-        }
-
-        .airflow-btn:hover {
-            background-color: #0e639c;
-            color: #ffffff;
-        }
-
-        .airflow-btn .icon {
-            width: 32px;
-            height: 32px;
-            margin-bottom: 5px;
-        }
-
-    </style>
-</head>
-<body>
-    <div class="row">
-        <div class="status">
-            <span id="statusConnection" class="offline"></span>
-            <b>Tambo: </b><span id="statusConnectionText">Desconectado</span>
-        </div>
-    </div>
-
-    <div class="row">
-        <div class="status">
-            <span id="statusGit" class="offline"></span>
-            <b>Git: </b><span id="statusGitText">Desconectado</span>
-        </div>
-    </div>
-
-    <div class="row">
-        <div class="status">
-            <span id="statusSandbox" class="offline"></span>
-            <b>Sandbox: </b><span id="statusSandboxText">Inactivo</span>
-        </div>
-        <button id="connectButton" class="hidden">Crear</button>
-    </div>
-
-    <div class="row" style="padding-top:10px;">
-        <div class="status">
-            <b>Herramientas: </b>
-        </div>
-    </div>
-
-    <div class="row airflow-buttons">
-        <button class="airflow-btn">
-            <img src="${vscodeURI}/resources/logos/automation.svg" class="icon">
-            <span>Automation</span>
-        </button>
-        <button class="airflow-btn">
-            <img src="${vscodeURI}/resources/logos/airflow.png" class="icon">
-            <span>Airflow</span>
-        </button>
-        <button class="airflow-btn">
-            <img src="${vscodeURI}/resources/logos/gitlab.png" class="icon">
-            <span>GitLab</span>
-        </button>
-    </div>
-
-    <script>
-        const vscode = acquireVsCodeApi();
-        let sandboxActive = false;
-
-        document.getElementById('connectButton').addEventListener('click', () => {
-            if (!sandboxActive) {
-                vscode.postMessage({ command: 'buttonClicked', action: 'create' });
-                vscode.postMessage({ command: 'showMessage', message: 'Creando sandbox' });
-                document.getElementById('connectButton').textContent = 'Destruir';
-                document.getElementById('statusSandbox').className = 'online';
-                document.getElementById('statusSandboxText').textContent = 'Activo';
-                sandboxActive = true;
-            } else {
-                vscode.postMessage({ command: 'buttonClicked', action: 'destroy' });
-                vscode.postMessage({ command: 'showMessage', message: 'Destruyendo sandbox' });
-                document.getElementById('connectButton').textContent = 'Crear';
-                document.getElementById('statusSandbox').className = 'offline';
-                document.getElementById('statusSandboxText').textContent = 'Inactivo';
-                sandboxActive = false;
-            }
-        });
-
-        function toggleCreateButton(connected) {
-            const connectButton = document.getElementById('connectButton');
-            if (connected) {
-                connectButton.classList.remove('hidden');
-            } else {
-                connectButton.classList.add('hidden');
-            }
-        }
-
-        window.addEventListener('message', (event) => {
-            const message = event.data;
-
-            if (message.command === 'updateTamboStatus') {
-                const statusConnection = document.getElementById('statusConnection');
-                const statusConnectionText = document.getElementById('statusConnectionText');
-
-                if (message.status === 'online') {
-                    statusConnection.className = 'online';
-                    statusConnectionText.textContent = 'Conectado';
-                    toggleCreateButton(true);
-                } else {
-                    statusConnection.className = 'offline';
-                    statusConnectionText.textContent = 'Desconectado';
-                    toggleCreateButton(false);
+        <!DOCTYPE html>
+        <html lang="en">
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>Connections View</title>
+            <style>
+                body {
+                    font-family: Arial, sans-serif;
+                    padding: 10px;
                 }
-            }
-
-            if (message.command === 'updateGitStatus') {
-                const statusGit = document.getElementById('statusGit');
-                const statusGitText = document.getElementById('statusGitText');
-
-                if (message.status === 'online') {
-                    statusGit.className = 'online';
-                    statusGitText.textContent = 'Conectado';
-                    toggleCreateButton(true);
-                } else {
-                    statusGit.className = 'offline';
-                    statusGitText.textContent = 'Desconectado';
-                    toggleCreateButton(false);
+                .row {
+                    display: flex;
+                    align-items: center;
+                    justify-content: space-between;
+                    margin-bottom: 10px;
                 }
-            }
+                .status {
+                    display: flex;
+                    align-items: center;
+                }
+                .status span {
+                    display: inline-block;
+                    width: 10px;
+                    height: 10px;
+                    border-radius: 50%;
+                    margin-right: 8px;
+                    margin-top: -5px;
+                    margin-left: 5px;
+                }
+                .status .online {
+                    background-color: green;
+                }
+                .status .offline {
+                    background-color: red;
+                }
+                button {
+                    background-color: transparent;
+                    color: #0e639c;
+                    border: 1px solid #0e639c;
+                    padding: 3px 10px;
+                    border-radius: 3px;
+                    font-size: 12px;
+                    cursor: pointer;
+                    transition: all 0.3s;
+                }
+                button:hover {
+                    background-color: #0e639c;
+                    color: #ffffff;
+                }
+                .hidden {
+                    display: none;
+                }
+
+                .tools-buttons {
+                    display: flex;
+                    flex-wrap: wrap;
+                    justify-content: flex-start;
+                    gap: 10px;
+                }
+
+                .tool-btn {
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    justify-content: center;
+                    width: 70px;
+                    height: 60px;
+                    border: 1px solid #0e639c;
+                    border-radius: 3px;
+                    text-align: center;
+                    font-size: 10px;
+                    color: #0e639c;
+                    cursor: pointer;
+                    transition: all 0.3s;
+                    background-color: transparent;
+                }
+
+                .tool-btn:hover {
+                    background-color: #0e639c;
+                    color: #ffffff;
+                }
+
+                .tool-btn .icon {
+                    width: 24px;
+                    height: 24px;
+                    margin-bottom: 5px;
+                }
+
+            </style>
+        </head>
+        <body>
+            <div class="row">
+                <div class="status">
+                    <span id="statusConnection" class="offline"></span>
+                    <b>Sandbox: </b><span id="statusConnectionText">Desconectado</span>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="status">
+                    <span id="statusGit" class="offline"></span>
+                    <b>Git: </b><span id="statusGitText">Desconectado</span>
+                </div>
+            </div>
 
 
-        });
+            <div class="row">
+                <div class="status">
+                    <span id="statusWorkspace" class="offline"></span>
+                    <b>Workspace: </b><span id="statusWorkspaceText">Inactivo</span>
+                </div>
+                <button id="connectButton" class="hidden">Crear</button>
+            </div>
 
-        function updateTamboStatus() {
-            vscode.postMessage({ command: 'checkApiStatus' });
-            vscode.postMessage({ command: 'checkGitlabStatus' });
-        }
+            <div>
+                <!--
+                <div class="row" style="padding-top:10px;">
+                    <div class="status">
+                        <b>Herramientas: </b>
+                    </div>
+                </div>
+                -->
+                
+                <div class="row tools-buttons">
+                    <button class="tool-btn" data-link="https://automation.telecom.com.ar">
+                        <img src="${vscodeURI}/resources/logos/automation.svg" class="icon">
+                        <span>Automation</span>
+                    </button>
+                    <button class="tool-btn" data-link="https://tambo-playground.automation.teco.com.ar">
+                        <img src="${vscodeURI}/resources/logos/airflow.png" class="icon">
+                        <span>Airflow</span>
+                    </button>
+                    <button class="tool-btn" data-link="https://gitlab.com/groups/telecom-argentina/-/saml/sso?token=93NxX_B5">
+                        <img src="${vscodeURI}/resources/logos/gitlab.png" class="icon">
+                        <span>GitLab</span>
+                    </button>
+                </div>
+            </div>
 
-        updateTamboStatus();
-        setInterval(updateTamboStatus, 3000);
-    </script>
-</body>
-</html>
+            <script>
+                const vscode = acquireVsCodeApi();
+
+                document.addEventListener('DOMContentLoaded', () => {
+                        // Selecciona todos los botones con data-link
+                    const buttons = document.querySelectorAll('.tool-btn[data-link]');
+
+                    buttons.forEach(button => {
+                        button.addEventListener('click', (event) => {
+                            const link = button.getAttribute('data-link');
+                            if (link) {
+                                vscode.postMessage({ command: 'openLink', link });
+                            }
+                        });
+                    });
+                });
+
+                window.addEventListener('message', (event) => {
+
+                    const message = event.data;
+
+                    if (message.command === 'sandboxData') {
+
+                        console.log(message);
+
+                        const apiEntry = message.data.find(entry => entry.hasOwnProperty('api'));
+                        const gitEntry = message.data.find(entry => entry.hasOwnProperty('git'));
+                        const workspaceEntry = message.data.find(entry => entry.hasOwnProperty('workspace'));
+
+                        const statusConnection = document.getElementById('statusConnection');
+                        const statusConnectionText = document.getElementById('statusConnectionText');
+
+                        if (apiEntry['api']) {
+                            statusConnection.className = 'online';
+                            statusConnectionText.textContent = 'Conectado';
+                        } else {
+                            statusConnection.className = 'offline';
+                            statusConnectionText.textContent = 'Desconectado';
+                        }
+                        
+                        const statusGit = document.getElementById('statusGit');
+                        const statusGitText = document.getElementById('statusGitText');
+
+                        if (gitEntry['git']) {
+                            statusGit.className = 'online';
+                            statusGitText.textContent = 'Conectado';
+                        } else {
+                            statusGit.className = 'offline';
+                            statusGitText.textContent = 'Desconectado';
+                        }
+
+                        const statusWorkspace = document.getElementById('statusWorkspace');
+                        const statusWorkspaceText = document.getElementById('statusWorkspaceText');
+
+                        if (workspaceEntry['workspace']) {
+                            statusWorkspace.className = 'online';
+                            statusWorkspaceText.textContent = 'Iniciado';
+                        } else {
+                            statusWorkspace.className = 'offline';
+                            statusWorkspaceText.textContent = 'Inactivo';
+                        }
+
+                    }
+
+                });
+
+                function updateSandboxData() {
+                    vscode.postMessage({ command: 'sandboxStatus' });
+                }
+
+                updateSandboxData();
+                setInterval(updateSandboxData, 3000);
+            </script>
+        </body>
+        </html>
         `;
     }
 }
 ConnectionsViewProvider.viewType = 'tambo_viewport_connection';
+async function checkApi() {
+    try {
+        const httpsAgent = new https.Agent({
+            rejectUnauthorized: false, // Ignorar certificados autofirmados
+        });
+        const response = await axios_1.default.get('https://cloudvalley.telecom.com.ar/api/ping', { httpsAgent });
+        return response.status === 200;
+    }
+    catch (error) {
+        console.log(error);
+        return false;
+    }
+}
+async function checkGitlab() {
+    try {
+        const configuration = vscode.workspace.getConfiguration('tambo.sandbox.gitlab');
+        const username = configuration.get('username');
+        const encryptedToken = configuration.get('token');
+        const token = encryptedToken ? (0, utils_1.decrypt)(encryptedToken) : null;
+        if (!username || !token) {
+            console.log('TAMBOSANDBOX: Gitlab: No hay credenciales configuradas.');
+            return false;
+        }
+        const httpsAgent = new https.Agent({
+            rejectUnauthorized: false, // Ignorar certificados autofirmados
+        });
+        const response = await axios_1.default.get('https://gitlab.com/api/v4/user', {
+            httpsAgent,
+            headers: { Authorization: `Bearer ${token}` },
+        });
+        return response.status === 200 && response.data.username === username;
+    }
+    catch (error) {
+        console.log(error);
+        return false;
+    }
+}
 
 
 /***/ }),

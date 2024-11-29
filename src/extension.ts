@@ -7,7 +7,6 @@ import * as os from 'os';
 import { Connection } from './connection';
 import { GruposTreeProvider, GrupoItem } from './grupos';
 
-
 export function activate(context: vscode.ExtensionContext) {
 
 	// CARGAR CONFIGURACION DE CONEXION A TAMBO SANDBOX
