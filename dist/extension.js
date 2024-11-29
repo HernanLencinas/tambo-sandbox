@@ -6334,6 +6334,7 @@ module.exports = require("path");
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.Connection = void 0;
+/* eslint-disable @typescript-eslint/naming-convention */
 const vscode = __webpack_require__(1);
 const utils_1 = __webpack_require__(21);
 const axios_1 = __webpack_require__(23);
@@ -6364,46 +6365,6 @@ class Connection {
             console.error("Tambo: ", error);
         }
     }
-    async apiPing() {
-        try {
-            const response = await axios_1.default.get('https://cloudvalley.telecom.com.ar/api/ping');
-            if (response.status === 200) {
-                vscode.window.showInformationMessage('API TAMBO está respondiendo correctamente (200)');
-            }
-            else {
-                vscode.window.showErrorMessage(`Error al conectar con la API TAMBO. Código de respuesta: ${response.status}`);
-            }
-        }
-        catch (error) {
-            vscode.window.showErrorMessage('Error al conectar con la API TAMBO: ' + error);
-        }
-    }
-    async validateGitlabConnection() {
-        try {
-            const configuration = vscode.workspace.getConfiguration('tambo.sandbox.gitlab');
-            const username = configuration.get('username');
-            const encryptedToken = configuration.get('token');
-            const token = encryptedToken ? (0, utils_1.decrypt)(encryptedToken) : null;
-            console.log(token);
-            if (!username || !token) {
-                vscode.window.showErrorMessage('No se encontraron credenciales de GitLab configuradas.');
-                return;
-            }
-            const response = await axios_1.default.get('https://gitlab.com/api/v4/user', {
-                // eslint-disable-next-line @typescript-eslint/naming-convention
-                headers: { Authorization: `Bearer ${token}` },
-            });
-            if (response.status === 200 && response.data.username === username) {
-                console.log('TAMBOSANDBOX: Gitlab, ping exitoso.');
-            }
-            else {
-                console.log('TAMBOSANDBOX: Gitlab, autenticacion fallida.');
-            }
-        }
-        catch (error) {
-            console.log(`TAMBOSANDBOX: validateGitlabConnection ${error}`);
-        }
-    }
 }
 exports.Connection = Connection;
 class ConnectionsViewProvider {
@@ -6432,12 +6393,38 @@ class ConnectionsViewProvider {
                     }
                     break;
                 case 'checkGitlabStatus':
+                    /*                     try {
+                                            const connection = new Connection();
+                                            const response = await connection.gitPing();
+                                            console.log(response);
+                    
+                                        } catch (error) {
+                                            vscode.window.showErrorMessage('Error conectando con gitlab');
+                                        } */
                     try {
-                        const connection = new Connection();
-                        await connection.validateGitlabConnection();
+                        const configuration = vscode.workspace.getConfiguration('tambo.sandbox.gitlab');
+                        const username = configuration.get('username');
+                        const encryptedToken = configuration.get('token');
+                        const token = encryptedToken ? (0, utils_1.decrypt)(encryptedToken) : null;
+                        if (!username || !token) {
+                            console.log('TAMBOSANDBOX: Gitlab: No hay credenciales configuradas.');
+                            return;
+                        }
+                        const response = await axios_1.default.get('https://gitlab.com/api/v4/user', {
+                            headers: { Authorization: `Bearer ${token}` },
+                        });
+                        if (response.status === 200 && response.data.username === username) {
+                            webviewView.webview.postMessage({ command: 'updateGitStatus', status: 'online' });
+                            console.log('TAMBOSANDBOX: Gitlab: ping exitoso.');
+                        }
+                        else {
+                            webviewView.webview.postMessage({ command: 'updateGitStatus', status: 'offline' });
+                            console.log('TAMBOSANDBOX: Gitlab: autenticacion fallida.');
+                        }
                     }
                     catch (error) {
-                        vscode.window.showErrorMessage('Error conectando con gitlab');
+                        webviewView.webview.postMessage({ command: 'updateGitStatus', status: 'offline' });
+                        console.log(`TAMBOSANDBOX: gitPing ${error}`);
                     }
                 case 'buttonClicked':
                     if (message.action === 'create') {
@@ -6560,8 +6547,8 @@ class ConnectionsViewProvider {
 
     <div class="row">
         <div class="status">
-            <span id="statusGit" class="online"></span>
-            <b>Git: </b><span id="statusGitText">Conectado</span>
+            <span id="statusGit" class="offline"></span>
+            <b>Git: </b><span id="statusGitText">Desconectado</span>
         </div>
     </div>
 
