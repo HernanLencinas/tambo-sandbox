@@ -6375,32 +6375,24 @@ class ConnectionsViewProvider {
         webviewView.webview.options = {
             enableScripts: true,
         };
-        webviewView.webview.html = this.getWebviewContent();
+        webviewView.webview.html = this.getWebviewContent(webviewView.webview.asWebviewUri(this.context.extensionUri));
         webviewView.webview.onDidReceiveMessage(async (message) => {
             switch (message.command) {
                 case 'checkApiStatus':
                     try {
                         const response = await axios_1.default.get('https://cloudvalley.telecom.com.ar/api/ping');
                         if (response.status === 200) {
-                            webviewView.webview.postMessage({ command: 'updateStatus', status: 'online' });
+                            webviewView.webview.postMessage({ command: 'updateTamboStatus', status: 'online' });
                         }
                         else {
-                            webviewView.webview.postMessage({ command: 'updateStatus', status: 'offline' });
+                            webviewView.webview.postMessage({ command: 'updateTamboStatus', status: 'offline' });
                         }
                     }
                     catch (error) {
-                        webviewView.webview.postMessage({ command: 'updateStatus', status: 'offline' });
+                        webviewView.webview.postMessage({ command: 'updateTamboStatus', status: 'offline' });
                     }
                     break;
                 case 'checkGitlabStatus':
-                    /*                     try {
-                                            const connection = new Connection();
-                                            const response = await connection.gitPing();
-                                            console.log(response);
-                    
-                                        } catch (error) {
-                                            vscode.window.showErrorMessage('Error conectando con gitlab');
-                                        } */
                     try {
                         const configuration = vscode.workspace.getConfiguration('tambo.sandbox.gitlab');
                         const username = configuration.get('username');
@@ -6415,16 +6407,13 @@ class ConnectionsViewProvider {
                         });
                         if (response.status === 200 && response.data.username === username) {
                             webviewView.webview.postMessage({ command: 'updateGitStatus', status: 'online' });
-                            console.log('TAMBOSANDBOX: Gitlab: ping exitoso.');
                         }
                         else {
                             webviewView.webview.postMessage({ command: 'updateGitStatus', status: 'offline' });
-                            console.log('TAMBOSANDBOX: Gitlab: autenticacion fallida.');
                         }
                     }
                     catch (error) {
                         webviewView.webview.postMessage({ command: 'updateGitStatus', status: 'offline' });
-                        console.log(`TAMBOSANDBOX: gitPing ${error}`);
                     }
                 case 'buttonClicked':
                     if (message.action === 'create') {
@@ -6444,7 +6433,7 @@ class ConnectionsViewProvider {
             }
         });
     }
-    getWebviewContent() {
+    getWebviewContent(vscodeURI) {
         return `
 <!DOCTYPE html>
 <html lang="en">
@@ -6568,11 +6557,15 @@ class ConnectionsViewProvider {
 
     <div class="row airflow-buttons">
         <button class="airflow-btn">
-            <img src="https://cdn.prod.website-files.com/627fe3133bae75e7bfbb9b2a/66c6c9ec336d4457d421d5ca_apache-airflow.png" class="icon">
+            <img src="${vscodeURI}/resources/logos/automation.svg" class="icon">
+            <span>Automation</span>
+        </button>
+        <button class="airflow-btn">
+            <img src="${vscodeURI}/resources/logos/airflow.png" class="icon">
             <span>Airflow</span>
         </button>
         <button class="airflow-btn">
-            <img src="https://cdn4.iconfinder.com/data/icons/logos-and-brands/512/144_Gitlab_logo_logos-512.png" class="icon">
+            <img src="${vscodeURI}/resources/logos/gitlab.png" class="icon">
             <span>GitLab</span>
         </button>
     </div>
@@ -6611,7 +6604,7 @@ class ConnectionsViewProvider {
         window.addEventListener('message', (event) => {
             const message = event.data;
 
-            if (message.command === 'updateStatus') {
+            if (message.command === 'updateTamboStatus') {
                 const statusConnection = document.getElementById('statusConnection');
                 const statusConnectionText = document.getElementById('statusConnectionText');
 
@@ -6625,15 +6618,32 @@ class ConnectionsViewProvider {
                     toggleCreateButton(false);
                 }
             }
+
+            if (message.command === 'updateGitStatus') {
+                const statusGit = document.getElementById('statusGit');
+                const statusGitText = document.getElementById('statusGitText');
+
+                if (message.status === 'online') {
+                    statusGit.className = 'online';
+                    statusGitText.textContent = 'Conectado';
+                    toggleCreateButton(true);
+                } else {
+                    statusGit.className = 'offline';
+                    statusGitText.textContent = 'Desconectado';
+                    toggleCreateButton(false);
+                }
+            }
+
+
         });
 
-        function updateStatus() {
+        function updateTamboStatus() {
             vscode.postMessage({ command: 'checkApiStatus' });
             vscode.postMessage({ command: 'checkGitlabStatus' });
         }
 
-        updateStatus();
-        setInterval(updateStatus, 3000);
+        updateTamboStatus();
+        setInterval(updateTamboStatus, 3000);
     </script>
 </body>
 </html>
