@@ -13,7 +13,7 @@
   ],
   "activationEvents": [
     "*",
-    "onDidSaveTextDocument" 
+    "onDidSaveTextDocument"
   ],
   "main": "./dist/extension.js",
   "contributes": {
@@ -29,9 +29,13 @@
     "views": {
       "tambo-sandbox": [
         {
-          "id": "tambo_viewport_connections",
+          "id": "tambo_viewport_connection",
           "name": "Conexion",
           "type": "webview"
+        },
+        {
+          "id": "tambo_viewport_grupos",
+          "name": "Grupos"
         },
         {
           "id": "tambo_viewport_help",
@@ -42,7 +46,7 @@
     },
     "viewsWelcome": [
       {
-        "view": "tambo_viewport_connections",
+        "view": "tambo_viewport_connection",
         "contents": "¡BIENVENIDO A TAMBO SANDBOX!\n\nParece que aún no has configurado tu conexión al Sandbox.\n\nPara comenzar deberas primero registrar una nueva conexión. Puedes hacerlo utilizando nuestro asistente de configuración.\n\n[Asistente de Conexión](command:tambosandbox.connectionWizard)\n\nEl asistente te guiará paso a paso en el proceso de registro.\n\nSi tienes alguna pregunta o necesitas ayuda, no dudes en contactarnos a través de nuestro correo frameautomation@teco.com.ar.\n"
       },
       {
@@ -61,9 +65,26 @@
       },
       {
         "command": "tambosandbox.cloneRepository",
-        "title": "Tambo Airflow: Clonar Repositorio"
+        "title": "Tambo Sandbox: Clonar Repositorio"
+      },
+      {
+        "command": "tambosandbox.editConnection",
+        "title": "Tambo Sandbox: Edit Conexion",
+        "icon": {
+          "light": "resources/icons/edit_light.svg",
+          "dark": "resources/icons/edit_dark.svg"
+        }
       }
     ],
+    "menus": {
+      "view/title": [
+        {
+          "command": "tambosandbox.editConnection",
+          "group": "navigation",
+          "when": "view == tambo_viewport_connection"
+        }
+      ]
+    },
     "configuration": {
       "type": "object",
       "title": "TAMBO Sandbox",
@@ -108,5 +129,8 @@
     "typescript": "^5.2.2",
     "webpack": "^5.88.2",
     "webpack-cli": "^5.1.4"
+  },
+  "dependencies": {
+    "axios": "^1.7.8"
   }
 }

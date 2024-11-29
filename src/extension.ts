@@ -5,6 +5,7 @@ import * as path from 'path';
 import * as os from 'os';
 
 import { Connection } from './connection';
+import { GruposTreeProvider, GrupoItem } from './grupos';
 
 
 export function activate(context: vscode.ExtensionContext) {
@@ -18,6 +19,22 @@ export function activate(context: vscode.ExtensionContext) {
 		connection.wizard();
 	});
 	context.subscriptions.push(cmdConnectionWizard);
+
+	// VIEWPORT GRUPOS
+    const gruposTreeProvider = new GruposTreeProvider(context);
+    vscode.window.registerTreeDataProvider('tambo_viewport_grupos', gruposTreeProvider);
+
+    // Registrar el comando para seleccionar un grupo
+    context.subscriptions.push(
+        vscode.commands.registerCommand('tambo.grupos.select', (item) => {
+            vscode.window.showInformationMessage(`Repositorio seleccionado: ${item.repositorio}`);
+        })
+    );
+
+    // Registrar un comando para refrescar el árbol (opcional)
+    context.subscriptions.push(
+        vscode.commands.registerCommand('tambo.grupos.refresh', () => gruposTreeProvider.refresh())
+    );
 
 	/// CAPTURAR EL EVENTO DE GUARDADO ///	
 	/* let saveListener = vscode.workspace.onDidSaveTextDocument(async (document: vscode.TextDocument) => {
