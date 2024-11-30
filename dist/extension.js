@@ -1302,19 +1302,40 @@ class ConnectionsViewProvider {
     }
     getConnectionContentWizard(vscodeURI) {
         return `
-        <!DOCTYPE html>
-        <html lang="en">
-        <head>
-            <meta charset="UTF-8">
-            <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <title>Connections View</title>
-            <style>
-            </style>
-        </head>
-        <body>
-        WIZARD
-        </body>
-        </html>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bienvenido a Tambo Sandbox</title>
+    <style>
+        body {
+            line-height: 1.6;
+        }
+        a {
+            color: #0056b3;
+            text-decoration: none;
+            font-weight: bold;
+        }
+        a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+¡BIENVENIDO A TAMBO SANDBOX!
+<p>Parece que aún no has configurado tu conexión al Sandbox.
+<p>Para comenzar deberás primero registrar una nueva conexión. Puedes hacerlo utilizando nuestro asistente de configuración.
+<p><a href="command:tambosandbox.connectionWizard">Asistente de Conexión</a>
+<p>El asistente te guiará paso a paso en el proceso de registro.
+    </p>
+    <p>
+        Si tienes alguna pregunta o necesitas ayuda, no dudes en contactarnos a través de nuestro correo 
+        <a href="mailto:frameautomation@teco.com.ar">frameautomation@teco.com.ar</a>.
+    </p>
+</body>
+</html>
+
         `;
     }
     getWebviewContent(vscodeURI) {
