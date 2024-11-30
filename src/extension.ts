@@ -1,11 +1,11 @@
 import * as vscode from 'vscode';
-import simpleGit, { SimpleGit, SimpleGitOptions } from 'simple-git';
-import * as fs from 'fs';
-import * as path from 'path';
-import * as os from 'os';
+//import simpleGit, { SimpleGit, SimpleGitOptions } from 'simple-git';
+//import * as fs from 'fs';
+//import * as path from 'path';
+//import * as os from 'os';
 
 import { Connection } from './connection';
-import { GruposTreeProvider, GrupoItem } from './grupos';
+//import { GruposTreeProvider, GrupoItem } from './grupos';
 
 export function activate(context: vscode.ExtensionContext) {
 
@@ -13,27 +13,27 @@ export function activate(context: vscode.ExtensionContext) {
 	const connection = new Connection();
 	connection.load(context);
 
-
-	const cmdConnectionWizard = vscode.commands.registerCommand('tambosandbox.connectionWizard', async () => {
-		connection.wizard();
-	});
-	context.subscriptions.push(cmdConnectionWizard);
+	// CONFIGURAR NUEVA CONEXION
+	/* 	const cmdConnectionWizard = vscode.commands.registerCommand('tambosandbox.connectionWizard', async () => {
+			connection.wizard();
+		});
+		context.subscriptions.push(cmdConnectionWizard); */
 
 	// VIEWPORT GRUPOS
-    const gruposTreeProvider = new GruposTreeProvider(context);
-    vscode.window.registerTreeDataProvider('tambo_viewport_grupos', gruposTreeProvider);
+	/*     const gruposTreeProvider = new GruposTreeProvider(context);
+		vscode.window.registerTreeDataProvider('tambo_viewport_grupos', gruposTreeProvider); */
 
-    // Registrar el comando para seleccionar un grupo
-    context.subscriptions.push(
-        vscode.commands.registerCommand('tambo.grupos.select', (item) => {
-            vscode.window.showInformationMessage(`Repositorio seleccionado: ${item.repositorio}`);
-        })
-    );
+	// Registrar el comando para seleccionar un grupo
+	/*     context.subscriptions.push(
+			vscode.commands.registerCommand('tambo.grupos.select', (item) => {
+				vscode.window.showInformationMessage(`Repositorio seleccionado: ${item.repositorio}`);
+			})
+		); */
 
-    // Registrar un comando para refrescar el árbol (opcional)
-    context.subscriptions.push(
-        vscode.commands.registerCommand('tambo.grupos.refresh', () => gruposTreeProvider.refresh())
-    );
+	// Registrar un comando para refrescar el árbol (opcional)
+	/*     context.subscriptions.push(
+			vscode.commands.registerCommand('tambo.grupos.refresh', () => gruposTreeProvider.refresh())
+		); */
 
 	/// CAPTURAR EL EVENTO DE GUARDADO ///	
 	/* let saveListener = vscode.workspace.onDidSaveTextDocument(async (document: vscode.TextDocument) => {
@@ -52,7 +52,7 @@ export function activate(context: vscode.ExtensionContext) {
 
 export function deactivate() { }
 
-function cloneRepository() {
+/* function cloneRepository() {
 
 	const git: SimpleGit = simpleGit();
 	const repoUrl = 'https://git.cloudvalley.telecom.com.ar/automatizacion/ansible-test.git';
@@ -83,9 +83,9 @@ function cloneRepository() {
 			vscode.window.showErrorMessage(`Error al Clonar: ${error}`);
 		});
 
-}
+} */
 
-function pushRepository() {
+/* function pushRepository() {
 
 	// Configuración de simple-git
 	const options: Partial<SimpleGitOptions> = {
@@ -108,7 +108,7 @@ function pushRepository() {
 		vscode.window.showErrorMessage(`TAMBO: Error al Actualizar - ${error}`);
 	}
 
-}
+} */
 
 /* 	// Configuración de simple-git
 	const options: Partial<SimpleGitOptions> = {

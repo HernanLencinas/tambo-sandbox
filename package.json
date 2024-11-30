@@ -69,10 +69,18 @@
       },
       {
         "command": "tambosandbox.editConnection",
-        "title": "Tambo Sandbox: Edit Conexion",
+        "title": "TAMBO Sandbox: Edit Conexion",
         "icon": {
           "light": "resources/icons/edit_light.svg",
           "dark": "resources/icons/edit_dark.svg"
+        }
+      },
+      {
+        "command": "tambosandbox.deleteConnection",
+        "title": "TAMBO Sandbox: Eliminar Conexion",
+        "icon": {
+          "light": "resources/icons/trash_light.svg",
+          "dark": "resources/icons/trash_dark.svg"
         }
       }
     ],
@@ -80,6 +88,11 @@
       "view/title": [
         {
           "command": "tambosandbox.editConnection",
+          "group": "navigation",
+          "when": "view == tambo_viewport_connection"
+        },
+        {
+          "command": "tambosandbox.deleteConnection",
           "group": "navigation",
           "when": "view == tambo_viewport_connection"
         }

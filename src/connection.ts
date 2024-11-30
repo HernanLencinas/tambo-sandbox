@@ -26,14 +26,23 @@ export class Connection {
     }
 
     load(context: vscode.ExtensionContext) {
+
         try {
             const provider = new ConnectionsViewProvider(context);
             context.subscriptions.push(
                 vscode.window.registerWebviewViewProvider(ConnectionsViewProvider.viewType, provider)
             );
         } catch (error) {
-            console.error("Tambo: ", error);
+            console.error("TAMBOSANDBOX: ", error);
         }
+
+    }
+
+    isConfigured(): boolean {
+
+        const config = vscode.workspace.getConfiguration('tambo.sandbox');
+        return config.get<string>('gitlab.username')?.trim() !== "" && config.get<string>('gitlab.token')?.trim() !== ""
+
     }
 
 }
@@ -55,7 +64,12 @@ class ConnectionsViewProvider implements vscode.WebviewViewProvider {
             enableScripts: true,
         };
 
-        webviewView.webview.html = this.getWebviewContent(webviewView.webview.asWebviewUri(this.context.extensionUri));
+        const connection = new Connection();
+        if (connection.isConfigured()) {
+            webviewView.webview.html = this.getWebviewContent(webviewView.webview.asWebviewUri(this.context.extensionUri));
+        } else {
+            webviewView.webview.html = this.getConnectionContentWizard(webviewView.webview.asWebviewUri(this.context.extensionUri));
+        }
 
         webviewView.webview.onDidReceiveMessage(async (message) => {
             switch (message.command) {
@@ -86,6 +100,25 @@ class ConnectionsViewProvider implements vscode.WebviewViewProvider {
                     break;
             }
         });
+    }
+
+
+    private getConnectionContentWizard(vscodeURI: vscode.Uri): string {
+        return `
+        <!DOCTYPE html>
+        <html lang="en">
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>Connections View</title>
+            <style>
+            </style>
+        </head>
+        <body>
+        WIZARD
+        </body>
+        </html>
+        `;
     }
 
     private getWebviewContent(vscodeURI: vscode.Uri): string {
@@ -343,12 +376,12 @@ async function checkGitlab(): Promise<boolean> {
             rejectUnauthorized: false, // Ignorar certificados autofirmados
         });
 
-        const response = await axios.get('https://gitlab.com/api/v4/user', { 
-            httpsAgent, 
+        const response = await axios.get('https://gitlab.com/api/v4/user', {
+            httpsAgent,
             headers: { Authorization: `Bearer ${token}` },
         });
         return response.status === 200 && response.data.username === username;
-        
+
     } catch (error) {
         console.log(error);
         return false;
