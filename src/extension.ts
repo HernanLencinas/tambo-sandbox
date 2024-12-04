@@ -13,11 +13,21 @@ export function activate(context: vscode.ExtensionContext) {
 	const connection = new Connection();
 	connection.load(context);
 
+	// ESCUCHAR CAMBIOS EN LA CONFIGURACION
+	vscode.workspace.onDidChangeConfiguration(event => {
+		if (event.affectsConfiguration('tambo.sandbox.gitlab.username') ||
+			event.affectsConfiguration('tambo.sandbox.gitlab.token')) {
+				//connection.load(context);
+				vscode.commands.executeCommand('setContext', 'tambo.configDefined', connection.isConfigured());
+				console.log("TAMBOSANDBOX: Cambio la configuracion ");
+		}
+	});
+
 	// CONFIGURAR NUEVA CONEXION
-	/* 	const cmdConnectionWizard = vscode.commands.registerCommand('tambosandbox.connectionWizard', async () => {
-			connection.wizard();
-		});
-		context.subscriptions.push(cmdConnectionWizard); */
+	const cmdConnectionWizard = vscode.commands.registerCommand('tambosandbox.connectionWizard', async () => {
+		connection.wizard();
+	});
+	context.subscriptions.push(cmdConnectionWizard);
 
 	// VIEWPORT GRUPOS
 	/*     const gruposTreeProvider = new GruposTreeProvider(context);

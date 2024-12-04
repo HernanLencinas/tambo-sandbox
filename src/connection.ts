@@ -29,6 +29,7 @@ export class Connection {
 
         try {
             const provider = new ConnectionsViewProvider(context);
+            
             context.subscriptions.push(
                 vscode.window.registerWebviewViewProvider(ConnectionsViewProvider.viewType, provider)
             );
@@ -41,7 +42,7 @@ export class Connection {
     isConfigured(): boolean {
 
         const config = vscode.workspace.getConfiguration('tambo.sandbox');
-        return config.get<string>('gitlab.username')?.trim() !== "" && config.get<string>('gitlab.token')?.trim() !== ""
+        return config.get<string>('gitlab.username')?.trim() !== "" && config.get<string>('gitlab.token')?.trim() !== "";
 
     }
 
@@ -66,10 +67,10 @@ class ConnectionsViewProvider implements vscode.WebviewViewProvider {
 
         const connection = new Connection();
         if (connection.isConfigured()) {
-            webviewView.webview.html = this.getWebviewContent(webviewView.webview.asWebviewUri(this.context.extensionUri));
+            webviewView.webview.html = this.getConnectionContent(webviewView.webview.asWebviewUri(this.context.extensionUri));
         } else {
-            webviewView.webview.html = this.getConnectionContentWizard(webviewView.webview.asWebviewUri(this.context.extensionUri));
-        }
+            webviewView.webview.html = this.getConnectionWizardContent(webviewView.webview.asWebviewUri(this.context.extensionUri));
+        } 
 
         webviewView.webview.onDidReceiveMessage(async (message) => {
             switch (message.command) {
@@ -89,6 +90,10 @@ class ConnectionsViewProvider implements vscode.WebviewViewProvider {
 
                     break;
 
+                case 'sandboxWizard':
+                    vscode.commands.executeCommand('tambosandbox.connectionWizard');
+                    break;
+                    
                 case 'openLink':
                     if (message.link) {
                         vscode.env.openExternal(vscode.Uri.parse(message.link));
@@ -103,262 +108,273 @@ class ConnectionsViewProvider implements vscode.WebviewViewProvider {
     }
 
 
-    private getConnectionContentWizard(vscodeURI: vscode.Uri): string {
+    private getConnectionWizardContent(vscodeURI: vscode.Uri): string {
         return `
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bienvenido a Tambo Sandbox</title>
-    <style>
-        body {
-            line-height: 1.6;
-        }
-        a {
-            color: #0056b3;
-            text-decoration: none;
-            font-weight: bold;
-        }
-        a:hover {
-            text-decoration: underline;
-        }
-    </style>
-</head>
-<body>
-¡BIENVENIDO A TAMBO SANDBOX!
-<p>Parece que aún no has configurado tu conexión al Sandbox.
-<p>Para comenzar deberás primero registrar una nueva conexión. Puedes hacerlo utilizando nuestro asistente de configuración.
-<p><a href="command:tambosandbox.connectionWizard">Asistente de Conexión</a>
-<p>El asistente te guiará paso a paso en el proceso de registro.
-    </p>
-    <p>
-        Si tienes alguna pregunta o necesitas ayuda, no dudes en contactarnos a través de nuestro correo 
-        <a href="mailto:frameautomation@teco.com.ar">frameautomation@teco.com.ar</a>.
-    </p>
-</body>
-</html>
+            <!DOCTYPE html>
+            <html lang="en">
+            <head>
+                <meta charset="UTF-8">
+                <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                <title>Bienvenido a Tambo Sandbox</title>
+                <style>
+                    body {
+                        line-height: 1.6;
+                    }
+                    a {
+                        color: #FFFFFFCC;
+                        text-decoration: none;
+                        font-weight: bold;
+                    }
+                    a:hover {
+                        text-decoration: underline;
+                    }
+                    .wizard-button {
+                        width: 100%;
+                        padding: 15px 0;
+                        border-radius: 5px;
+                        font-size: 14px;
+                        font-weight: bold;
+                        color: orange;
+                        background-color: transparent;
+                        border: 1px solid orange;
+                        text-align: center;
+                        cursor: pointer;
+                        transition: background-color 0.3s, color 0.3s;
+                    }
 
+                    .wizard-button:hover {
+                        background-color: orange;
+                        color: black;
+                    }
+                </style>
+            </head>
+            <body>
+                <b>¡BIENVENIDO A TAMBO SANDBOX!</b>
+                <p>Parece que aún no has configurado tu conexión al Sandbox.
+                <p>Para comenzar deberás primero registrar una nueva conexión. Puedes hacerlo utilizando nuestro asistente de configuración.
+                <p><button onclick="invokeWizard()" class="wizard-button">Asistente de Conexión</button>
+                <p>El asistente te guiará paso a paso en el proceso de registro.
+                <p>Si tienes alguna pregunta o necesitas ayuda, no dudes en contactarnos a través de nuestro correo <a href="mailto:frameautomation@teco.com.ar">frameautomation@teco.com.ar</a>
+            </body>
+                <script>
+                    const vscode = acquireVsCodeApi();
+                    function invokeWizard() {
+                        vscode.postMessage({ command: "sandboxWizard" });
+                    }
+                </script>
+            </html>
         `;
     }
 
-    private getWebviewContent(vscodeURI: vscode.Uri): string {
+    private getConnectionContent(vscodeURI: vscode.Uri): string {
         return `
-        <!DOCTYPE html>
-        <html lang="en">
-        <head>
-            <meta charset="UTF-8">
-            <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <title>Connections View</title>
-            <style>
-                body {
-                    font-family: Arial, sans-serif;
-                    padding: 10px;
-                }
-                .row {
-                    display: flex;
-                    align-items: center;
-                    justify-content: space-between;
-                    margin-bottom: 10px;
-                }
-                .status {
-                    display: flex;
-                    align-items: center;
-                }
-                .status span {
-                    display: inline-block;
-                    width: 10px;
-                    height: 10px;
-                    border-radius: 50%;
-                    margin-right: 8px;
-                    margin-top: -5px;
-                    margin-left: 5px;
-                }
-                .status .online {
-                    background-color: green;
-                }
-                .status .offline {
-                    background-color: red;
-                }
-                button {
-                    background-color: transparent;
-                    color: #0e639c;
-                    border: 1px solid #0e639c;
-                    padding: 3px 10px;
-                    border-radius: 3px;
-                    font-size: 12px;
-                    cursor: pointer;
-                    transition: all 0.3s;
-                }
-                button:hover {
-                    background-color: #0e639c;
-                    color: #ffffff;
-                }
-                .hidden {
-                    display: none;
-                }
-
-                .tools-buttons {
-                    display: flex;
-                    flex-wrap: wrap;
-                    justify-content: flex-start;
-                    gap: 10px;
-                }
-
-                .tool-btn {
-                    display: flex;
-                    flex-direction: column;
-                    align-items: center;
-                    justify-content: center;
-                    width: 70px;
-                    height: 60px;
-                    border: 1px solid #0e639c;
-                    border-radius: 3px;
-                    text-align: center;
-                    font-size: 10px;
-                    color: #0e639c;
-                    cursor: pointer;
-                    transition: all 0.3s;
-                    background-color: transparent;
-                }
-
-                .tool-btn:hover {
-                    background-color: #0e639c;
-                    color: #ffffff;
-                }
-
-                .tool-btn .icon {
-                    width: 24px;
-                    height: 24px;
-                    margin-bottom: 5px;
-                }
-
-            </style>
-        </head>
-        <body>
-            <div class="row">
-                <div class="status">
-                    <span id="statusConnection" class="offline"></span>
-                    <b>Sandbox: </b><span id="statusConnectionText">Desconectado</span>
-                </div>
-            </div>
-
-            <div class="row">
-                <div class="status">
-                    <span id="statusGit" class="offline"></span>
-                    <b>Git: </b><span id="statusGitText">Desconectado</span>
-                </div>
-            </div>
-
-
-            <div class="row">
-                <div class="status">
-                    <span id="statusWorkspace" class="offline"></span>
-                    <b>Workspace: </b><span id="statusWorkspaceText">Inactivo</span>
-                </div>
-                <button id="connectButton" class="hidden">Crear</button>
-            </div>
-
-            <div>
-                <!--
-                <div class="row" style="padding-top:10px;">
-                    <div class="status">
-                        <b>Herramientas: </b>
-                    </div>
-                </div>
-                -->
-                
-                <div class="row tools-buttons">
-                    <button class="tool-btn" data-link="https://automation.telecom.com.ar">
-                        <img src="${vscodeURI}/resources/logos/automation.svg" class="icon">
-                        <span>Automation</span>
-                    </button>
-                    <button class="tool-btn" data-link="https://tambo-playground.automation.teco.com.ar">
-                        <img src="${vscodeURI}/resources/logos/airflow.png" class="icon">
-                        <span>Airflow</span>
-                    </button>
-                    <button class="tool-btn" data-link="https://gitlab.com/groups/telecom-argentina/-/saml/sso?token=93NxX_B5">
-                        <img src="${vscodeURI}/resources/logos/gitlab.png" class="icon">
-                        <span>GitLab</span>
-                    </button>
-                </div>
-            </div>
-
-            <script>
-                const vscode = acquireVsCodeApi();
-
-                document.addEventListener('DOMContentLoaded', () => {
-                        // Selecciona todos los botones con data-link
-                    const buttons = document.querySelectorAll('.tool-btn[data-link]');
-
-                    buttons.forEach(button => {
-                        button.addEventListener('click', (event) => {
-                            const link = button.getAttribute('data-link');
-                            if (link) {
-                                vscode.postMessage({ command: 'openLink', link });
-                            }
-                        });
-                    });
-                });
-
-                window.addEventListener('message', (event) => {
-
-                    const message = event.data;
-
-                    if (message.command === 'sandboxData') {
-
-                        console.log(message);
-
-                        const apiEntry = message.data.find(entry => entry.hasOwnProperty('api'));
-                        const gitEntry = message.data.find(entry => entry.hasOwnProperty('git'));
-                        const workspaceEntry = message.data.find(entry => entry.hasOwnProperty('workspace'));
-
-                        const statusConnection = document.getElementById('statusConnection');
-                        const statusConnectionText = document.getElementById('statusConnectionText');
-
-                        if (apiEntry['api']) {
-                            statusConnection.className = 'online';
-                            statusConnectionText.textContent = 'Conectado';
-                        } else {
-                            statusConnection.className = 'offline';
-                            statusConnectionText.textContent = 'Desconectado';
-                        }
-                        
-                        const statusGit = document.getElementById('statusGit');
-                        const statusGitText = document.getElementById('statusGitText');
-
-                        if (gitEntry['git']) {
-                            statusGit.className = 'online';
-                            statusGitText.textContent = 'Conectado';
-                        } else {
-                            statusGit.className = 'offline';
-                            statusGitText.textContent = 'Desconectado';
-                        }
-
-                        const statusWorkspace = document.getElementById('statusWorkspace');
-                        const statusWorkspaceText = document.getElementById('statusWorkspaceText');
-
-                        if (workspaceEntry['workspace']) {
-                            statusWorkspace.className = 'online';
-                            statusWorkspaceText.textContent = 'Iniciado';
-                        } else {
-                            statusWorkspace.className = 'offline';
-                            statusWorkspaceText.textContent = 'Inactivo';
-                        }
-
+            <!DOCTYPE html>
+            <html lang="en">
+            <head>
+                <meta charset="UTF-8">
+                <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                <title>Connections View</title>
+                <style>
+                    body {
+                        font-family: Arial, sans-serif;
+                        padding: 10px;
+                    }
+                    .row {
+                        display: flex;
+                        align-items: center;
+                        justify-content: space-between;
+                        margin-bottom: 10px;
+                    }
+                    .status {
+                        display: flex;
+                        align-items: center;
+                    }
+                    .status span {
+                        display: inline-block;
+                        width: 10px;
+                        height: 10px;
+                        border-radius: 50%;
+                        margin-right: 8px;
+                        margin-top: -5px;
+                        margin-left: 5px;
+                    }
+                    .status .online {
+                        background-color: green;
+                    }
+                    .status .offline {
+                        background-color: red;
+                    }
+                    button {
+                        background-color: transparent;
+                        color: #0e639c;
+                        border: 1px solid #0e639c;
+                        padding: 3px 10px;
+                        border-radius: 3px;
+                        font-size: 12px;
+                        cursor: pointer;
+                        transition: all 0.3s;
+                    }
+                    button:hover {
+                        background-color: #0e639c;
+                        color: #ffffff;
+                    }
+                    .hidden {
+                        display: none;
                     }
 
-                });
+                    .tools-buttons {
+                        display: flex;
+                        flex-wrap: wrap;
+                        justify-content: flex-start;
+                        gap: 10px;
+                    }
 
-                function updateSandboxData() {
-                    vscode.postMessage({ command: 'sandboxStatus' });
-                }
+                    .tool-btn {
+                        display: flex;
+                        flex-direction: column;
+                        align-items: center;
+                        justify-content: center;
+                        width: 70px;
+                        height: 60px;
+                        border: 1px solid #0e639c;
+                        border-radius: 3px;
+                        text-align: center;
+                        font-size: 10px;
+                        color: #0e639c;
+                        cursor: pointer;
+                        transition: all 0.3s;
+                        background-color: transparent;
+                    }
 
-                updateSandboxData();
-                setInterval(updateSandboxData, 3000);
-            </script>
-        </body>
-        </html>
+                    .tool-btn:hover {
+                        background-color: #0e639c;
+                        color: #ffffff;
+                    }
+
+                    .tool-btn .icon {
+                        width: 24px;
+                        height: 24px;
+                        margin-bottom: 5px;
+                    }
+
+                </style>
+            </head>
+            <body>
+                <div class="row">
+                    <div class="status">
+                        <span id="statusConnection" class="offline"></span>
+                        <b>Sandbox: </b><span id="statusConnectionText">Desconectado</span>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="status">
+                        <span id="statusGit" class="offline"></span>
+                        <b>Git: </b><span id="statusGitText">Desconectado</span>
+                    </div>
+                </div>
+
+
+                <div class="row">
+                    <div class="status">
+                        <span id="statusWorkspace" class="offline"></span>
+                        <b>Workspace: </b><span id="statusWorkspaceText">Inactivo</span>
+                    </div>
+                    <button id="connectButton" class="hidden">Crear</button>
+                </div>
+
+                <div>
+                    <div class="row tools-buttons">
+                        <button class="tool-btn" data-link="https://automation.telecom.com.ar">
+                            <img src="${vscodeURI}/resources/logos/automation.svg" class="icon">
+                            <span>Automation</span>
+                        </button>
+                        <button class="tool-btn" data-link="https://tambo-playground.automation.teco.com.ar">
+                            <img src="${vscodeURI}/resources/logos/airflow.png" class="icon">
+                            <span>Airflow</span>
+                        </button>
+                        <button class="tool-btn" data-link="https://gitlab.com/groups/telecom-argentina/-/saml/sso?token=93NxX_B5">
+                            <img src="${vscodeURI}/resources/logos/gitlab.png" class="icon">
+                            <span>GitLab</span>
+                        </button>
+                    </div>
+                </div>
+
+                <script>
+                    const vscode = acquireVsCodeApi();
+
+                    document.addEventListener('DOMContentLoaded', () => {
+                            // Selecciona todos los botones con data-link
+                        const buttons = document.querySelectorAll('.tool-btn[data-link]');
+
+                        buttons.forEach(button => {
+                            button.addEventListener('click', (event) => {
+                                const link = button.getAttribute('data-link');
+                                if (link) {
+                                    vscode.postMessage({ command: 'openLink', link });
+                                }
+                            });
+                        });
+                    });
+
+                    window.addEventListener('message', (event) => {
+
+                        const message = event.data;
+
+                        if (message.command === 'sandboxData') {
+
+                            console.log(message);
+
+                            const apiEntry = message.data.find(entry => entry.hasOwnProperty('api'));
+                            const gitEntry = message.data.find(entry => entry.hasOwnProperty('git'));
+                            const workspaceEntry = message.data.find(entry => entry.hasOwnProperty('workspace'));
+
+                            const statusConnection = document.getElementById('statusConnection');
+                            const statusConnectionText = document.getElementById('statusConnectionText');
+
+                            if (apiEntry['api']) {
+                                statusConnection.className = 'online';
+                                statusConnectionText.textContent = 'Conectado';
+                            } else {
+                                statusConnection.className = 'offline';
+                                statusConnectionText.textContent = 'Desconectado';
+                            }
+                            
+                            const statusGit = document.getElementById('statusGit');
+                            const statusGitText = document.getElementById('statusGitText');
+
+                            if (gitEntry['git']) {
+                                statusGit.className = 'online';
+                                statusGitText.textContent = 'Conectado';
+                            } else {
+                                statusGit.className = 'offline';
+                                statusGitText.textContent = 'Desconectado';
+                            }
+
+                            const statusWorkspace = document.getElementById('statusWorkspace');
+                            const statusWorkspaceText = document.getElementById('statusWorkspaceText');
+
+                            if (workspaceEntry['workspace']) {
+                                statusWorkspace.className = 'online';
+                                statusWorkspaceText.textContent = 'Iniciado';
+                            } else {
+                                statusWorkspace.className = 'offline';
+                                statusWorkspaceText.textContent = 'Inactivo';
+                            }
+
+                        }
+
+                    });
+
+                    function updateSandboxData() {
+                        vscode.postMessage({ command: 'sandboxStatus' });
+                    }
+
+                    updateSandboxData();
+                    setInterval(updateSandboxData, 3000);
+                </script>
+            </body>
+            </html>
         `;
     }
 }

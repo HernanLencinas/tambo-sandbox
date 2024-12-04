@@ -46,10 +46,6 @@
     },
     "viewsWelcome": [
       {
-        "view": "tambo_viewport_connection",
-        "contents": "¡BIENVENIDO A TAMBO SANDBOX!\n\nParece que aún no has configurado tu conexión al Sandbox.\n\nPara comenzar deberas primero registrar una nueva conexión. Puedes hacerlo utilizando nuestro asistente de configuración.\n\n[Asistente de Conexión](command:tambosandbox.connectionWizard)\n\nEl asistente te guiará paso a paso en el proceso de registro.\n\nSi tienes alguna pregunta o necesitas ayuda, no dudes en contactarnos a través de nuestro correo frameautomation@teco.com.ar.\n"
-      },
-      {
         "view": "tambo_viewport_help",
         "contents": "¡BIENVENIDO A TAMBO SANDBOX!\n\nAquí encontrarás una amplia fuente de información y accesos esenciales que te serán de gran utilidad en el desarrollo de tus proyectos de automatización.\n\n1. [Pregunta 1](command:cmd)\n2. [Pregunta 2](command:tambo.cmdAddEnvs)\n3. [Pregunta 3](command:tambo.cmd)\n4. [Pregunta 4](command:tambo.cmd)\n\nSi necesitas información adicional o asistencia, te invitamos a acceder a [iTicket](command:tambo.openItickets) y generar una nueva solicitud. Nos comprometemos a procesar tu solicitud rápidamente y a ponernos en contacto contigo lo antes posible. No dudes en aprovechar esta plataforma para obtener la información que necesitas o solicitar la ayuda que requieres. Estamos aquí para ayudarte y atender tus inquietudes.\n\n"
       }
@@ -89,12 +85,12 @@
         {
           "command": "tambosandbox.editConnection",
           "group": "navigation",
-          "when": "view == tambo_viewport_connection"
+          "when": "view == tambo_viewport_connection && tambo.configDefined"
         },
         {
           "command": "tambosandbox.deleteConnection",
           "group": "navigation",
-          "when": "view == tambo_viewport_connection"
+          "when": "view == tambo_viewport_connection && tambo.configDefined"
         }
       ]
     },
