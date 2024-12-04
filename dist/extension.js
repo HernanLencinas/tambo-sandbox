@@ -28,7 +28,47 @@ class Connection {
             const configuration = vscode.workspace.getConfiguration('tambo.sandbox.gitlab');
             await configuration.update('username', gitlabUsername, vscode.ConfigurationTarget.Global);
             await configuration.update('token', (0, utils_1.encrypt)(gitlabToken), vscode.ConfigurationTarget.Global);
-            vscode.window.showInformationMessage(`TAMBO: Se configuró la conexión con TAMBO Sandbox`);
+            vscode.window.showInformationMessage(`TAMBO-SANDBOX: Se configuró la conexión exitosamente`);
+        }
+    }
+    async edit() {
+        const configuration = vscode.workspace.getConfiguration('tambo.sandbox.gitlab');
+        const currentUsername = configuration.get('username');
+        const currentToken = configuration.get('token'); // Desencripta si es necesario
+        // Solicita el nuevo usuario
+        const nuevoGitlabUsername = await vscode.window.showInputBox({
+            prompt: 'Usuario de Gitlab: ',
+            placeHolder: 'Deja en blanco para mantener el actual',
+            value: currentUsername ? String(currentUsername) : '' // Asegura que siempre sea un string
+        });
+        // Solicita el nuevo token
+        const nuevoGitlabToken = await vscode.window.showInputBox({
+            prompt: 'Token de Gitlab: ',
+            placeHolder: 'Deja en blanco para mantener el actual',
+            password: true
+        });
+        // Actualiza la configuración si el usuario proporciona nuevos valores
+        if (nuevoGitlabUsername || nuevoGitlabToken) {
+            if (nuevoGitlabUsername) {
+                await configuration.update('username', nuevoGitlabUsername, vscode.ConfigurationTarget.Global);
+            }
+            if (nuevoGitlabToken) {
+                await configuration.update('token', (0, utils_1.encrypt)(nuevoGitlabToken), vscode.ConfigurationTarget.Global);
+            }
+            vscode.window.showInformationMessage(`TAMBO-SANDBOX: Se configuró la conexión exitosamente`);
+        }
+        else {
+            vscode.window.showInformationMessage('TAMBO-SANDBOX: Fallo al intentar configurar la conexión');
+        }
+    }
+    async delete() {
+        const respuesta = await vscode.window.showInformationMessage('¿Estás seguro de que deseas eliminar la configuración de conexión a TAMBO Sandbox?', { modal: true }, // Modal para enfatizar la confirmación
+        'Sí');
+        if (respuesta === 'Sí') {
+            const configuration = vscode.workspace.getConfiguration('tambo.sandbox.gitlab');
+            await configuration.update('username', undefined, vscode.ConfigurationTarget.Global);
+            await configuration.update('token', undefined, vscode.ConfigurationTarget.Global);
+            vscode.window.showInformationMessage('TAMBO-SANDBOX: Se elimino la configuracion');
         }
     }
     load(context) {
@@ -48,11 +88,10 @@ class Connection {
     }
     refresh() {
         if (this.provider) {
-            this.provider.refreshView(); // Llamar al método refresh de la instancia única
-            console.log("TAMBOSANDBOX: Refrescando...");
+            this.provider.refreshView();
         }
         else {
-            console.error("TAMBOSANDBOX: El proveedor no está inicializado.");
+            console.error("TAMBOSANDBOX: No se pudo actualizar la vista.");
         }
     }
 }
@@ -77,12 +116,19 @@ class ConnectionsViewProvider {
                     const sandboxData = [
                         { 'api': apiStatus },
                         { 'git': gitStatus },
-                        { 'workspace': workspaceStatus }
+                        { 'workspace': false }
                     ];
                     webviewView.webview.postMessage({ command: 'sandboxData', data: sandboxData });
                     break;
                 case 'sandboxWizard':
                     vscode.commands.executeCommand('tambosandbox.connectionWizard');
+                    break;
+                case 'startWorkspace':
+                    const respuesta = await vscode.window.showInformationMessage('¿Iniciar un nuevo workspace de TAMBO Sandbox?', { modal: true }, // Modal para enfatizar la confirmación
+                    'Sí');
+                    if (respuesta === 'Sí') {
+                        vscode.window.showInformationMessage("TAMBO-SANDBOX: Iniciando Workspace de Sandbox");
+                    }
                     break;
                 case 'openLink':
                     if (message.link) {
@@ -224,45 +270,61 @@ class ConnectionsViewProvider {
                         background-color: #0e639c;
                         color: #ffffff;
                     }
+                    .sandbox-button {
+                        width: 100%;
+                        padding: 10px 0px 10px 0px;
+                        margin: 10px 10px 0px 10px;
+                        border-radius: 5px;
+                        font-size: 12px;
+                        color: orange;
+                        background-color: transparent;
+                        border: 1px solid orange;
+                        text-align: center;
+                        cursor: pointer;
+                        transition: background-color 0.3s, color 0.3s;
+                    }
+                    .sandbox-button:hover {
+                        background-color: orange;
+                        color: black;
+                    }
+
+
+                    
+                    .apps-button {
+                        display: flex; /* Flexbox para alinear contenido horizontalmente */
+                        align-items: center; /* Centrar verticalmente */
+                        width: 100%;
+                        padding: 10px 0px 10px 0px;
+                        margin: -10px 10px 0px 10px;
+                        border-radius: 5px;
+                        font-size: 12px;
+                        color: orange;
+                        background-color: transparent;
+                        border: 0px solid orange;
+                        text-align: center;
+                        cursor: pointer;
+                        transition: background-color 0.3s, color 0.3s;
+                    }
+                    .apps-button:hover {
+                        background-color: orange;
+                        color: black;
+                    }
+                    .apps-button-icon {
+                        width: 16px; /* Ajusta el tamaño del ícono */
+                        height: 16px;
+                        margin-right: 8px; /* Espacio entre el ícono y el texto */
+                        margin-left: 10px;
+                    }
+
                     .hidden {
                         display: none;
                     }
-
                     .tools-buttons {
                         display: flex;
                         flex-wrap: wrap;
                         justify-content: flex-start;
                         gap: 10px;
                     }
-
-                    .tool-btn {
-                        display: flex;
-                        flex-direction: column;
-                        align-items: center;
-                        justify-content: center;
-                        width: 70px;
-                        height: 60px;
-                        border: 1px solid #0e639c;
-                        border-radius: 3px;
-                        text-align: center;
-                        font-size: 10px;
-                        color: #0e639c;
-                        cursor: pointer;
-                        transition: all 0.3s;
-                        background-color: transparent;
-                    }
-
-                    .tool-btn:hover {
-                        background-color: #0e639c;
-                        color: #ffffff;
-                    }
-
-                    .tool-btn .icon {
-                        width: 24px;
-                        height: 24px;
-                        margin-bottom: 5px;
-                    }
-
                 </style>
             </head>
             <body>
@@ -289,29 +351,39 @@ class ConnectionsViewProvider {
                     <button id="connectButton" class="hidden">Crear</button>
                 </div>
 
-                <div>
-                    <div class="row tools-buttons">
-                        <button class="tool-btn" data-link="https://automation.telecom.com.ar">
-                            <img src="${vscodeURI}/resources/logos/automation.svg" class="icon">
-                            <span>Automation</span>
-                        </button>
-                        <button class="tool-btn" data-link="https://tambo-playground.automation.teco.com.ar">
-                            <img src="${vscodeURI}/resources/logos/airflow.png" class="icon">
-                            <span>Airflow</span>
-                        </button>
-                        <button class="tool-btn" data-link="https://gitlab.com/groups/telecom-argentina/-/saml/sso?token=93NxX_B5">
-                            <img src="${vscodeURI}/resources/logos/gitlab.png" class="icon">
-                            <span>GitLab</span>
-                        </button>
-                    </div>
+                <div class="row">
+                    <button id="startSandboxButton" onclick="invokeStartWorkspace();" class="sandbox-button hidden">Iniciar Workspace</button>
                 </div>
 
+                <div class="row">
+                    <b>Accesos:</b>
+                </div>
+
+
+                <div class="row">
+                    <button class="apps-button" data-link="https://tambo-playground.automation.teco.com.ar">
+                        <img src="${vscodeURI}/resources/logos/airflow.png" class="apps-button-icon"> Airflow
+                    </button>
+                </div>
+
+                <div class="row">
+                    <button class="apps-button" data-link="https://gitlab.com/groups/telecom-argentina/-/saml/sso?token=93NxX_B5">
+                        <img src="${vscodeURI}/resources/logos/gitlab.png" class="apps-button-icon"> Gitlab
+                    </button>
+                </div>
+
+                <div class="row">
+                    <button class="apps-button" data-link="https://automation.telecom.com.ar">
+                        <img src="${vscodeURI}/resources/logos/automation.svg" class="apps-button-icon"> Automatizacion
+                    </button>
+                </div>                
+                
                 <script>
                     const vscode = acquireVsCodeApi();
 
                     document.addEventListener('DOMContentLoaded', () => {
                             // Selecciona todos los botones con data-link
-                        const buttons = document.querySelectorAll('.tool-btn[data-link]');
+                        const buttons = document.querySelectorAll('.apps-button[data-link]');
 
                         buttons.forEach(button => {
                             button.addEventListener('click', (event) => {
@@ -329,7 +401,7 @@ class ConnectionsViewProvider {
 
                         if (message.command === 'sandboxData') {
 
-                            console.log(message);
+                            console.log("TAMBO-SANDBOX: ", message);
 
                             const apiEntry = message.data.find(entry => entry.hasOwnProperty('api'));
                             const gitEntry = message.data.find(entry => entry.hasOwnProperty('git'));
@@ -359,18 +431,26 @@ class ConnectionsViewProvider {
 
                             const statusWorkspace = document.getElementById('statusWorkspace');
                             const statusWorkspaceText = document.getElementById('statusWorkspaceText');
+                            const statusWorkspaceButton = document.getElementById('startSandboxButton');
 
                             if (workspaceEntry['workspace']) {
                                 statusWorkspace.className = 'online';
                                 statusWorkspaceText.textContent = 'Iniciado';
+                                statusWorkspaceButton.classList.add('hidden');
                             } else {
                                 statusWorkspace.className = 'offline';
                                 statusWorkspaceText.textContent = 'Inactivo';
+                                statusWorkspaceButton.classList.remove('hidden');
                             }
 
                         }
 
                     });
+
+                    function invokeStartWorkspace() {
+                        //document.getElementById('startSandboxButton').classList.add('hidden');
+                        vscode.postMessage({ command: "startWorkspace" });
+                    }
 
                     function updateSandboxData() {
                         vscode.postMessage({ command: 'sandboxStatus' });
@@ -8854,7 +8934,7 @@ const vscode = __webpack_require__(2);
 const connection_1 = __webpack_require__(1);
 //import { GruposTreeProvider, GrupoItem } from './grupos';
 function activate(context) {
-    // CARGAR CONFIGURACION DE CONEXION A TAMBO SANDBOX
+    // CARGAR CONFIGURACION DE CONExión A TAMBO SANDBOX
     const connection = new connection_1.Connection();
     connection.load(context);
     // ESCUCHAR CAMBIOS EN LA CONFIGURACION
@@ -8864,11 +8944,20 @@ function activate(context) {
             vscode.commands.executeCommand('tambosandbox.connectionRefresh');
         }
     });
-    // COMANDOS DE CONEXION
+    // COMANDOS DE CONExión
     const cmdConnectionWizard = vscode.commands.registerCommand('tambosandbox.connectionWizard', async () => {
         connection.wizard();
     });
     context.subscriptions.push(cmdConnectionWizard);
+    const cmdConnectionEdit = vscode.commands.registerCommand('tambosandbox.connectionEdit', async () => {
+        connection.edit();
+        vscode.commands.executeCommand('tambosandbox.connectionRefresh');
+    });
+    context.subscriptions.push(cmdConnectionEdit);
+    const cmdConnectionDelete = vscode.commands.registerCommand('tambosandbox.connectionDelete', async () => {
+        connection.delete();
+    });
+    context.subscriptions.push(cmdConnectionDelete);
     const cmdConnectionRefresh = vscode.commands.registerCommand('tambosandbox.connectionRefresh', async () => {
         connection.refresh();
     });

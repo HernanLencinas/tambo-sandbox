@@ -9,7 +9,7 @@ import { Connection } from './connection';
 
 export function activate(context: vscode.ExtensionContext) {
 
-	// CARGAR CONFIGURACION DE CONEXION A TAMBO SANDBOX
+	// CARGAR CONFIGURACION DE CONExión A TAMBO SANDBOX
 
 	const connection = new Connection();
 	connection.load(context);
@@ -23,12 +23,23 @@ export function activate(context: vscode.ExtensionContext) {
 		}
 	});
 
-	// COMANDOS DE CONEXION
+	// COMANDOS DE CONExión
 
 	const cmdConnectionWizard = vscode.commands.registerCommand('tambosandbox.connectionWizard', async () => {
 		connection.wizard();
 	});
 	context.subscriptions.push(cmdConnectionWizard);
+
+	const cmdConnectionEdit = vscode.commands.registerCommand('tambosandbox.connectionEdit', async () => {
+		connection.edit();
+		vscode.commands.executeCommand('tambosandbox.connectionRefresh');
+	});
+	context.subscriptions.push(cmdConnectionEdit);
+
+	const cmdConnectionDelete = vscode.commands.registerCommand('tambosandbox.connectionDelete', async () => {
+		connection.delete();
+	});
+	context.subscriptions.push(cmdConnectionDelete);
 
 	const cmdConnectionRefresh = vscode.commands.registerCommand('tambosandbox.connectionRefresh', async () => {
 		connection.refresh();

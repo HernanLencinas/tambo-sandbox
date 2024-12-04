@@ -30,7 +30,7 @@
       "tambo-sandbox": [
         {
           "id": "tambo_viewport_connection",
-          "name": "Conexion",
+          "name": "Conexión",
           "type": "webview"
         },
         {
@@ -53,7 +53,7 @@
     "commands": [
       {
         "command": "tambosandbox.connectionWizard",
-        "title": "Tambo Sandbox: Configurar conexion",
+        "title": "Tambo Sandbox: Configurar conexión",
         "icon": {
           "light": "resources/icons/project_light.svg",
           "dark": "resources/icons/project_dark.svg"
@@ -61,7 +61,7 @@
       },
       {
         "command": "tambosandbox.connectionRefresh",
-        "title": "Tambo Sandbox: Refrescar conexion",
+        "title": "Tambo Sandbox: Refrescar conexión",
         "icon": {
           "light": "resources/icons/refresh_light.svg",
           "dark": "resources/icons/refresh_dark.svg"
@@ -73,7 +73,7 @@
       },
       {
         "command": "tambosandbox.connectionEdit",
-        "title": "TAMBO Sandbox: Edit Conexion",
+        "title": "TAMBO Sandbox: Edit Conexión",
         "icon": {
           "light": "resources/icons/edit_light.svg",
           "dark": "resources/icons/edit_dark.svg"
@@ -81,7 +81,7 @@
       },
       {
         "command": "tambosandbox.connectionDelete",
-        "title": "TAMBO Sandbox: Eliminar Conexion",
+        "title": "TAMBO Sandbox: Eliminar Conexión",
         "icon": {
           "light": "resources/icons/trash_light.svg",
           "dark": "resources/icons/trash_dark.svg"
