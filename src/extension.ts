@@ -10,25 +10,32 @@ import { Connection } from './connection';
 export function activate(context: vscode.ExtensionContext) {
 
 	// CARGAR CONFIGURACION DE CONEXION A TAMBO SANDBOX
+
 	const connection = new Connection();
 	connection.load(context);
 
 	// ESCUCHAR CAMBIOS EN LA CONFIGURACION
+
 	vscode.workspace.onDidChangeConfiguration(event => {
 		if (event.affectsConfiguration('tambo.sandbox.gitlab.username') ||
 			event.affectsConfiguration('tambo.sandbox.gitlab.token')) {
-				//connection.load(context);
-				vscode.commands.executeCommand('setContext', 'tambo.configDefined', connection.isConfigured());
-				console.log("TAMBOSANDBOX: Cambio la configuracion ");
+				vscode.commands.executeCommand('tambosandbox.connectionRefresh');
 		}
 	});
 
-	// CONFIGURAR NUEVA CONEXION
+	// COMANDOS DE CONEXION
+
 	const cmdConnectionWizard = vscode.commands.registerCommand('tambosandbox.connectionWizard', async () => {
 		connection.wizard();
 	});
 	context.subscriptions.push(cmdConnectionWizard);
 
+	const cmdConnectionRefresh = vscode.commands.registerCommand('tambosandbox.connectionRefresh', async () => {
+		connection.refresh();
+	});
+	context.subscriptions.push(cmdConnectionRefresh);
+
+	
 	// VIEWPORT GRUPOS
 	/*     const gruposTreeProvider = new GruposTreeProvider(context);
 		vscode.window.registerTreeDataProvider('tambo_viewport_grupos', gruposTreeProvider); */

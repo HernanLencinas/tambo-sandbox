@@ -60,11 +60,19 @@
         }
       },
       {
+        "command": "tambosandbox.connectionRefresh",
+        "title": "Tambo Sandbox: Refrescar conexion",
+        "icon": {
+          "light": "resources/icons/refresh_light.svg",
+          "dark": "resources/icons/refresh_dark.svg"
+        }
+      },
+      {
         "command": "tambosandbox.cloneRepository",
         "title": "Tambo Sandbox: Clonar Repositorio"
       },
       {
-        "command": "tambosandbox.editConnection",
+        "command": "tambosandbox.connectionEdit",
         "title": "TAMBO Sandbox: Edit Conexion",
         "icon": {
           "light": "resources/icons/edit_light.svg",
@@ -72,7 +80,7 @@
         }
       },
       {
-        "command": "tambosandbox.deleteConnection",
+        "command": "tambosandbox.connectionDelete",
         "title": "TAMBO Sandbox: Eliminar Conexion",
         "icon": {
           "light": "resources/icons/trash_light.svg",
@@ -83,12 +91,17 @@
     "menus": {
       "view/title": [
         {
-          "command": "tambosandbox.editConnection",
+          "command": "tambosandbox.connectionRefresh",
+          "group": "navigation",
+          "when": "view == tambo_viewport_connection"
+        },
+        {
+          "command": "tambosandbox.connectionEdit",
           "group": "navigation",
           "when": "view == tambo_viewport_connection && tambo.configDefined"
         },
         {
-          "command": "tambosandbox.deleteConnection",
+          "command": "tambosandbox.connectionDelete",
           "group": "navigation",
           "when": "view == tambo_viewport_connection && tambo.configDefined"
         }

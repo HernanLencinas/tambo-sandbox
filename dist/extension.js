@@ -33,8 +33,9 @@ class Connection {
     }
     load(context) {
         try {
-            const provider = new ConnectionsViewProvider(context);
-            context.subscriptions.push(vscode.window.registerWebviewViewProvider(ConnectionsViewProvider.viewType, provider));
+            // Crear una única instancia del proveedor
+            this.provider = new ConnectionsViewProvider(context);
+            context.subscriptions.push(vscode.window.registerWebviewViewProvider(ConnectionsViewProvider.viewType, this.provider));
         }
         catch (error) {
             console.error("TAMBOSANDBOX: ", error);
@@ -42,7 +43,17 @@ class Connection {
     }
     isConfigured() {
         const config = vscode.workspace.getConfiguration('tambo.sandbox');
-        return config.get('gitlab.username')?.trim() !== "" && config.get('gitlab.token')?.trim() !== "";
+        return (config.get('gitlab.username')?.trim() !== "" &&
+            config.get('gitlab.token')?.trim() !== "");
+    }
+    refresh() {
+        if (this.provider) {
+            this.provider.refreshView(); // Llamar al método refresh de la instancia única
+            console.log("TAMBOSANDBOX: Refrescando...");
+        }
+        else {
+            console.error("TAMBOSANDBOX: El proveedor no está inicializado.");
+        }
     }
 }
 exports.Connection = Connection;
@@ -51,22 +62,18 @@ class ConnectionsViewProvider {
         this.context = context;
     }
     resolveWebviewView(webviewView, context, token) {
+        this.webviewView = webviewView;
         webviewView.webview.options = {
             enableScripts: true,
         };
-        const connection = new Connection();
-        if (connection.isConfigured()) {
-            webviewView.webview.html = this.getConnectionContent(webviewView.webview.asWebviewUri(this.context.extensionUri));
-        }
-        else {
-            webviewView.webview.html = this.getConnectionWizardContent(webviewView.webview.asWebviewUri(this.context.extensionUri));
-        }
+        this.updateWebviewContent();
+        vscode.commands.executeCommand('setContext', 'tambo.configDefined', new Connection().isConfigured());
         webviewView.webview.onDidReceiveMessage(async (message) => {
             switch (message.command) {
                 case 'sandboxStatus':
                     const apiStatus = await checkApi();
                     const gitStatus = await checkGitlab();
-                    const workspaceStatus = apiStatus === true && gitStatus === true;
+                    const workspaceStatus = apiStatus && gitStatus;
                     const sandboxData = [
                         { 'api': apiStatus },
                         { 'git': gitStatus },
@@ -88,6 +95,26 @@ class ConnectionsViewProvider {
             }
         });
     }
+    refreshView() {
+        if (this.webviewView) {
+            this.updateWebviewContent();
+        }
+        else {
+            console.error("TAMBOSANDBOX: No se puede refrescar, el WebView no está inicializado.");
+        }
+    }
+    updateWebviewContent() {
+        if (!this.webviewView) {
+            return;
+        }
+        const connection = new Connection();
+        if (connection.isConfigured()) {
+            this.webviewView.webview.html = this.getConnectionContent(this.webviewView.webview.asWebviewUri(this.context.extensionUri));
+        }
+        else {
+            this.webviewView.webview.html = this.getConnectionWizardContent(this.webviewView.webview.asWebviewUri(this.context.extensionUri));
+        }
+    }
     getConnectionWizardContent(vscodeURI) {
         return `
             <!DOCTYPE html>
@@ -103,7 +130,7 @@ class ConnectionsViewProvider {
                     a {
                         color: #FFFFFFCC;
                         text-decoration: none;
-                        font-weight: bold;
+                        
                     }
                     a:hover {
                         text-decoration: underline;
@@ -113,7 +140,7 @@ class ConnectionsViewProvider {
                         padding: 15px 0;
                         border-radius: 5px;
                         font-size: 14px;
-                        font-weight: bold;
+                       
                         color: orange;
                         background-color: transparent;
                         border: 1px solid orange;
@@ -360,38 +387,31 @@ class ConnectionsViewProvider {
 ConnectionsViewProvider.viewType = 'tambo_viewport_connection';
 async function checkApi() {
     try {
-        const httpsAgent = new https.Agent({
-            rejectUnauthorized: false, // Ignorar certificados autofirmados
+        const response = await axios_1.default.get('https://cloudvalley.telecom.com.ar/api/ping', {
+            httpsAgent: new https.Agent({ rejectUnauthorized: false }),
         });
-        const response = await axios_1.default.get('https://cloudvalley.telecom.com.ar/api/ping', { httpsAgent });
         return response.status === 200;
     }
     catch (error) {
-        console.log(error);
+        console.error("API Error:", error);
         return false;
     }
 }
 async function checkGitlab() {
     try {
-        const configuration = vscode.workspace.getConfiguration('tambo.sandbox.gitlab');
-        const username = configuration.get('username');
-        const encryptedToken = configuration.get('token');
-        const token = encryptedToken ? (0, utils_1.decrypt)(encryptedToken) : null;
+        const config = vscode.workspace.getConfiguration('tambo.sandbox.gitlab');
+        const username = config.get('username');
+        const token = config.get('token') ? (0, utils_1.decrypt)(config.get('token')) : null;
         if (!username || !token) {
-            console.log('TAMBOSANDBOX: Gitlab: No hay credenciales configuradas.');
             return false;
         }
-        const httpsAgent = new https.Agent({
-            rejectUnauthorized: false, // Ignorar certificados autofirmados
-        });
         const response = await axios_1.default.get('https://gitlab.com/api/v4/user', {
-            httpsAgent,
             headers: { Authorization: `Bearer ${token}` },
         });
         return response.status === 200 && response.data.username === username;
     }
     catch (error) {
-        console.log(error);
+        console.error("GitLab Error:", error);
         return false;
     }
 }
@@ -8841,16 +8861,18 @@ function activate(context) {
     vscode.workspace.onDidChangeConfiguration(event => {
         if (event.affectsConfiguration('tambo.sandbox.gitlab.username') ||
             event.affectsConfiguration('tambo.sandbox.gitlab.token')) {
-            //connection.load(context);
-            vscode.commands.executeCommand('setContext', 'tambo.configDefined', connection.isConfigured());
-            console.log("TAMBOSANDBOX: Cambio la configuracion ");
+            vscode.commands.executeCommand('tambosandbox.connectionRefresh');
         }
     });
-    // CONFIGURAR NUEVA CONEXION
+    // COMANDOS DE CONEXION
     const cmdConnectionWizard = vscode.commands.registerCommand('tambosandbox.connectionWizard', async () => {
         connection.wizard();
     });
     context.subscriptions.push(cmdConnectionWizard);
+    const cmdConnectionRefresh = vscode.commands.registerCommand('tambosandbox.connectionRefresh', async () => {
+        connection.refresh();
+    });
+    context.subscriptions.push(cmdConnectionRefresh);
     // VIEWPORT GRUPOS
     /*     const gruposTreeProvider = new GruposTreeProvider(context);
         vscode.window.registerTreeDataProvider('tambo_viewport_grupos', gruposTreeProvider); */
