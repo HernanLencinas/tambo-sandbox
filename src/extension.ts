@@ -7,10 +7,13 @@ import * as vscode from 'vscode';
 import { Connection } from './connection';
 //import { GruposTreeProvider, GrupoItem } from './grupos';
 
+let globalVariable: string;
+
 export function activate(context: vscode.ExtensionContext) {
 
-	// CARGAR CONFIGURACION DE CONExión A TAMBO SANDBOX
+	globalVariable = 'Valor inicial';
 
+	// CARGAR CONFIGURACION DE CONExión A TAMBO SANDBOX
 	const connection = new Connection();
 	connection.load(context);
 

@@ -3,11 +3,15 @@ import * as vscode from 'vscode';
 import { encrypt, decrypt } from './utils';
 import * as https from 'https';
 import axios from 'axios';
+import { globalConfig } from './globals';
+import { Sandbox } from './sandbox';
+import { Gitlab } from './gitlab';
 
 export class Connection {
     private provider?: ConnectionsViewProvider;
 
     async wizard() {
+
         const gitlabUsername = await vscode.window.showInputBox({
             prompt: 'Usuario de Gitlab: ',
             placeHolder: ''
@@ -24,6 +28,7 @@ export class Connection {
             await configuration.update('token', encrypt(gitlabToken), vscode.ConfigurationTarget.Global);
             vscode.window.showInformationMessage(`TAMBO-SANDBOX: Se configuró la conexión exitosamente`);
         }
+
     }
 
     async edit() {
@@ -64,6 +69,7 @@ export class Connection {
     }
 
     async delete() {
+
         const respuesta = await vscode.window.showInformationMessage(
             '¿Estás seguro de que deseas eliminar la configuración de conexión a TAMBO Sandbox?',
             { modal: true }, // Modal para enfatizar la confirmación
@@ -77,9 +83,11 @@ export class Connection {
 
             vscode.window.showInformationMessage('TAMBO-SANDBOX: Se elimino la configuracion');
         }
+
     }
 
     load(context: vscode.ExtensionContext) {
+
         try {
             // Crear una única instancia del proveedor
             this.provider = new ConnectionsViewProvider(context);
@@ -93,26 +101,32 @@ export class Connection {
         } catch (error) {
             console.error("TAMBOSANDBOX: ", error);
         }
+
     }
 
     isConfigured(): boolean {
+
         const config = vscode.workspace.getConfiguration('tambo.sandbox');
         return (
             config.get<string>('gitlab.username')?.trim() !== "" &&
             config.get<string>('gitlab.token')?.trim() !== ""
         );
+
     }
 
     refresh() {
+
         if (this.provider) {
             this.provider.refreshView();
         } else {
             console.error("TAMBOSANDBOX: No se pudo actualizar la vista.");
         }
+
     }
 }
 
 class ConnectionsViewProvider implements vscode.WebviewViewProvider {
+
     static viewType = 'tambo_viewport_connection';
     private context: vscode.ExtensionContext;
     private webviewView?: vscode.WebviewView;
@@ -183,14 +197,17 @@ class ConnectionsViewProvider implements vscode.WebviewViewProvider {
     }
 
     refreshView(): void {
+
         if (this.webviewView) {
             this.updateWebviewContent();
         } else {
             console.error("TAMBOSANDBOX: No se puede refrescar, el WebView no está inicializado.");
         }
+
     }
 
     private updateWebviewContent(): void {
+
         if (!this.webviewView) {
             return;
         }
@@ -205,9 +222,11 @@ class ConnectionsViewProvider implements vscode.WebviewViewProvider {
                 this.webviewView.webview.asWebviewUri(this.context.extensionUri)
             );
         }
+
     }
 
     private getConnectionWizardContent(vscodeURI: vscode.Uri): string {
+
         return `
             <!DOCTYPE html>
             <html lang="en">
@@ -263,9 +282,11 @@ class ConnectionsViewProvider implements vscode.WebviewViewProvider {
                 </script>
             </html>
         `;
+
     }
 
     private getConnectionContent(vscodeURI: vscode.Uri): string {
+
         return `
             <!DOCTYPE html>
             <html lang="en">
@@ -335,19 +356,18 @@ class ConnectionsViewProvider implements vscode.WebviewViewProvider {
                         color: black;
                     }
 
-
-                    
                     .apps-button {
                         display: flex; /* Flexbox para alinear contenido horizontalmente */
                         align-items: center; /* Centrar verticalmente */
                         width: 100%;
                         padding: 10px 0px 10px 0px;
-                        margin: -10px 10px 0px 10px;
+                        margin: -7px 10px 0px 10px;
                         border-radius: 5px;
                         font-size: 12px;
                         color: orange;
+                        /* background-color: red; */
                         background-color: transparent;
-                        border: 0px solid orange;
+                        border: 1px solid orange;
                         text-align: center;
                         cursor: pointer;
                         transition: background-color 0.3s, color 0.3s;
@@ -402,7 +422,7 @@ class ConnectionsViewProvider implements vscode.WebviewViewProvider {
                     <button id="startSandboxButton" onclick="invokeStartWorkspace();" class="sandbox-button hidden">Iniciar Workspace</button>
                 </div>
 
-                <div class="row">
+                <div class="row" style="padding: 10px 0px 10px 10px;">
                     <b>Accesos:</b>
                 </div>
 
@@ -448,7 +468,7 @@ class ConnectionsViewProvider implements vscode.WebviewViewProvider {
 
                         if (message.command === 'sandboxData') {
 
-                            console.log("TAMBO-SANDBOX: ", message);
+                            //console.log("TAMBOSANDBOX: ", message);
 
                             const apiEntry = message.data.find(entry => entry.hasOwnProperty('api'));
                             const gitEntry = message.data.find(entry => entry.hasOwnProperty('git'));
@@ -509,37 +529,44 @@ class ConnectionsViewProvider implements vscode.WebviewViewProvider {
             </body>
             </html>
         `;
+
     }
 }
 
 async function checkApi(): Promise<boolean> {
+
     try {
-        const response = await axios.get('https://cloudvalley.telecom.com.ar/api/ping', {
-            httpsAgent: new https.Agent({ rejectUnauthorized: false }),
-        });
-        return response.status === 200;
+
+        const sandbox = new Sandbox();
+        const response = await sandbox.status();
+
+        return response?.status === 200;
+
     } catch (error) {
-        console.error("API Error:", error);
+
+        console.error("TAMBOSANDBOX:", error);
         return false;
+
     }
+
 }
 
 async function checkGitlab(): Promise<boolean> {
+
     try {
+
         const config = vscode.workspace.getConfiguration('tambo.sandbox.gitlab');
         const username = config.get<string>('username');
-        const token = config.get<string>('token') ? decrypt(config.get<string>('token')!) : null;
+        const gitlab = new Gitlab();
+        const response = await gitlab.status();
 
-        if (!username || !token) {
-            return false;
-        }
+        return response?.status === 200 && response.data.username === username;
 
-        const response = await axios.get('https://gitlab.com/api/v4/user', {
-            headers: { Authorization: `Bearer ${token}` },
-        });
-        return response.status === 200 && response.data.username === username;
     } catch (error) {
-        console.error("GitLab Error:", error);
+
+        console.error("TAMBOSANDBOX:", error);
         return false;
+
     }
+
 }

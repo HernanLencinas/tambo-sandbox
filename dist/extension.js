@@ -2,6 +2,13 @@
 /******/ 	var __webpack_modules__ = ([
 /* 0 */,
 /* 1 */
+/***/ ((module) => {
+
+"use strict";
+module.exports = require("vscode");
+
+/***/ }),
+/* 2 */
 /***/ ((__unused_webpack_module, exports, __webpack_require__) => {
 
 "use strict";
@@ -9,10 +16,10 @@
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.Connection = void 0;
 /* eslint-disable @typescript-eslint/naming-convention */
-const vscode = __webpack_require__(2);
+const vscode = __webpack_require__(1);
 const utils_1 = __webpack_require__(3);
-const https = __webpack_require__(5);
-const axios_1 = __webpack_require__(6);
+const sandbox_1 = __webpack_require__(46);
+const gitlab_1 = __webpack_require__(47);
 class Connection {
     async wizard() {
         const gitlabUsername = await vscode.window.showInputBox({
@@ -288,19 +295,18 @@ class ConnectionsViewProvider {
                         color: black;
                     }
 
-
-                    
                     .apps-button {
                         display: flex; /* Flexbox para alinear contenido horizontalmente */
                         align-items: center; /* Centrar verticalmente */
                         width: 100%;
                         padding: 10px 0px 10px 0px;
-                        margin: -10px 10px 0px 10px;
+                        margin: -7px 10px 0px 10px;
                         border-radius: 5px;
                         font-size: 12px;
                         color: orange;
+                        /* background-color: red; */
                         background-color: transparent;
-                        border: 0px solid orange;
+                        border: 1px solid orange;
                         text-align: center;
                         cursor: pointer;
                         transition: background-color 0.3s, color 0.3s;
@@ -355,7 +361,7 @@ class ConnectionsViewProvider {
                     <button id="startSandboxButton" onclick="invokeStartWorkspace();" class="sandbox-button hidden">Iniciar Workspace</button>
                 </div>
 
-                <div class="row">
+                <div class="row" style="padding: 10px 0px 10px 10px;">
                     <b>Accesos:</b>
                 </div>
 
@@ -401,7 +407,7 @@ class ConnectionsViewProvider {
 
                         if (message.command === 'sandboxData') {
 
-                            console.log("TAMBO-SANDBOX: ", message);
+                            //console.log("TAMBOSANDBOX: ", message);
 
                             const apiEntry = message.data.find(entry => entry.hasOwnProperty('api'));
                             const gitEntry = message.data.find(entry => entry.hasOwnProperty('git'));
@@ -467,13 +473,12 @@ class ConnectionsViewProvider {
 ConnectionsViewProvider.viewType = 'tambo_viewport_connection';
 async function checkApi() {
     try {
-        const response = await axios_1.default.get('https://cloudvalley.telecom.com.ar/api/ping', {
-            httpsAgent: new https.Agent({ rejectUnauthorized: false }),
-        });
-        return response.status === 200;
+        const sandbox = new sandbox_1.Sandbox();
+        const response = await sandbox.status();
+        return response?.status === 200;
     }
     catch (error) {
-        console.error("API Error:", error);
+        console.error("TAMBOSANDBOX:", error);
         return false;
     }
 }
@@ -481,28 +486,16 @@ async function checkGitlab() {
     try {
         const config = vscode.workspace.getConfiguration('tambo.sandbox.gitlab');
         const username = config.get('username');
-        const token = config.get('token') ? (0, utils_1.decrypt)(config.get('token')) : null;
-        if (!username || !token) {
-            return false;
-        }
-        const response = await axios_1.default.get('https://gitlab.com/api/v4/user', {
-            headers: { Authorization: `Bearer ${token}` },
-        });
-        return response.status === 200 && response.data.username === username;
+        const gitlab = new gitlab_1.Gitlab();
+        const response = await gitlab.status();
+        return response?.status === 200 && response.data.username === username;
     }
     catch (error) {
-        console.error("GitLab Error:", error);
+        console.error("TAMBOSANDBOX:", error);
         return false;
     }
 }
 
-
-/***/ }),
-/* 2 */
-/***/ ((module) => {
-
-"use strict";
-module.exports = require("vscode");
 
 /***/ }),
 /* 3 */
@@ -8889,6 +8882,104 @@ module.exports = require("zlib");
 "use strict";
 module.exports = require("events");
 
+/***/ }),
+/* 45 */
+/***/ ((__unused_webpack_module, exports) => {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.globalConfig = void 0;
+exports.globalConfig = {
+    sandboxUrl: 'https://run.mocky.io',
+    sandboxAPIStatus: '/v3/435ea231-3f8a-4ed4-8d22-cae1cd330251',
+    sandboxAPICreate: '/v3/435ea231-3f8a-4ed4-8d22-cae1cd330251',
+    sandboxAPIDestroy: '/v3/435ea231-3f8a-4ed4-8d22-cae1cd330251',
+    gitlabUrl: 'https://gitlab.com/api/v4/user'
+};
+
+
+/***/ }),
+/* 46 */
+/***/ ((__unused_webpack_module, exports, __webpack_require__) => {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.Sandbox = void 0;
+const vscode = __webpack_require__(1);
+const utils_1 = __webpack_require__(3);
+const https = __webpack_require__(5);
+const axios_1 = __webpack_require__(6);
+const globals_1 = __webpack_require__(45);
+class Sandbox {
+    async status() {
+        try {
+            const sandboxUrl = globals_1.globalConfig.sandboxUrl + globals_1.globalConfig.sandboxAPIStatus;
+            const config = vscode.workspace.getConfiguration('tambo.sandbox.gitlab');
+            const username = config.get('username');
+            const token = config.get('token') ? (0, utils_1.decrypt)(config.get('token')) : null;
+            if (!username || !token) {
+                return false;
+            }
+            const response = await axios_1.default.get(sandboxUrl, {
+                httpsAgent: new https.Agent({ rejectUnauthorized: false }),
+                headers: { user: username, token: token },
+            });
+            return response;
+        }
+        catch (error) {
+            console.error("TAMBOSANDBOX:", error);
+            return false;
+        }
+    }
+    async create() {
+    }
+    async destroy() {
+    }
+}
+exports.Sandbox = Sandbox;
+
+
+/***/ }),
+/* 47 */
+/***/ ((__unused_webpack_module, exports, __webpack_require__) => {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.Gitlab = void 0;
+/* eslint-disable @typescript-eslint/naming-convention */
+const vscode = __webpack_require__(1);
+const utils_1 = __webpack_require__(3);
+const https = __webpack_require__(5);
+const axios_1 = __webpack_require__(6);
+const globals_1 = __webpack_require__(45);
+class Gitlab {
+    async status() {
+        try {
+            const gitlabUrl = globals_1.globalConfig.gitlabUrl;
+            const config = vscode.workspace.getConfiguration('tambo.sandbox.gitlab');
+            const username = config.get('username');
+            const token = config.get('token') ? (0, utils_1.decrypt)(config.get('token')) : null;
+            if (!username || !token) {
+                return false;
+            }
+            const response = await axios_1.default.get(gitlabUrl, {
+                httpsAgent: new https.Agent({ rejectUnauthorized: false }),
+                headers: { Authorization: `Bearer ${token}` },
+            });
+            return response;
+        }
+        catch (error) {
+            console.error("TAMBOSANDBOX:", error);
+            return false;
+        }
+    }
+}
+exports.Gitlab = Gitlab;
+
+
 /***/ })
 /******/ 	]);
 /************************************************************************/
@@ -8926,14 +9017,16 @@ var exports = __webpack_exports__;
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.activate = activate;
 exports.deactivate = deactivate;
-const vscode = __webpack_require__(2);
+const vscode = __webpack_require__(1);
 //import simpleGit, { SimpleGit, SimpleGitOptions } from 'simple-git';
 //import * as fs from 'fs';
 //import * as path from 'path';
 //import * as os from 'os';
-const connection_1 = __webpack_require__(1);
+const connection_1 = __webpack_require__(2);
 //import { GruposTreeProvider, GrupoItem } from './grupos';
+let globalVariable;
 function activate(context) {
+    globalVariable = 'Valor inicial';
     // CARGAR CONFIGURACION DE CONExión A TAMBO SANDBOX
     const connection = new connection_1.Connection();
     connection.load(context);
