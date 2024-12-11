@@ -1,9 +1,9 @@
 /* eslint-disable @typescript-eslint/naming-convention */
 import * as vscode from 'vscode';
-import { encrypt, decrypt } from './utils';
-import * as https from 'https';
-import axios from 'axios';
-import { globalConfig } from './globals';
+import { encrypt } from './utils';
+//import * as https from 'https';
+//import axios from 'axios';
+//import { globalConfig } from './globals';
 import { Sandbox } from './sandbox';
 import { Gitlab } from './gitlab';
 
@@ -153,14 +153,14 @@ class ConnectionsViewProvider implements vscode.WebviewViewProvider {
         webviewView.webview.onDidReceiveMessage(async (message) => {
             switch (message.command) {
                 case 'sandboxStatus':
-                    const apiStatus = await checkApi();
+                    const sandboxStatus = await checkSandbox();
                     const gitStatus = await checkGitlab();
-                    const workspaceStatus = apiStatus && gitStatus;
-
+                    const workspaceStatus = await checkWorkspace();
                     const sandboxData = [
-                        { 'api': apiStatus },
+                        { 'sandbox': sandboxStatus },
                         { 'git': gitStatus },
-                        { 'workspace': false }
+                        { 'workspace': (sandboxStatus === false || gitStatus === false) ? 4 : workspaceStatus.data?.status },
+                        { 'workspaceData': workspaceStatus.data }
                     ];
 
                     webviewView.webview.postMessage({ command: 'sandboxData', data: sandboxData });
@@ -324,6 +324,36 @@ class ConnectionsViewProvider implements vscode.WebviewViewProvider {
                     .status .offline {
                         background-color: red;
                     }
+                    .status .deploying {
+                        background-color: orange;
+                    }
+                    .status .destroying {
+                        background-color: yellow;
+                    }
+                    .status .unknown {
+                        background-color: blue;
+                    }
+                    .status-msg {
+                        display: flex;
+                        align-items: flex-start;"
+                    }
+                    .arrow {
+                        align-self: flex-start;
+                        font-size: 16px;
+                        margin-right: 5px;
+                        padding-left: 7px;
+                    }
+                    .icon {
+                        height: 100%;
+                        padding-right: 7px;
+                    }
+                    .msg {
+                        width: 100%;
+                        height: 100%;
+                        padding-top: 2px;
+                        color: #FFD740;
+                    }
+                    <!--
                     button {
                         background-color: transparent;
                         color: #0e639c;
@@ -338,6 +368,7 @@ class ConnectionsViewProvider implements vscode.WebviewViewProvider {
                         background-color: #0e639c;
                         color: #ffffff;
                     }
+                    -->
                     .sandbox-button {
                         width: 100%;
                         padding: 10px 0px 10px 0px;
@@ -392,59 +423,121 @@ class ConnectionsViewProvider implements vscode.WebviewViewProvider {
                         justify-content: flex-start;
                         gap: 10px;
                     }
+                    .
                 </style>
             </head>
             <body>
+
+                <!-- Sandbox Status -->
                 <div class="row">
                     <div class="status">
                         <span id="statusConnection" class="offline"></span>
-                        <b>Sandbox: </b><span id="statusConnectionText">Desconectado</span>
+                        <b>Sandbox: </b><span id="statusConnectionText">Validando</span>
+                    </div>
+                </div>
+                <div class="row hidden" id="statusConnectionAlert">
+                    <div class="status-msg">
+                        <span class="arrow">&#x21B3;</span>
+                        <span class="icon">⚠️</span>
+                        <span class="msg" id="statusConnectionAlertText"></span>
                     </div>
                 </div>
 
+                <!-- Gitlab Status -->
                 <div class="row">
                     <div class="status">
                         <span id="statusGit" class="offline"></span>
-                        <b>Git: </b><span id="statusGitText">Desconectado</span>
+                        <b>Git: </b><span id="statusGitText">Validando</span>
+                    </div>
+                </div>
+                <div class="row hidden" id="statusGitAlert">
+                    <div class="status-msg">
+                        <span class="arrow">&#x21B3;</span>
+                        <span class="icon">⚠️</span>
+                        <span class="msg" id="statusGitAlertText"></span>
                     </div>
                 </div>
 
-
+                <!-- Workspace Status -->
                 <div class="row">
                     <div class="status">
                         <span id="statusWorkspace" class="offline"></span>
-                        <b>Workspace: </b><span id="statusWorkspaceText">Inactivo</span>
+                        <b>Workspace: </b><span id="statusWorkspaceText">Validando</span>
                     </div>
-                    <button id="connectButton" class="hidden">Crear</button>
+                </div>
+                <div class="row hidden" id="statusWorkspaceAlert">
+                    <div class="status-msg">
+                        <span class="arrow">&#x21B3;</span>
+                        <span class="icon">🚀</span>
+                        <span class="msg" id="statusWorkspaceAlertText"></span>
+                    </div>
                 </div>
 
+                <!-- Workspace Details -->
+                <div class="hidden" id="workspaceDetails">
+                    <div class="row" id="x1">
+                        <div class="status-msg">
+                            <span class="arrow">&#x21B3;</span>
+                    
+                            <span class1="msg" style="font-weight: bold" id="workspaceName">Texto de muestra</span>
+                        </div>
+                    </div>
+                    <div class="row" id="x1">
+                        <div class="status-msg">
+                            <span class="arrow"></span>
+                            <span class="icon"><b>usuario:</b></span>
+                            <span class="msg" id="x1">Texto de muestra</span>
+                        </div>
+                    </div>
+                    <div class="row" id="x1">
+                        <div class="status-msg">
+                            <span class="arrow">&#x21B3;</span>
+                            <span class="icon"><b>repo:</b></span>
+                            <span class="msg" id="x1">Texto de muestra</span>
+                        </div>
+                    </div>
+                    <div class="row" id="x1">
+                        <div class="status-msg">
+                            <span class="arrow">&#x21B3;</span>
+                            <span class="icon"><b>branch:</b></span>
+                            <span class="msg" id="x1">Texto de muestra</span>
+                        </div>
+                    </div>                    
+                    <div class="row" id="x1">
+                        <div class="status-msg">
+                            <span class="arrow">&#x21B3;</span>
+                            <span class="icon"><b>hash:</b></span>
+                            <span class="msg" id="x1">Texto de muestra</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Workspace Tools -->
                 <div class="row">
-                    <button id="startSandboxButton" onclick="invokeStartWorkspace();" class="sandbox-button hidden">Iniciar Workspace</button>
+                    <button id="actionSandboxButton" onclick="invokeWorkspace();" class="sandbox-button hidden">Iniciar Workspace</button>
                 </div>
 
-                <div class="row" style="padding: 10px 0px 10px 10px;">
-                    <b>Accesos:</b>
+                <div id="toolsPanel" class="hidden">
+                    <div class="row" style="padding: 10px 0px 10px 10px;">
+                        <b>Accesos:</b>
+                    </div>
+                    <div class="row">
+                        <button class="apps-button" data-link="https://tambo-playground.automation.teco.com.ar">
+                            <img src="${vscodeURI}/resources/logos/airflow.png" class="apps-button-icon"> Airflow
+                        </button>
+                    </div>
+                    <div class="row">
+                        <button class="apps-button" data-link="https://gitlab.com/groups/telecom-argentina/-/saml/sso?token=93NxX_B5">
+                            <img src="${vscodeURI}/resources/logos/gitlab.png" class="apps-button-icon"> Gitlab
+                        </button>
+                    </div>
+                    <div class="row">
+                        <button class="apps-button" data-link="https://automation.telecom.com.ar">
+                            <img src="${vscodeURI}/resources/logos/automation.svg" class="apps-button-icon"> Automatizacion
+                        </button>
+                    </div>   
                 </div>
 
-
-                <div class="row">
-                    <button class="apps-button" data-link="https://tambo-playground.automation.teco.com.ar">
-                        <img src="${vscodeURI}/resources/logos/airflow.png" class="apps-button-icon"> Airflow
-                    </button>
-                </div>
-
-                <div class="row">
-                    <button class="apps-button" data-link="https://gitlab.com/groups/telecom-argentina/-/saml/sso?token=93NxX_B5">
-                        <img src="${vscodeURI}/resources/logos/gitlab.png" class="apps-button-icon"> Gitlab
-                    </button>
-                </div>
-
-                <div class="row">
-                    <button class="apps-button" data-link="https://automation.telecom.com.ar">
-                        <img src="${vscodeURI}/resources/logos/automation.svg" class="apps-button-icon"> Automatizacion
-                    </button>
-                </div>                
-                
                 <script>
                     const vscode = acquireVsCodeApi();
 
@@ -468,55 +561,129 @@ class ConnectionsViewProvider implements vscode.WebviewViewProvider {
 
                         if (message.command === 'sandboxData') {
 
-                            //console.log("TAMBOSANDBOX: ", message);
+                            console.log("TAMBOSANDBOX: ", message);
 
-                            const apiEntry = message.data.find(entry => entry.hasOwnProperty('api'));
+                            const sandboxEntry = message.data.find(entry => entry.hasOwnProperty('sandbox'));
                             const gitEntry = message.data.find(entry => entry.hasOwnProperty('git'));
                             const workspaceEntry = message.data.find(entry => entry.hasOwnProperty('workspace'));
+                            const workspaceData = message.data.find(entry => entry.hasOwnProperty('workspaceData'));
 
+                            // statusSandbox
                             const statusConnection = document.getElementById('statusConnection');
                             const statusConnectionText = document.getElementById('statusConnectionText');
+                            const statusConnectionAlert = document.getElementById('statusConnectionAlert');
+                            const statusConnectionAlertText = document.getElementById('statusConnectionAlertText');
 
-                            if (apiEntry['api']) {
+                            if (sandboxEntry['sandbox']) {
                                 statusConnection.className = 'online';
                                 statusConnectionText.textContent = 'Conectado';
+                                statusConnectionAlert.classList.add('hidden');
                             } else {
                                 statusConnection.className = 'offline';
                                 statusConnectionText.textContent = 'Desconectado';
+                                statusConnectionAlert.classList.remove('hidden');
+                                statusConnectionAlertText.textContent = "No se pudo establecer conexión con el servicio de Sandbox. Verifique su conexión a la red o asegúrese de estar conectado a la VPN.";
                             }
-                            
+
+                            // statusGit
                             const statusGit = document.getElementById('statusGit');
                             const statusGitText = document.getElementById('statusGitText');
-
+                            const statusGitAlert = document.getElementById('statusGitAlert');
+                            const statusGitAlertText = document.getElementById('statusGitAlertText');
+ 
                             if (gitEntry['git']) {
                                 statusGit.className = 'online';
                                 statusGitText.textContent = 'Conectado';
+                                statusGitAlert.classList.add('hidden');
                             } else {
                                 statusGit.className = 'offline';
                                 statusGitText.textContent = 'Desconectado';
+                                statusGitAlert.classList.remove('hidden');
+                                statusGitAlertText.textContent = "Autenticación fallida. Por favor, verifique que su usuario y token sean correctos.";
                             }
-
+                        
+                            // statusWorkspace
                             const statusWorkspace = document.getElementById('statusWorkspace');
                             const statusWorkspaceText = document.getElementById('statusWorkspaceText');
-                            const statusWorkspaceButton = document.getElementById('startSandboxButton');
+                            const statusWorkspaceAlert = document.getElementById('statusWorkspaceAlert');
+                            const statusWorkspaceAlertText = document.getElementById('statusWorkspaceAlertText');
+                            
+                            //const workspaceDetails = document.getElementById('workspaceDetails');
+                            //const workspaceName = document.getElementById('workspaceName');
+                            //const actionSandboxButton = document.getElementById('actionSandboxButton');
+                            //const toolsPanel = document.getElementById('toolsPanel');
 
-                            if (workspaceEntry['workspace']) {
-                                statusWorkspace.className = 'online';
-                                statusWorkspaceText.textContent = 'Iniciado';
-                                statusWorkspaceButton.classList.add('hidden');
-                            } else {
-                                statusWorkspace.className = 'offline';
-                                statusWorkspaceText.textContent = 'Inactivo';
-                                statusWorkspaceButton.classList.remove('hidden');
+                            switch (workspaceEntry['workspace']) {
+                                case 0: // Estado 0: Activado
+                                    statusWorkspace.className = 'online';
+                                    statusWorkspaceText.textContent = 'Activo';
+                                    statusWorkspaceAlert.classList.add('hidden');
+
+                                    actionSandboxButton.textContent = 'Destruir Workspace';
+                                    actionSandboxButton.classList.remove('hidden');
+                                    //workspaceDetails.classList.remove('hidden');
+                                    //workspaceName.textContent = workspaceData.workspaceData.id;
+                                    //toolsPanel.classList.remove('hidden');
+                                    break;
+                                case 1: // Estado 1: Inactivo
+                                    statusWorkspace.className = 'offline';
+                                    statusWorkspaceText.textContent = 'Inactivo';
+                                    statusWorkspaceAlert.classList.remove('hidden');
+                                    statusWorkspaceAlertText.innerHTML = 'No tienes un workspace asignado. Para crear uno nuevo, haz clic en el botón <b>Iniciar workspace</b> para comenzar';
+
+                                    actionSandboxButton.textContent = 'Iniciar Workspace';
+                                    actionSandboxButton.classList.remove('hidden');
+                                    //workspaceDetails.classList.add('hidden');
+                                    //toolsPanel.classList.add('hidden');
+                                    break;
+                                case 2: // Estado 2: En construccion
+                                    statusWorkspace.className = 'deploying';
+                                    statusWorkspaceText.textContent = 'Deployando';
+                                    statusWorkspaceAlert.classList.add('hidden');
+
+                                    actionSandboxButton.classList.add('hidden');
+                                    workspaceDetails.classList.add('hidden');
+                                    toolsPanel.classList.add('hidden');
+                                    break;
+                                case 3: // Estado 3: En destruccion
+                                    statusWorkspace.className = 'destroying';
+                                    statusWorkspaceText.textContent = 'Destruyendo';
+                                    statusWorkspaceAlert.classList.add('hidden');
+
+                                    actionSandboxButton.textContent = '';
+                                    actionSandboxButton.classList.add('hidden');
+                                    workspaceDetails.classList.add('hidden');
+                                    toolsPanel.classList.add('hidden');
+                                    break;
+                                case 4: // Estado 4: Desconectado
+                                    statusWorkspace.className = 'offline';
+                                    statusWorkspaceText.textContent = 'Desconectado';
+                                    statusWorkspaceAlert.classList.add('hidden');
+
+                                    actionSandboxButton.textContent = '';
+                                    actionSandboxButton.classList.add('hidden');
+                                    workspaceDetails.classList.add('hidden');
+                                    toolsPanel.classList.add('hidden');
+                                    break;
+                                default: // Desconocido
+                                    statusWorkspace.className = 'unknown';
+                                    statusWorkspaceText.textContent = 'Desconocido';
+                                    statusWorkspaceAlert.classList.add('hidden');
+
+                                    actionSandboxButton.textContent = '';
+                                    actionSandboxButton.classList.add('hidden');
+                                    workspaceDetails.classList.add('hidden');
+                                    toolsPanel.classList.add('hidden');
+                                    break;
                             }
-
                         }
 
                     });
 
-                    function invokeStartWorkspace() {
+                    function invokeWorkspace() {
                         //document.getElementById('startSandboxButton').classList.add('hidden');
                         vscode.postMessage({ command: "startWorkspace" });
+                        vscode.postMessage({ command: "destroyWorkspace" });
                     }
 
                     function updateSandboxData() {
@@ -533,18 +700,18 @@ class ConnectionsViewProvider implements vscode.WebviewViewProvider {
     }
 }
 
-async function checkApi(): Promise<boolean> {
+async function checkSandbox(): Promise<boolean> {
 
     try {
 
         const sandbox = new Sandbox();
-        const response = await sandbox.status();
+        const response = await sandbox.ping();
 
-        return response?.status === 200;
+        return response;
 
     } catch (error) {
 
-        console.error("TAMBOSANDBOX:", error);
+        console.error("TAMBOSANDBOX.connections.checkSandbox", error);
         return false;
 
     }
@@ -564,7 +731,29 @@ async function checkGitlab(): Promise<boolean> {
 
     } catch (error) {
 
-        console.error("TAMBOSANDBOX:", error);
+        console.error("TAMBOSANDBOX.connections.checkGitlab", error);
+        return false;
+
+    }
+
+}
+
+async function checkWorkspace(): Promise<any> {
+
+    try {
+
+        const sandbox = new Sandbox();
+        const response = await sandbox.status();
+
+        if (response.status === 200) {
+            return response;
+        } else {
+            return false;
+        }
+
+    } catch (error) {
+
+        console.error("TAMBOSANDBOX.connections.checkWorkspace", error);
         return false;
 
     }
