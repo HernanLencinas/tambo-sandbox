@@ -353,23 +353,9 @@ class ConnectionsViewProvider implements vscode.WebviewViewProvider {
                         padding-top: 2px;
                         color: #FFD740;
                     }
+
                     <!--
-                    button {
-                        background-color: transparent;
-                        color: #0e639c;
-                        border: 1px solid #0e639c;
-                        padding: 3px 10px;
-                        border-radius: 3px;
-                        font-size: 12px;
-                        cursor: pointer;
-                        transition: all 0.3s;
-                    }
-                    button:hover {
-                        background-color: #0e639c;
-                        color: #ffffff;
-                    }
-                    -->
-                    .sandbox-button {
+                    .sandbox-button1 {
                         width: 100%;
                         padding: 10px 0px 10px 0px;
                         margin: 10px 10px 0px 10px;
@@ -379,13 +365,69 @@ class ConnectionsViewProvider implements vscode.WebviewViewProvider {
                         background-color: transparent;
                         border: 1px solid orange;
                         text-align: center;
+                        align-items: center;
+                        justify-content: center;
                         cursor: pointer;
                         transition: background-color 0.3s, color 0.3s;
+                    }
+                    .sandbox-button1:hover {
+                        background-color: orange;
+                        color: black;
+                    }
+                    -->
+
+                    .sandbox-button {
+                        position: relative;
+                        display: inline-flex;
+                        align-items: center;
+                        justify-content: center;
+                        padding: 10px 20px;
+                        font-size: 12px;
+                        color: white;
+                        background-color: transparent;
+                        border: 1px solid orange;
+                        border-radius: 5px;
+                        cursor: pointer;
+                        transition: background-color 0.3s;
+                        width: 100%;
+                        color: orange;
                     }
                     .sandbox-button:hover {
                         background-color: orange;
                         color: black;
                     }
+                    .sandbox-button:disabled {
+                        background-color: transparent;
+                        cursor: not-allowed;
+                    }
+                    .spinner {
+                        position: absolute;
+                        width: 16px;
+                        height: 16px;
+                        border: 2px solid orange;
+                        border-top-color: transparent;
+                        border-radius: 50%;
+                        animation: spin 0.6s linear infinite;
+                        display: none;
+                    }
+                    .sandbox-button.loading .spinner {
+                        display: block; /* Show spinner when loading */
+                    }
+
+                    .sandbox-button.loading span {
+                        visibility: hidden; /* Hide text when spinner is visible */
+                    }
+
+                    @keyframes spin {
+                        from {
+                            transform: rotate(0deg);
+                        }
+                        to {
+                            transform: rotate(360deg);
+                        }
+                    }
+
+
 
                     .apps-button {
                         display: flex; /* Flexbox para alinear contenido horizontalmente */
@@ -478,7 +520,6 @@ class ConnectionsViewProvider implements vscode.WebviewViewProvider {
                     <div class="row" id="x1">
                         <div class="status-msg">
                             <span class="arrow">&#x21B3;</span>
-                    
                             <span class1="msg" style="font-weight: bold" id="workspaceName">Texto de muestra</span>
                         </div>
                     </div>
@@ -514,7 +555,10 @@ class ConnectionsViewProvider implements vscode.WebviewViewProvider {
 
                 <!-- Workspace Tools -->
                 <div class="row">
-                    <button id="actionSandboxButton" onclick="invokeWorkspace();" class="sandbox-button hidden">Iniciar Workspace</button>
+                    <button id="actionSandboxButton" onclick="invokeWorkspace();" class="sandbox-button hidden">
+                        <div class="spinner"></div>
+                        <span id="actionSandboxButtonText"></span>
+                    </button>
                 </div>
 
                 <div id="toolsPanel" class="hidden">
@@ -608,9 +652,11 @@ class ConnectionsViewProvider implements vscode.WebviewViewProvider {
                             const statusWorkspaceAlert = document.getElementById('statusWorkspaceAlert');
                             const statusWorkspaceAlertText = document.getElementById('statusWorkspaceAlertText');
                             
+                            const actionSandboxButton = document.getElementById('actionSandboxButton');
+                            const actionSandboxButtonText = document.getElementById('actionSandboxButtonText');
+
                             //const workspaceDetails = document.getElementById('workspaceDetails');
                             //const workspaceName = document.getElementById('workspaceName');
-                            //const actionSandboxButton = document.getElementById('actionSandboxButton');
                             //const toolsPanel = document.getElementById('toolsPanel');
 
                             switch (workspaceEntry['workspace']) {
@@ -619,8 +665,11 @@ class ConnectionsViewProvider implements vscode.WebviewViewProvider {
                                     statusWorkspaceText.textContent = 'Activo';
                                     statusWorkspaceAlert.classList.add('hidden');
 
-                                    actionSandboxButton.textContent = 'Destruir Workspace';
                                     actionSandboxButton.classList.remove('hidden');
+                                    actionSandboxButton.classList.remove('loading');
+                                    actionSandboxButton.disabled = false;
+                                    actionSandboxButtonText.textContent = 'DESTRUIR WORKSPACE';
+
                                     //workspaceDetails.classList.remove('hidden');
                                     //workspaceName.textContent = workspaceData.workspaceData.id;
                                     //toolsPanel.classList.remove('hidden');
@@ -631,8 +680,11 @@ class ConnectionsViewProvider implements vscode.WebviewViewProvider {
                                     statusWorkspaceAlert.classList.remove('hidden');
                                     statusWorkspaceAlertText.innerHTML = 'No tienes un workspace asignado. Para crear uno nuevo, haz clic en el botón <b>Iniciar workspace</b> para comenzar';
 
-                                    actionSandboxButton.textContent = 'Iniciar Workspace';
                                     actionSandboxButton.classList.remove('hidden');
+                                    actionSandboxButton.classList.remove('loading');
+                                    actionSandboxButton.disabled = false;
+                                    actionSandboxButtonText.innerHTML = 'INICIAR WORKSPACE';
+
                                     //workspaceDetails.classList.add('hidden');
                                     //toolsPanel.classList.add('hidden');
                                     break;
@@ -642,48 +694,73 @@ class ConnectionsViewProvider implements vscode.WebviewViewProvider {
                                     statusWorkspaceAlert.classList.add('hidden');
 
                                     actionSandboxButton.classList.add('hidden');
-                                    workspaceDetails.classList.add('hidden');
-                                    toolsPanel.classList.add('hidden');
+                                    actionSandboxButton.classList.remove('loading');
+                                    actionSandboxButton.disabled = false;
+                                    actionSandboxButtonText.innerHTML = '';
+
+                                    //workspaceDetails.classList.add('hidden');
+                                    //toolsPanel.classList.add('hidden');
                                     break;
                                 case 3: // Estado 3: En destruccion
                                     statusWorkspace.className = 'destroying';
                                     statusWorkspaceText.textContent = 'Destruyendo';
                                     statusWorkspaceAlert.classList.add('hidden');
 
-                                    actionSandboxButton.textContent = '';
                                     actionSandboxButton.classList.add('hidden');
-                                    workspaceDetails.classList.add('hidden');
-                                    toolsPanel.classList.add('hidden');
+                                    actionSandboxButton.classList.remove('loading');
+                                    actionSandboxButton.disabled = false;
+                                    actionSandboxButtonText.innerHTML = '';
+
+                                    //workspaceDetails.classList.add('hidden');
+                                    //toolsPanel.classList.add('hidden');
                                     break;
                                 case 4: // Estado 4: Desconectado
                                     statusWorkspace.className = 'offline';
                                     statusWorkspaceText.textContent = 'Desconectado';
                                     statusWorkspaceAlert.classList.add('hidden');
 
-                                    actionSandboxButton.textContent = '';
                                     actionSandboxButton.classList.add('hidden');
-                                    workspaceDetails.classList.add('hidden');
-                                    toolsPanel.classList.add('hidden');
+                                    actionSandboxButton.classList.remove('loading');
+                                    actionSandboxButton.disabled = false;
+                                    actionSandboxButtonText.innerHTML = '';
+
+                                    //workspaceDetails.classList.add('hidden');
+                                    //toolsPanel.classList.add('hidden');
                                     break;
                                 default: // Desconocido
                                     statusWorkspace.className = 'unknown';
                                     statusWorkspaceText.textContent = 'Desconocido';
                                     statusWorkspaceAlert.classList.add('hidden');
 
-                                    actionSandboxButton.textContent = '';
                                     actionSandboxButton.classList.add('hidden');
-                                    workspaceDetails.classList.add('hidden');
-                                    toolsPanel.classList.add('hidden');
+                                    actionSandboxButton.classList.remove('loading');
+                                    actionSandboxButton.disabled = false;
+                                    actionSandboxButtonText.innerHTML = '';
+
+                                    //workspaceDetails.classList.add('hidden');
+                                    //toolsPanel.classList.add('hidden');
                                     break;
                             }
                         }
 
                     });
 
-                    function invokeWorkspace() {
+                    function invokeWorkspace1() {
                         //document.getElementById('startSandboxButton').classList.add('hidden');
                         vscode.postMessage({ command: "startWorkspace" });
                         vscode.postMessage({ command: "destroyWorkspace" });
+                    }
+
+                    function invokeWorkspace() {
+
+                        const actionSandboxButton = document.getElementById("actionSandboxButton");
+
+                        actionSandboxButton.classList.add("loading");
+                        actionSandboxButton.disabled = true;
+
+                        vscode.postMessage({ command: "startWorkspace" });
+                        vscode.postMessage({ command: "destroyWorkspace" });
+
                     }
 
                     function updateSandboxData() {
@@ -743,7 +820,7 @@ async function checkWorkspace(): Promise<any> {
     try {
 
         const sandbox = new Sandbox();
-        const response = await sandbox.status();
+        const response = await sandbox.statusWorkspace();
 
         if (response.status === 200) {
             return response;
