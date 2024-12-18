@@ -155,12 +155,26 @@ class ConnectionsViewProvider implements vscode.WebviewViewProvider {
                 case 'sandboxStatus':
                     const sandboxStatus = await checkSandbox();
                     const gitStatus = await checkGitlab();
-                    const workspaceStatus = await checkWorkspace();
+                    //const workspaceStatus = await checkWorkspace();
+
+                    const workspaceStatusId: number = 0;
+
+                    switch (workspaceStatusId) {
+                        case 0:
+                            vscode.commands.executeCommand('setContext', 'hasGrupos', true);
+                            break;
+                        case 1:
+                        case 2:
+                            vscode.commands.executeCommand('setContext', 'hasGrupos', false);
+                            break;
+                    }
+
                     const sandboxData = [
                         { 'sandbox': sandboxStatus },
                         { 'git': gitStatus },
-                        { 'workspace': (sandboxStatus === false || gitStatus === false) ? 4 : workspaceStatus.data?.status },
-                        { 'workspaceData': workspaceStatus.data }
+                        { 'workspace': workspaceStatusId },
+                        /* { 'workspace': (sandboxStatus === false || gitStatus === false) ? 4 : workspaceStatus.data?.estado }, */
+                        /* { 'workspaceData': workspaceStatus.data } */
                     ];
 
                     webviewView.webview.postMessage({ command: 'sandboxData', data: sandboxData });
@@ -353,29 +367,6 @@ class ConnectionsViewProvider implements vscode.WebviewViewProvider {
                         padding-top: 2px;
                         color: #FFD740;
                     }
-
-                    <!--
-                    .sandbox-button1 {
-                        width: 100%;
-                        padding: 10px 0px 10px 0px;
-                        margin: 10px 10px 0px 10px;
-                        border-radius: 5px;
-                        font-size: 12px;
-                        color: orange;
-                        background-color: transparent;
-                        border: 1px solid orange;
-                        text-align: center;
-                        align-items: center;
-                        justify-content: center;
-                        cursor: pointer;
-                        transition: background-color 0.3s, color 0.3s;
-                    }
-                    .sandbox-button1:hover {
-                        background-color: orange;
-                        color: black;
-                    }
-                    -->
-
                     .sandbox-button {
                         position: relative;
                         display: inline-flex;
@@ -383,14 +374,16 @@ class ConnectionsViewProvider implements vscode.WebviewViewProvider {
                         justify-content: center;
                         padding: 10px 20px;
                         font-size: 12px;
+                        font-wight: 900;
                         color: white;
                         background-color: transparent;
-                        border: 1px solid orange;
+                        border: 2px solid orange;
                         border-radius: 5px;
                         cursor: pointer;
                         transition: background-color 0.3s;
                         width: 100%;
                         color: orange;
+                        margin-top: 10px;
                     }
                     .sandbox-button:hover {
                         background-color: orange;
@@ -411,11 +404,11 @@ class ConnectionsViewProvider implements vscode.WebviewViewProvider {
                         display: none;
                     }
                     .sandbox-button.loading .spinner {
-                        display: block; /* Show spinner when loading */
+                        display: block; /* Mostrar spinner cuando esta cargando */
                     }
 
                     .sandbox-button.loading span {
-                        visibility: hidden; /* Hide text when spinner is visible */
+                        visibility: hidden; /* Ocultar Texto cuando el spinner esta visible */
                     }
 
                     @keyframes spin {
@@ -782,9 +775,8 @@ async function checkSandbox(): Promise<boolean> {
     try {
 
         const sandbox = new Sandbox();
-        const response = await sandbox.ping();
 
-        return response;
+        return await sandbox.ping();
 
     } catch (error) {
 

@@ -35,7 +35,8 @@
         },
         {
           "id": "tambo_viewport_grupos",
-          "name": "Grupos"
+          "name": "Grupos",
+          "when": "hasGrupos"
         },
         {
           "id": "tambo_viewport_help",
@@ -135,6 +136,7 @@
     "lint": "eslint src --ext ts"
   },
   "devDependencies": {
+    "@types/axios": "^0.14.4",
     "@types/mocha": "^10.0.2",
     "@types/node": "18.x",
     "@types/vscode": "^1.94.0",
@@ -154,7 +156,7 @@
     "webpack-cli": "^5.1.4"
   },
   "dependencies": {
-    "axios": "^1.7.8",
+    "axios": "^1.7.9",
     "https": "1.0.0"
   }
 }

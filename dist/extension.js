@@ -122,12 +122,23 @@ class ConnectionsViewProvider {
                 case 'sandboxStatus':
                     const sandboxStatus = await checkSandbox();
                     const gitStatus = await checkGitlab();
-                    const workspaceStatus = await checkWorkspace();
+                    //const workspaceStatus = await checkWorkspace();
+                    const workspaceStatusId = 0;
+                    switch (workspaceStatusId) {
+                        case 0:
+                            vscode.commands.executeCommand('setContext', 'hasGrupos', true);
+                            break;
+                        case 1:
+                        case 2:
+                            vscode.commands.executeCommand('setContext', 'hasGrupos', false);
+                            break;
+                    }
                     const sandboxData = [
                         { 'sandbox': sandboxStatus },
                         { 'git': gitStatus },
-                        { 'workspace': (sandboxStatus === false || gitStatus === false) ? 4 : workspaceStatus.data?.status },
-                        { 'workspaceData': workspaceStatus.data }
+                        { 'workspace': workspaceStatusId },
+                        /* { 'workspace': (sandboxStatus === false || gitStatus === false) ? 4 : workspaceStatus.data?.estado }, */
+                        /* { 'workspaceData': workspaceStatus.data } */
                     ];
                     webviewView.webview.postMessage({ command: 'sandboxData', data: sandboxData });
                     break;
@@ -296,29 +307,6 @@ class ConnectionsViewProvider {
                         padding-top: 2px;
                         color: #FFD740;
                     }
-
-                    <!--
-                    .sandbox-button1 {
-                        width: 100%;
-                        padding: 10px 0px 10px 0px;
-                        margin: 10px 10px 0px 10px;
-                        border-radius: 5px;
-                        font-size: 12px;
-                        color: orange;
-                        background-color: transparent;
-                        border: 1px solid orange;
-                        text-align: center;
-                        align-items: center;
-                        justify-content: center;
-                        cursor: pointer;
-                        transition: background-color 0.3s, color 0.3s;
-                    }
-                    .sandbox-button1:hover {
-                        background-color: orange;
-                        color: black;
-                    }
-                    -->
-
                     .sandbox-button {
                         position: relative;
                         display: inline-flex;
@@ -326,14 +314,16 @@ class ConnectionsViewProvider {
                         justify-content: center;
                         padding: 10px 20px;
                         font-size: 12px;
+                        font-wight: 900;
                         color: white;
                         background-color: transparent;
-                        border: 1px solid orange;
+                        border: 2px solid orange;
                         border-radius: 5px;
                         cursor: pointer;
                         transition: background-color 0.3s;
                         width: 100%;
                         color: orange;
+                        margin-top: 10px;
                     }
                     .sandbox-button:hover {
                         background-color: orange;
@@ -354,11 +344,11 @@ class ConnectionsViewProvider {
                         display: none;
                     }
                     .sandbox-button.loading .spinner {
-                        display: block; /* Show spinner when loading */
+                        display: block; /* Mostrar spinner cuando esta cargando */
                     }
 
                     .sandbox-button.loading span {
-                        visibility: hidden; /* Hide text when spinner is visible */
+                        visibility: hidden; /* Ocultar Texto cuando el spinner esta visible */
                     }
 
                     @keyframes spin {
@@ -722,8 +712,7 @@ ConnectionsViewProvider.viewType = 'tambo_viewport_connection';
 async function checkSandbox() {
     try {
         const sandbox = new sandbox_1.Sandbox();
-        const response = await sandbox.ping();
-        return response;
+        return await sandbox.ping();
     }
     catch (error) {
         console.error("TAMBOSANDBOX.connections.checkSandbox", error);
@@ -823,13 +812,16 @@ const globals_1 = __webpack_require__(46);
 class Sandbox {
     async ping() {
         try {
-            const sandboxUrl = globals_1.globalConfig.sandboxUrl + globals_1.globalConfig.sandboxAPIPing;
+            const sandboxUrl = globals_1.globalConfig.sandboxUrl + globals_1.globalConfig.sandboxAPIStatus;
             const response = await axios_1.default.get(sandboxUrl, {
                 httpsAgent: new https.Agent({ rejectUnauthorized: false })
             });
-            return response.status === 200;
+            return response.status === 200 || response.status === 422;
         }
         catch (error) {
+            if (axios_1.default.isAxiosError(error) && error.response && error.response.status === 422) {
+                return true;
+            }
             console.error("TAMBOSANDBOX:sandbox.status:", error);
             return false;
         }
@@ -843,9 +835,12 @@ class Sandbox {
             if (!username || !token) {
                 return false;
             }
-            const response = await axios_1.default.get(sandboxUrl, {
-                httpsAgent: new https.Agent({ rejectUnauthorized: false }),
-                headers: { user: username, token: token },
+            const params = new URLSearchParams({
+                usuario: username,
+                token: token
+            });
+            const response = await axios_1.default.get(`${sandboxUrl}?${params.toString()}`, {
+                httpsAgent: new https.Agent({ rejectUnauthorized: false })
             });
             return response;
         }
@@ -855,76 +850,10 @@ class Sandbox {
         }
     }
     async createWorkspace() {
-        try {
-            const sandboxUrl = globals_1.globalConfig.sandboxUrl + globals_1.globalConfig.sandboxAPICreate;
-            const config = vscode.workspace.getConfiguration('tambo.sandbox.gitlab');
-            const username = config.get('username');
-            const token = config.get('token') ? (0, utils_1.decrypt)(config.get('token')) : null;
-            const requestBody = {
-                hola: "123",
-                mundo: "abcd"
-            };
-            if (!username || !token) {
-                return false;
-            }
-            const response = await axios_1.default.post(sandboxUrl, requestBody, {
-                httpsAgent: new https.Agent({ rejectUnauthorized: false }),
-                headers: { user: username, token: token },
-            });
-            return response.status === 200;
-        }
-        catch (error) {
-            console.error("TAMBOSANDBOX:sandbox.createWorkspace:", error);
-            return false;
-        }
     }
     async destroyWorkspace() {
-        try {
-            const sandboxUrl = globals_1.globalConfig.sandboxUrl + globals_1.globalConfig.sandboxAPIDestroy;
-            const config = vscode.workspace.getConfiguration('tambo.sandbox.gitlab');
-            const username = config.get('username');
-            const token = config.get('token') ? (0, utils_1.decrypt)(config.get('token')) : null;
-            const requestBody = {
-                hola: "123",
-                mundo: "abcd"
-            };
-            if (!username || !token) {
-                return false;
-            }
-            const response = await axios_1.default.post(sandboxUrl, requestBody, {
-                httpsAgent: new https.Agent({ rejectUnauthorized: false }),
-                headers: { user: username, token: token },
-            });
-            return response.status === 200;
-        }
-        catch (error) {
-            console.error("TAMBOSANDBOX:sandbox.createWorkspace:", error);
-            return false;
-        }
     }
     async commitWorkspace() {
-        try {
-            const sandboxUrl = globals_1.globalConfig.sandboxUrl + globals_1.globalConfig.sandboxAPIUpdate;
-            const config = vscode.workspace.getConfiguration('tambo.sandbox.gitlab');
-            const username = config.get('username');
-            const token = config.get('token') ? (0, utils_1.decrypt)(config.get('token')) : null;
-            const requestBody = {
-                hola: "123",
-                mundo: "abcd"
-            };
-            if (!username || !token) {
-                return false;
-            }
-            const response = await axios_1.default.post(sandboxUrl, requestBody, {
-                httpsAgent: new https.Agent({ rejectUnauthorized: false }),
-                headers: { user: username, token: token },
-            });
-            return response.status === 200;
-        }
-        catch (error) {
-            console.error("TAMBOSANDBOX:sandbox.createWorkspace:", error);
-            return false;
-        }
     }
 }
 exports.Sandbox = Sandbox;
@@ -942,7 +871,7 @@ module.exports = require("https");
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
-// Axios v1.7.8 Copyright (c) 2024 Matt Zabriskie and contributors
+// Axios v1.7.9 Copyright (c) 2024 Matt Zabriskie and contributors
 
 
 const FormData$1 = __webpack_require__(8);
@@ -3022,7 +2951,7 @@ function buildFullPath(baseURL, requestedURL) {
   return requestedURL;
 }
 
-const VERSION = "1.7.8";
+const VERSION = "1.7.9";
 
 function parseProtocol(url) {
   const match = /^([-+\w]{1,25})(:?\/\/|:)/.exec(url);
@@ -9278,12 +9207,11 @@ module.exports = require("events");
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.globalConfig = void 0;
 exports.globalConfig = {
-    sandboxUrl: 'https://run.mocky.io',
-    sandboxAPIPing: '/v3/ccfffab5-4271-44ad-85c7-ef05174872c1',
-    sandboxAPIStatus: '/v3/462d2cee-f127-4515-b276-a3b1b5803c55',
-    sandboxAPICreate: '/v3/435ea231-3f8a-4ed4-8d22-cae1cd330251',
-    sandboxAPIDestroy: '/v3/435ea231-3f8a-4ed4-8d22-cae1cd330251',
-    sandboxAPICommit: '/v3/435ea231-3f8a-4ed4-8d22-cae1cd330251',
+    sandboxUrl: 'https://backend-sandbox.dev.apps.automation.teco.com.ar',
+    sandboxAPIStatus: '/status',
+    sandboxAPICreate: '/sandbox',
+    sandboxAPIDestroy: '/sandbox',
+    sandboxAPICommit: '/sandbox',
     gitlabUrl: 'https://gitlab.com/api/v4/user'
 };
 
@@ -9325,6 +9253,75 @@ class Gitlab {
     }
 }
 exports.Gitlab = Gitlab;
+
+
+/***/ }),
+/* 48 */
+/***/ ((__unused_webpack_module, exports, __webpack_require__) => {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.GrupoItem = exports.GruposTreeProvider = void 0;
+const vscode = __webpack_require__(1);
+const sandbox_1 = __webpack_require__(5);
+class GruposTreeProvider {
+    constructor(context) {
+        this.context = context;
+        this._onDidChangeTreeData = new vscode.EventEmitter();
+        this.onDidChangeTreeData = this._onDidChangeTreeData.event;
+        this.sandbox = new sandbox_1.Sandbox();
+    }
+    refresh() {
+        this._onDidChangeTreeData.fire();
+    }
+    getTreeItem(element) {
+        return element;
+    }
+    async getChildren(element) {
+        if (element) {
+            return Promise.resolve([]);
+        }
+        else {
+            try {
+                //const response = await this.sandbox.statusWorkspace();
+                const sandbox = new sandbox_1.Sandbox();
+                const response = await sandbox.statusWorkspace();
+                console.log("TAMBOSANDBOX response:", response);
+                if (!response || !response.data || !response.data.repos_disponibles || !Array.isArray(response.data.repos_disponibles)) {
+                    vscode.window.showErrorMessage('No se pudo obtener la lista de grupos desde el servidor.');
+                    return [];
+                }
+                return response.data.repos_disponibles.map((repo) => new GrupoItem(repo.id.toString(), repo.path, this.context));
+            }
+            catch (error) {
+                vscode.window.showErrorMessage('Error al obtener los grupos: ' + error);
+                return [];
+            }
+        }
+    }
+}
+exports.GruposTreeProvider = GruposTreeProvider;
+class GrupoItem extends vscode.TreeItem {
+    constructor(id, path, context) {
+        super(path, vscode.TreeItemCollapsibleState.None);
+        this.id = id;
+        this.path = path;
+        this.context = context;
+        this.tooltip = `ID: ${id} | Path: ${path}`;
+        this.description = id;
+        this.command = {
+            title: 'Seleccionar Grupo',
+            command: 'tambo.grupos.select',
+            arguments: [this]
+        };
+        this.iconPath = {
+            light: this.context.asAbsolutePath('resources/icons/git_light.svg'),
+            dark: this.context.asAbsolutePath('resources/icons/git_dark.svg')
+        };
+    }
+}
+exports.GrupoItem = GrupoItem;
 
 
 /***/ })
@@ -9370,10 +9367,10 @@ const vscode = __webpack_require__(1);
 //import * as path from 'path';
 //import * as os from 'os';
 const connection_1 = __webpack_require__(2);
-//import { GruposTreeProvider, GrupoItem } from './grupos';
-let globalVariable;
+const grupos_1 = __webpack_require__(48);
+// file deepcode ignore InsecureTLSConfig: <please specify a reason of ignoring this>
+process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
 function activate(context) {
-    globalVariable = 'Valor inicial';
     // CARGAR CONFIGURACION DE CONExión A TAMBO SANDBOX
     const connection = new connection_1.Connection();
     connection.load(context);
@@ -9403,8 +9400,8 @@ function activate(context) {
     });
     context.subscriptions.push(cmdConnectionRefresh);
     // VIEWPORT GRUPOS
-    /*     const gruposTreeProvider = new GruposTreeProvider(context);
-        vscode.window.registerTreeDataProvider('tambo_viewport_grupos', gruposTreeProvider); */
+    const gruposTreeProvider = new grupos_1.GruposTreeProvider(context);
+    vscode.window.registerTreeDataProvider('tambo_viewport_grupos', gruposTreeProvider);
     // Registrar el comando para seleccionar un grupo
     /*     context.subscriptions.push(
             vscode.commands.registerCommand('tambo.grupos.select', (item) => {

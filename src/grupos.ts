@@ -1,31 +1,15 @@
 import * as vscode from 'vscode';
+import { Sandbox } from './sandbox';
 
 export class GruposTreeProvider implements vscode.TreeDataProvider<GrupoItem> {
     private _onDidChangeTreeData: vscode.EventEmitter<GrupoItem | undefined | void> = new vscode.EventEmitter<GrupoItem | undefined | void>();
     readonly onDidChangeTreeData: vscode.Event<GrupoItem | undefined | void> = this._onDidChangeTreeData.event;
 
-    private grupos: { name: string; repositorio: string; branch: string }[] = [
-        { name: "Frame", repositorio: "repo-frame", branch: "main" },
-        { name: "Acceso Fijo", repositorio: "repo-acceso-fijo", branch: "develop" },
-        { name: "Acceso Móvil", repositorio: "repo-acceso-movil", branch: "main" },
-        { name: "Transporte", repositorio: "repo-transporte", branch: "release" },
-        { name: "PMC", repositorio: "repo-pmc", branch: "feature" },
-        { name: "IM", repositorio: "repo-im", branch: "hotfix" },
-        { name: "Servicios", repositorio: "repo-servicios", branch: "main" },
-        { name: "Inventario", repositorio: "repo-inventario", branch: "develop" },
-        { name: "Data", repositorio: "repo-data", branch: "main" },
-        { name: "Gnoc", repositorio: "repo-gnoc", branch: "release" },
-        { name: "Conectividad Hogar", repositorio: "repo-conectividad", branch: "main" },
-        { name: "Soporte Proactivo", repositorio: "repo-soporte", branch: "develop" },
-        { name: "Tte Acceso Fijo", repositorio: "repo-tte-fijo", branch: "main" },
-        { name: "Tte Agregación", repositorio: "repo-tte-agregacion", branch: "develop" },
-        { name: "Tte DC y Serv", repositorio: "repo-tte-dc", branch: "main" },
-        { name: "Tte Redes Ópticas", repositorio: "repo-tte-opticas", branch: "release" },
-        { name: "Gsoc", repositorio: "repo-gsoc", branch: "main" },
-        { name: "Demo", repositorio: "repo-demo", branch: "develop" }
-    ];
+    private sandbox: Sandbox;
 
-    constructor(private context: vscode.ExtensionContext) {}
+    constructor(private context: vscode.ExtensionContext) {
+        this.sandbox = new Sandbox();
+    }
 
     refresh(): void {
         this._onDidChangeTreeData.fire();
@@ -35,39 +19,59 @@ export class GruposTreeProvider implements vscode.TreeDataProvider<GrupoItem> {
         return element;
     }
 
-    getChildren(element?: GrupoItem): Thenable<GrupoItem[]> {
+    async getChildren(element?: GrupoItem): Promise<GrupoItem[]> {
+
         if (element) {
+
             return Promise.resolve([]);
+        
         } else {
-            return Promise.resolve(
-                this.grupos.map(grupo => new GrupoItem(grupo.name, grupo.repositorio, grupo.branch, this.context))
-            );
+        
+            try {
+
+                //const response = await this.sandbox.statusWorkspace();
+                const sandbox = new Sandbox();
+                const response = await sandbox.statusWorkspace();
+                console.log("TAMBOSANDBOX response:", response);
+
+                if (!response || !response.data || !response.data.repos_disponibles || !Array.isArray(response.data.repos_disponibles)) {
+                    vscode.window.showErrorMessage('No se pudo obtener la lista de grupos desde el servidor.');
+                    return [];
+                }
+
+                return response.data.repos_disponibles.map((repo: any) => new GrupoItem(
+                    repo.id.toString(),
+                    repo.path,
+                    this.context
+                ));
+
+            } catch (error) {
+                vscode.window.showErrorMessage('Error al obtener los grupos: ' + error);
+                return [];
+            }
         }
     }
 }
 
 export class GrupoItem extends vscode.TreeItem {
     constructor(
-        public readonly name: string,
-        public readonly repositorio: string,
-        public readonly branch: string,
+        public readonly id: string,
+        public readonly path: string,
         private context: vscode.ExtensionContext
     ) {
-        super(name, vscode.TreeItemCollapsibleState.None);
-        this.tooltip = `Repositorio: ${repositorio} | Branch: ${branch}`;
-        this.description = branch;
+        super(path, vscode.TreeItemCollapsibleState.None);
+        this.tooltip = `ID: ${id} | Path: ${path}`;
+        this.description = id;
 
-        // Asociar un comando al elemento
         this.command = {
             title: 'Seleccionar Grupo',
             command: 'tambo.grupos.select',
-            arguments: [this] // Pasar el elemento seleccionado al comando
+            arguments: [this]
         };
 
-        // Usar rutas absolutas para los iconos
         this.iconPath = {
-            light: this.context.asAbsolutePath('resources/icons/file_light.svg'),
-            dark: this.context.asAbsolutePath('resources/icons/file_dark.svg')
+            light: this.context.asAbsolutePath('resources/icons/git_light.svg'),
+            dark: this.context.asAbsolutePath('resources/icons/git_dark.svg')
         };
     }
 }

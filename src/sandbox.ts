@@ -10,14 +10,18 @@ export class Sandbox {
 
         try {
 
-            const sandboxUrl = globalConfig.sandboxUrl + globalConfig.sandboxAPIPing;
+            const sandboxUrl = globalConfig.sandboxUrl + globalConfig.sandboxAPIStatus;
 
             const response = await axios.get(sandboxUrl, {
                 httpsAgent: new https.Agent({ rejectUnauthorized: false })
             });
-            return response.status === 200;
+            return response.status === 200 || response.status === 422;
 
         } catch (error) {
+
+            if (axios.isAxiosError(error) && error.response && error.response.status === 422) {
+                return true;
+            }
 
             console.error("TAMBOSANDBOX:sandbox.status:", error);
             return false;
@@ -39,10 +43,15 @@ export class Sandbox {
                 return false;
             }
 
-            const response = await axios.get(sandboxUrl, {
-                httpsAgent: new https.Agent({ rejectUnauthorized: false }),
-                headers: { user: username, token: token },
+            const params = new URLSearchParams({
+                usuario: username,
+                token: token
             });
+
+            const response = await axios.get(`${sandboxUrl}?${params.toString()}`, {
+                httpsAgent: new https.Agent({ rejectUnauthorized: false })
+            });
+
             return response;
 
         } catch (error) {
@@ -54,99 +63,15 @@ export class Sandbox {
 
     }
 
-    async createWorkspace(): Promise<boolean> {
-
-        try {
-
-            const sandboxUrl = globalConfig.sandboxUrl + globalConfig.sandboxAPICreate;
-            const config = vscode.workspace.getConfiguration('tambo.sandbox.gitlab');
-            const username = config.get<string>('username');
-            const token = config.get<string>('token') ? decrypt(config.get<string>('token')!) : null;
-            const requestBody = {
-                hola: "123",
-                mundo: "abcd"
-            };
-
-            if (!username || !token) {
-                return false;
-            }
-
-            const response = await axios.post(sandboxUrl, requestBody, {
-                httpsAgent: new https.Agent({ rejectUnauthorized: false }),
-                headers: { user: username, token: token },
-            });
-            return response.status === 200;
-
-        } catch (error) {
-
-            console.error("TAMBOSANDBOX:sandbox.createWorkspace:", error);
-            return false;
-
-        }
+    async createWorkspace() {
 
     }
 
     async destroyWorkspace() {
 
-        try {
-
-            const sandboxUrl = globalConfig.sandboxUrl + globalConfig.sandboxAPIDestroy;
-            const config = vscode.workspace.getConfiguration('tambo.sandbox.gitlab');
-            const username = config.get<string>('username');
-            const token = config.get<string>('token') ? decrypt(config.get<string>('token')!) : null;
-            const requestBody = {
-                hola: "123",
-                mundo: "abcd"
-            };
-
-            if (!username || !token) {
-                return false;
-            }
-
-            const response = await axios.post(sandboxUrl, requestBody, {
-                httpsAgent: new https.Agent({ rejectUnauthorized: false }),
-                headers: { user: username, token: token },
-            });
-            return response.status === 200;
-
-        } catch (error) {
-
-            console.error("TAMBOSANDBOX:sandbox.createWorkspace:", error);
-            return false;
-
-        }
-
     }
 
     async commitWorkspace() {
-
-        try {
-
-            const sandboxUrl = globalConfig.sandboxUrl + globalConfig.sandboxAPIUpdate;
-            const config = vscode.workspace.getConfiguration('tambo.sandbox.gitlab');
-            const username = config.get<string>('username');
-            const token = config.get<string>('token') ? decrypt(config.get<string>('token')!) : null;
-            const requestBody = {
-                hola: "123",
-                mundo: "abcd"
-            };
-
-            if (!username || !token) {
-                return false;
-            }
-
-            const response = await axios.post(sandboxUrl, requestBody, {
-                httpsAgent: new https.Agent({ rejectUnauthorized: false }),
-                headers: { user: username, token: token },
-            });
-            return response.status === 200;
-
-        } catch (error) {
-
-            console.error("TAMBOSANDBOX:sandbox.createWorkspace:", error);
-            return false;
-
-        }
 
     }
 

@@ -4,14 +4,14 @@ import * as vscode from 'vscode';
 //import * as path from 'path';
 //import * as os from 'os';
 
-import { Connection } from './connection';
-//import { GruposTreeProvider, GrupoItem } from './grupos';
 
-let globalVariable: string;
+import { Connection } from './connection';
+import { GruposTreeProvider, GrupoItem } from './grupos';
+
+// file deepcode ignore InsecureTLSConfig: <please specify a reason of ignoring this>
+process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
 
 export function activate(context: vscode.ExtensionContext) {
-
-	globalVariable = 'Valor inicial';
 
 	// CARGAR CONFIGURACION DE CONExión A TAMBO SANDBOX
 	const connection = new Connection();
@@ -22,7 +22,7 @@ export function activate(context: vscode.ExtensionContext) {
 	vscode.workspace.onDidChangeConfiguration(event => {
 		if (event.affectsConfiguration('tambo.sandbox.gitlab.username') ||
 			event.affectsConfiguration('tambo.sandbox.gitlab.token')) {
-				vscode.commands.executeCommand('tambosandbox.connectionRefresh');
+			vscode.commands.executeCommand('tambosandbox.connectionRefresh');
 		}
 	});
 
@@ -49,10 +49,11 @@ export function activate(context: vscode.ExtensionContext) {
 	});
 	context.subscriptions.push(cmdConnectionRefresh);
 
-	
+
 	// VIEWPORT GRUPOS
-	/*     const gruposTreeProvider = new GruposTreeProvider(context);
-		vscode.window.registerTreeDataProvider('tambo_viewport_grupos', gruposTreeProvider); */
+	const gruposTreeProvider = new GruposTreeProvider(context);
+	vscode.window.registerTreeDataProvider('tambo_viewport_grupos', gruposTreeProvider);
+
 
 	// Registrar el comando para seleccionar un grupo
 	/*     context.subscriptions.push(
