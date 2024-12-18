@@ -6,30 +6,6 @@ import { globalConfig } from './globals';
 
 export class Sandbox {
 
-    async ping(): Promise<boolean> {
-
-        try {
-
-            const sandboxUrl = globalConfig.sandboxUrl + globalConfig.sandboxAPIStatus;
-
-            const response = await axios.get(sandboxUrl, {
-                httpsAgent: new https.Agent({ rejectUnauthorized: false })
-            });
-            return response.status === 200 || response.status === 422;
-
-        } catch (error) {
-
-            if (axios.isAxiosError(error) && error.response && error.response.status === 422) {
-                return true;
-            }
-
-            console.error("TAMBOSANDBOX:sandbox.status:", error);
-            return false;
-
-        }
-
-    }
-
     async statusWorkspace(): Promise<any> {
 
         try {

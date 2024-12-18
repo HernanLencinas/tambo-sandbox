@@ -153,18 +153,19 @@ class ConnectionsViewProvider implements vscode.WebviewViewProvider {
         webviewView.webview.onDidReceiveMessage(async (message) => {
             switch (message.command) {
                 case 'sandboxStatus':
-                    const sandboxStatus = await checkSandbox();
-                    const gitStatus = await checkGitlab();
-                    //const workspaceStatus = await checkWorkspace();
 
-                    const workspaceStatusId: number = 0;
+                    const workspaceStatus = await checkWorkspace();
+                    const sandboxStatus = workspaceStatus === false ? false : true;
+                    const workspaceStatusId = workspaceStatus.data?.estado;
+                    const gitStatus = await checkGitlab();
 
                     switch (workspaceStatusId) {
                         case 0:
                             vscode.commands.executeCommand('setContext', 'hasGrupos', true);
                             break;
-                        case 1:
-                        case 2:
+                        default:
+                            //case 1:
+                            //case 2:
                             vscode.commands.executeCommand('setContext', 'hasGrupos', false);
                             break;
                     }
@@ -172,8 +173,7 @@ class ConnectionsViewProvider implements vscode.WebviewViewProvider {
                     const sandboxData = [
                         { 'sandbox': sandboxStatus },
                         { 'git': gitStatus },
-                        { 'workspace': workspaceStatusId },
-                        /* { 'workspace': (sandboxStatus === false || gitStatus === false) ? 4 : workspaceStatus.data?.estado }, */
+                        { 'workspace': (sandboxStatus === false || gitStatus === false) ? 4 : workspaceStatusId },
                         /* { 'workspaceData': workspaceStatus.data } */
                     ];
 
@@ -598,8 +598,6 @@ class ConnectionsViewProvider implements vscode.WebviewViewProvider {
 
                         if (message.command === 'sandboxData') {
 
-                            console.log("TAMBOSANDBOX: ", message);
-
                             const sandboxEntry = message.data.find(entry => entry.hasOwnProperty('sandbox'));
                             const gitEntry = message.data.find(entry => entry.hasOwnProperty('git'));
                             const workspaceEntry = message.data.find(entry => entry.hasOwnProperty('workspace'));
@@ -768,23 +766,6 @@ class ConnectionsViewProvider implements vscode.WebviewViewProvider {
         `;
 
     }
-}
-
-async function checkSandbox(): Promise<boolean> {
-
-    try {
-
-        const sandbox = new Sandbox();
-
-        return await sandbox.ping();
-
-    } catch (error) {
-
-        console.error("TAMBOSANDBOX.connections.checkSandbox", error);
-        return false;
-
-    }
-
 }
 
 async function checkGitlab(): Promise<boolean> {

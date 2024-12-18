@@ -120,24 +120,24 @@ class ConnectionsViewProvider {
         webviewView.webview.onDidReceiveMessage(async (message) => {
             switch (message.command) {
                 case 'sandboxStatus':
-                    const sandboxStatus = await checkSandbox();
+                    const workspaceStatus = await checkWorkspace();
+                    const sandboxStatus = workspaceStatus === false ? false : true;
+                    const workspaceStatusId = workspaceStatus.data?.estado;
                     const gitStatus = await checkGitlab();
-                    //const workspaceStatus = await checkWorkspace();
-                    const workspaceStatusId = 0;
                     switch (workspaceStatusId) {
                         case 0:
                             vscode.commands.executeCommand('setContext', 'hasGrupos', true);
                             break;
-                        case 1:
-                        case 2:
+                        default:
+                            //case 1:
+                            //case 2:
                             vscode.commands.executeCommand('setContext', 'hasGrupos', false);
                             break;
                     }
                     const sandboxData = [
                         { 'sandbox': sandboxStatus },
                         { 'git': gitStatus },
-                        { 'workspace': workspaceStatusId },
-                        /* { 'workspace': (sandboxStatus === false || gitStatus === false) ? 4 : workspaceStatus.data?.estado }, */
+                        { 'workspace': (sandboxStatus === false || gitStatus === false) ? 4 : workspaceStatusId },
                         /* { 'workspaceData': workspaceStatus.data } */
                     ];
                     webviewView.webview.postMessage({ command: 'sandboxData', data: sandboxData });
@@ -538,8 +538,6 @@ class ConnectionsViewProvider {
 
                         if (message.command === 'sandboxData') {
 
-                            console.log("TAMBOSANDBOX: ", message);
-
                             const sandboxEntry = message.data.find(entry => entry.hasOwnProperty('sandbox'));
                             const gitEntry = message.data.find(entry => entry.hasOwnProperty('git'));
                             const workspaceEntry = message.data.find(entry => entry.hasOwnProperty('workspace'));
@@ -709,16 +707,6 @@ class ConnectionsViewProvider {
     }
 }
 ConnectionsViewProvider.viewType = 'tambo_viewport_connection';
-async function checkSandbox() {
-    try {
-        const sandbox = new sandbox_1.Sandbox();
-        return await sandbox.ping();
-    }
-    catch (error) {
-        console.error("TAMBOSANDBOX.connections.checkSandbox", error);
-        return false;
-    }
-}
 async function checkGitlab() {
     try {
         const config = vscode.workspace.getConfiguration('tambo.sandbox.gitlab');
@@ -810,22 +798,6 @@ const https = __webpack_require__(6);
 const axios_1 = __webpack_require__(7);
 const globals_1 = __webpack_require__(46);
 class Sandbox {
-    async ping() {
-        try {
-            const sandboxUrl = globals_1.globalConfig.sandboxUrl + globals_1.globalConfig.sandboxAPIStatus;
-            const response = await axios_1.default.get(sandboxUrl, {
-                httpsAgent: new https.Agent({ rejectUnauthorized: false })
-            });
-            return response.status === 200 || response.status === 422;
-        }
-        catch (error) {
-            if (axios_1.default.isAxiosError(error) && error.response && error.response.status === 422) {
-                return true;
-            }
-            console.error("TAMBOSANDBOX:sandbox.status:", error);
-            return false;
-        }
-    }
     async statusWorkspace() {
         try {
             const sandboxUrl = globals_1.globalConfig.sandboxUrl + globals_1.globalConfig.sandboxAPIStatus;
