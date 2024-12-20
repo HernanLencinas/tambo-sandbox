@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/naming-convention */
 import * as vscode from 'vscode';
 import { decrypt } from './utils';
 import * as https from 'https';
@@ -19,20 +20,19 @@ export class Sandbox {
                 return false;
             }
 
-            const params = new URLSearchParams({
-                usuario: username,
-                token: token
-            });
-
-            const response = await axios.get(`${sandboxUrl}?${params.toString()}`, {
-                httpsAgent: new https.Agent({ rejectUnauthorized: false })
+            const response = await axios.get(sandboxUrl, {
+                httpsAgent: new https.Agent({ rejectUnauthorized: false }),
+                headers: {
+                    'X-Usuario': username,
+                    'X-Token-Gitlab': token
+                }
             });
 
             return response;
 
         } catch (error) {
 
-            console.error("TAMBOSANDBOX:sandbox.status:", error);
+            console.error("TAMBOSANDBOX.sandbox.status: ", error);
             return false;
 
         }

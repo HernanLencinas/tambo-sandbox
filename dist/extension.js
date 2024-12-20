@@ -88,7 +88,7 @@ class Connection {
             context.subscriptions.push(vscode.window.registerWebviewViewProvider(ConnectionsViewProvider.viewType, this.provider));
         }
         catch (error) {
-            console.error("TAMBOSANDBOX: ", error);
+            console.error("TAMBOSANDBOX.Connection.load: ", error);
         }
     }
     isConfigured() {
@@ -101,7 +101,7 @@ class Connection {
             this.provider.refreshView();
         }
         else {
-            console.error("TAMBOSANDBOX: No se pudo actualizar la vista.");
+            console.error("TAMBOSANDBOX.Connection.refresh: No se pudo actualizar la vista.");
         }
     }
 }
@@ -168,7 +168,7 @@ class ConnectionsViewProvider {
             this.updateWebviewContent();
         }
         else {
-            console.error("TAMBOSANDBOX: No se puede refrescar, el WebView no está inicializado.");
+            console.error("TAMBOSANDBOX.ConnectionViewProvider.refreshview: No se puede refrescar, el WebView no está inicializado.");
         }
     }
     updateWebviewContent() {
@@ -792,6 +792,7 @@ module.exports = require("crypto");
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.Sandbox = void 0;
+/* eslint-disable @typescript-eslint/naming-convention */
 const vscode = __webpack_require__(1);
 const utils_1 = __webpack_require__(3);
 const https = __webpack_require__(6);
@@ -807,17 +808,17 @@ class Sandbox {
             if (!username || !token) {
                 return false;
             }
-            const params = new URLSearchParams({
-                usuario: username,
-                token: token
-            });
-            const response = await axios_1.default.get(`${sandboxUrl}?${params.toString()}`, {
-                httpsAgent: new https.Agent({ rejectUnauthorized: false })
+            const response = await axios_1.default.get(sandboxUrl, {
+                httpsAgent: new https.Agent({ rejectUnauthorized: false }),
+                headers: {
+                    'X-Usuario': username,
+                    'X-Token-Gitlab': token
+                }
             });
             return response;
         }
         catch (error) {
-            console.error("TAMBOSANDBOX:sandbox.status:", error);
+            console.error("TAMBOSANDBOX.sandbox.status: ", error);
             return false;
         }
     }
@@ -9219,7 +9220,7 @@ class Gitlab {
             return response;
         }
         catch (error) {
-            console.error("TAMBOSANDBOX:", error);
+            console.error("TAMBOSANDBOX.Gitlab.status: ", error);
             return false;
         }
     }

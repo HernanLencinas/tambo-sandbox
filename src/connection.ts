@@ -99,7 +99,7 @@ export class Connection {
                 )
             );
         } catch (error) {
-            console.error("TAMBOSANDBOX: ", error);
+            console.error("TAMBOSANDBOX.Connection.load: ", error);
         }
 
     }
@@ -119,7 +119,7 @@ export class Connection {
         if (this.provider) {
             this.provider.refreshView();
         } else {
-            console.error("TAMBOSANDBOX: No se pudo actualizar la vista.");
+            console.error("TAMBOSANDBOX.Connection.refresh: No se pudo actualizar la vista.");
         }
 
     }
@@ -215,7 +215,7 @@ class ConnectionsViewProvider implements vscode.WebviewViewProvider {
         if (this.webviewView) {
             this.updateWebviewContent();
         } else {
-            console.error("TAMBOSANDBOX: No se puede refrescar, el WebView no está inicializado.");
+            console.error("TAMBOSANDBOX.ConnectionViewProvider.refreshview: No se puede refrescar, el WebView no está inicializado.");
         }
 
     }
