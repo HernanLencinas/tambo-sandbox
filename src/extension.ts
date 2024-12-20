@@ -4,7 +4,6 @@ import * as vscode from 'vscode';
 //import * as path from 'path';
 //import * as os from 'os';
 
-
 import { Connection } from './connection';
 import { GruposTreeProvider, GrupoItem } from './grupos';
 
@@ -18,7 +17,6 @@ export function activate(context: vscode.ExtensionContext) {
 	connection.load(context);
 
 	// ESCUCHAR CAMBIOS EN LA CONFIGURACION
-
 	vscode.workspace.onDidChangeConfiguration(event => {
 		if (event.affectsConfiguration('tambo.sandbox.gitlab.username') ||
 			event.affectsConfiguration('tambo.sandbox.gitlab.token')) {
@@ -27,7 +25,6 @@ export function activate(context: vscode.ExtensionContext) {
 	});
 
 	// COMANDOS DE CONExión
-
 	const cmdConnectionWizard = vscode.commands.registerCommand('tambosandbox.connectionWizard', async () => {
 		connection.wizard();
 	});

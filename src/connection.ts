@@ -156,7 +156,7 @@ class ConnectionsViewProvider implements vscode.WebviewViewProvider {
 
                     const workspaceStatus = await checkWorkspace();
                     const sandboxStatus = workspaceStatus === false ? false : true;
-                    const workspaceStatusId = workspaceStatus.data?.estado;
+                    const workspaceStatusId = 0; //workspaceStatus.data?.estado;
                     const gitStatus = await checkGitlab();
 
                     switch (workspaceStatusId) {
@@ -173,8 +173,7 @@ class ConnectionsViewProvider implements vscode.WebviewViewProvider {
                     const sandboxData = [
                         { 'sandbox': sandboxStatus },
                         { 'git': gitStatus },
-                        { 'workspace': (sandboxStatus === false || gitStatus === false) ? 4 : workspaceStatusId },
-                        /* { 'workspaceData': workspaceStatus.data } */
+                        { 'workspace': (sandboxStatus === false || gitStatus === false) ? 4 : workspaceStatusId }
                     ];
 
                     webviewView.webview.postMessage({ command: 'sandboxData', data: sandboxData });
@@ -186,14 +185,27 @@ class ConnectionsViewProvider implements vscode.WebviewViewProvider {
 
                 case 'startWorkspace':
 
-                    const respuesta = await vscode.window.showInformationMessage(
+                    const startWorkspaceRes = await vscode.window.showInformationMessage(
                         '¿Iniciar un nuevo workspace de TAMBO Sandbox?',
                         { modal: true }, // Modal para enfatizar la confirmación
                         'Sí'
                     );
 
-                    if (respuesta === 'Sí') {
+                    if (startWorkspaceRes === 'Sí') {
                         vscode.window.showInformationMessage("TAMBO-SANDBOX: Iniciando Workspace de Sandbox");
+                    }
+                    break;
+
+                case 'destroyWorkspace':
+
+                    const destroyWorkspaceRes = await vscode.window.showInformationMessage(
+                        '¿Destruir el workspace actualmente en ejecuccion?',
+                        { modal: true }, // Modal para enfatizar la confirmación
+                        'Sí'
+                    );
+
+                    if (destroyWorkspaceRes === 'Sí') {
+                        vscode.window.showInformationMessage("TAMBO-SANDBOX: Destruyendo Workspace de Sandbox");
                     }
                     break;
 
@@ -384,6 +396,8 @@ class ConnectionsViewProvider implements vscode.WebviewViewProvider {
                         width: 100%;
                         color: orange;
                         margin-top: 10px;
+                        margin-left: 10px;
+                        margin-right: 10px;
                     }
                     .sandbox-button:hover {
                         background-color: orange;
@@ -420,8 +434,6 @@ class ConnectionsViewProvider implements vscode.WebviewViewProvider {
                         }
                     }
 
-
-
                     .apps-button {
                         display: flex; /* Flexbox para alinear contenido horizontalmente */
                         align-items: center; /* Centrar verticalmente */
@@ -430,10 +442,15 @@ class ConnectionsViewProvider implements vscode.WebviewViewProvider {
                         margin: -7px 10px 0px 10px;
                         border-radius: 5px;
                         font-size: 12px;
-                        color: orange;
-                        /* background-color: red; */
-                        background-color: transparent;
-                        border: 1px solid orange;
+                        
+                        /*  color: orange; */
+                        /*  background-color: transparent; */
+                        /*  border: 1px solid orange; */
+
+                        color: #eee;
+                        background-color: rgba(0, 0, 0, 0.1);
+                        border: 1px solid rgba(0, 0, 0, 0.1);
+                        
                         text-align: center;
                         cursor: pointer;
                         transition: background-color 0.3s, color 0.3s;
@@ -458,7 +475,7 @@ class ConnectionsViewProvider implements vscode.WebviewViewProvider {
                         justify-content: flex-start;
                         gap: 10px;
                     }
-                    .
+                    
                 </style>
             </head>
             <body>
@@ -595,6 +612,7 @@ class ConnectionsViewProvider implements vscode.WebviewViewProvider {
                     window.addEventListener('message', (event) => {
 
                         const message = event.data;
+                        let currentStatus = 0;
 
                         if (message.command === 'sandboxData') {
 
@@ -663,8 +681,9 @@ class ConnectionsViewProvider implements vscode.WebviewViewProvider {
 
                                     //workspaceDetails.classList.remove('hidden');
                                     //workspaceName.textContent = workspaceData.workspaceData.id;
-                                    //toolsPanel.classList.remove('hidden');
+                                    toolsPanel.classList.remove('hidden');
                                     break;
+
                                 case 1: // Estado 1: Inactivo
                                     statusWorkspace.className = 'offline';
                                     statusWorkspaceText.textContent = 'Inactivo';
@@ -679,6 +698,7 @@ class ConnectionsViewProvider implements vscode.WebviewViewProvider {
                                     //workspaceDetails.classList.add('hidden');
                                     //toolsPanel.classList.add('hidden');
                                     break;
+
                                 case 2: // Estado 2: En construccion
                                     statusWorkspace.className = 'deploying';
                                     statusWorkspaceText.textContent = 'Deployando';
@@ -692,6 +712,7 @@ class ConnectionsViewProvider implements vscode.WebviewViewProvider {
                                     //workspaceDetails.classList.add('hidden');
                                     //toolsPanel.classList.add('hidden');
                                     break;
+
                                 case 3: // Estado 3: En destruccion
                                     statusWorkspace.className = 'destroying';
                                     statusWorkspaceText.textContent = 'Destruyendo';
@@ -705,6 +726,7 @@ class ConnectionsViewProvider implements vscode.WebviewViewProvider {
                                     //workspaceDetails.classList.add('hidden');
                                     //toolsPanel.classList.add('hidden');
                                     break;
+
                                 case 4: // Estado 4: Desconectado
                                     statusWorkspace.className = 'offline';
                                     statusWorkspaceText.textContent = 'Desconectado';
@@ -718,6 +740,7 @@ class ConnectionsViewProvider implements vscode.WebviewViewProvider {
                                     //workspaceDetails.classList.add('hidden');
                                     //toolsPanel.classList.add('hidden');
                                     break;
+
                                 default: // Desconocido
                                     statusWorkspace.className = 'unknown';
                                     statusWorkspaceText.textContent = 'Desconocido';
@@ -731,16 +754,11 @@ class ConnectionsViewProvider implements vscode.WebviewViewProvider {
                                     //workspaceDetails.classList.add('hidden');
                                     //toolsPanel.classList.add('hidden');
                                     break;
+
                             }
                         }
 
                     });
-
-                    function invokeWorkspace1() {
-                        //document.getElementById('startSandboxButton').classList.add('hidden');
-                        vscode.postMessage({ command: "startWorkspace" });
-                        vscode.postMessage({ command: "destroyWorkspace" });
-                    }
 
                     function invokeWorkspace() {
 
@@ -749,7 +767,7 @@ class ConnectionsViewProvider implements vscode.WebviewViewProvider {
                         actionSandboxButton.classList.add("loading");
                         actionSandboxButton.disabled = true;
 
-                        vscode.postMessage({ command: "startWorkspace" });
+                        //vscode.postMessage({ command: "startWorkspace" });
                         vscode.postMessage({ command: "destroyWorkspace" });
 
                     }
@@ -758,8 +776,9 @@ class ConnectionsViewProvider implements vscode.WebviewViewProvider {
                         vscode.postMessage({ command: 'sandboxStatus' });
                     }
 
-                    updateSandboxData();
+                    //updateSandboxData();
                     setInterval(updateSandboxData, 3000);
+
                 </script>
             </body>
             </html>
