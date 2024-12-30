@@ -40,8 +40,8 @@ export class GruposTreeProvider implements vscode.TreeDataProvider<GrupoItem> {
                 }
 
                 return response.data.repos_disponibles.map((repo: any) => new GrupoItem(
-                    repo.id.toString(),
-                    repo.path,
+                    repo.path, //repo.id.toString(),
+                    repo.path.match(/clientes\/([^\/]+)\/tambo/)[1],
                     this.context
                 ));
 
@@ -60,8 +60,9 @@ export class GrupoItem extends vscode.TreeItem {
         private context: vscode.ExtensionContext
     ) {
         super(path, vscode.TreeItemCollapsibleState.None);
-        this.tooltip = `ID: ${id} | Path: ${path}`;
-        this.description = id;
+        this.tooltip = `Repositorio: https://gitlab.com/${id}.git`;
+        //this.tooltip = `ID: ${id} | Path: ${path}`;
+        //this.description = id;
 
         this.command = {
             title: 'Seleccionar Grupo',

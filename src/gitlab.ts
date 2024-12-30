@@ -11,7 +11,7 @@ export class Gitlab {
 
         try {
 
-            const gitlabUrl = globalConfig.gitlabUrl;
+            const gitlabUrl = globalConfig.gitlabUrl + globalConfig.gitlabAPIUser;
             const config = vscode.workspace.getConfiguration('tambo.sandbox.gitlab');
             const username = config.get<string>('username');
             const token = config.get<string>('token') ? decrypt(config.get<string>('token')!) : null;

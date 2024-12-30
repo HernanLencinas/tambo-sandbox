@@ -6,5 +6,6 @@ export const globalConfig = {
     sandboxAPICreate: '/sandbox' as string,
     sandboxAPIDestroy: '/sandbox' as string,
     sandboxAPICommit: '/sandbox' as string,
-    gitlabUrl: 'https://gitlab.com/api/v4/user' as string
+    gitlabUrl: 'https://gitlab.com' as string,
+    gitlabAPIUser: '/api/v4/user' as string,
 };

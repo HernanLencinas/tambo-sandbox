@@ -23,8 +23,8 @@ export class Sandbox {
             const response = await axios.get(sandboxUrl, {
                 httpsAgent: new https.Agent({ rejectUnauthorized: false }),
                 headers: {
-                    'X-Usuario': username,
-                    'X-Token-Gitlab': token
+                    'usuario': username,
+                    'token': token
                 }
             });
 

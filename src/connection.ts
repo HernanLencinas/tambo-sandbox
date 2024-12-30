@@ -6,6 +6,7 @@ import { encrypt } from './utils';
 //import { globalConfig } from './globals';
 import { Sandbox } from './sandbox';
 import { Gitlab } from './gitlab';
+import { globalConfig } from './globals';
 
 export class Connection {
     private provider?: ConnectionsViewProvider;
@@ -159,21 +160,32 @@ class ConnectionsViewProvider implements vscode.WebviewViewProvider {
                     const workspaceStatusId = 0; //workspaceStatus.data?.estado;
                     const gitStatus = await checkGitlab();
 
-                    switch (workspaceStatusId) {
-                        case 0:
-                            vscode.commands.executeCommand('setContext', 'hasGrupos', true);
-                            break;
-                        default:
-                            //case 1:
-                            //case 2:
-                            vscode.commands.executeCommand('setContext', 'hasGrupos', false);
-                            break;
-                    }
+                    /*                     switch (workspaceStatusId) {
+                                            case 0:
+                                                vscode.commands.executeCommand('setContext', 'hasGrupos', true);
+                                                break;
+                                            default:
+                                                //case 1:
+                                                //case 2:
+                                                vscode.commands.executeCommand('setContext', 'hasGrupos', false);
+                                                break;
+                                        } */
+
+                    const workspaceRepos = workspaceStatus.data.repos_disponibles.map((repo: any) => ({
+                        id: repo.id,
+                        name: repo.path.match(/clientes\/([^\/]+)\/tambo/)[1],
+                        repo: globalConfig.gitlabUrl + '/' + repo.path + '.git',
+                        branch: 'master'
+                    }));
+
+                    console.log("TAMBOSANDBOX:", workspaceRepos);
+
 
                     const sandboxData = [
                         { 'sandbox': sandboxStatus },
                         { 'git': gitStatus },
-                        { 'workspace': (sandboxStatus === false || gitStatus === false) ? 4 : workspaceStatusId }
+                        { 'workspace': (sandboxStatus === false || gitStatus === false) ? 4 : workspaceStatusId },
+                        { 'workspaceGrupos': workspaceRepos },
                     ];
 
                     webviewView.webview.postMessage({ command: 'sandboxData', data: sandboxData });
@@ -465,6 +477,11 @@ class ConnectionsViewProvider implements vscode.WebviewViewProvider {
                         margin-right: 8px; /* Espacio entre el ícono y el texto */
                         margin-left: 10px;
                     }
+                    .external-link-icon {
+                        width: 10px; 
+                        height: 10px;
+                        padding-left: 8px;
+                    }
 
                     .hidden {
                         display: none;
@@ -573,24 +590,41 @@ class ConnectionsViewProvider implements vscode.WebviewViewProvider {
 
                 <div id="toolsPanel" class="hidden">
                     <div class="row" style="padding: 10px 0px 10px 10px;">
-                        <b>Accesos:</b>
+                        <b>Herramientas:</b>
                     </div>
                     <div class="row">
                         <button class="apps-button" data-link="https://tambo-playground.automation.teco.com.ar">
-                            <img src="${vscodeURI}/resources/logos/airflow.png" class="apps-button-icon"> Airflow
+                            <img src="${vscodeURI}/resources/logos/airflow.png" class="apps-button-icon"> Airflow <img src="${vscodeURI}/resources/icons/external-link.svg" class="external-link-icon" />
                         </button>
                     </div>
                     <div class="row">
                         <button class="apps-button" data-link="https://gitlab.com/groups/telecom-argentina/-/saml/sso?token=93NxX_B5">
-                            <img src="${vscodeURI}/resources/logos/gitlab.png" class="apps-button-icon"> Gitlab
+                            <img src="${vscodeURI}/resources/logos/gitlab.png" class="apps-button-icon"> Gitlab <img src="${vscodeURI}/resources/icons/external-link.svg" class="external-link-icon" />
                         </button>
                     </div>
                     <div class="row">
                         <button class="apps-button" data-link="https://automation.telecom.com.ar">
-                            <img src="${vscodeURI}/resources/logos/automation.svg" class="apps-button-icon"> Automatizacion
+                            <img src="${vscodeURI}/resources/logos/automation.svg" class="apps-button-icon"> Portal de Automatizacion <img src="${vscodeURI}/resources/icons/external-link.svg" class="external-link-icon" />
                         </button>
                     </div>   
                 </div>
+
+                <!-- LISTADO DE GRUPOS -->
+                <div id="toolsPanel1" class1="hidden">
+                    <div class="row" style="padding: 10px 0px 10px 10px;">
+                        <b>Grupos:</b>
+                    </div>
+
+
+                    <div class="row">
+                        <button class="apps-button" data-link="https://tambo-playground.automation.teco.com.ar">
+                            <img src="${vscodeURI}/resources/icons/git_dark.svg" class="apps-button-icon"> Airflow
+                        </button>
+                    </div>
+
+
+                </div>
+
 
                 <script>
                     const vscode = acquireVsCodeApi();
@@ -614,12 +648,36 @@ class ConnectionsViewProvider implements vscode.WebviewViewProvider {
                         const message = event.data;
                         let currentStatus = 0;
 
+                        console.log("TAMBOSANDBOX: ", message);
+
                         if (message.command === 'sandboxData') {
 
                             const sandboxEntry = message.data.find(entry => entry.hasOwnProperty('sandbox'));
                             const gitEntry = message.data.find(entry => entry.hasOwnProperty('git'));
                             const workspaceEntry = message.data.find(entry => entry.hasOwnProperty('workspace'));
                             const workspaceData = message.data.find(entry => entry.hasOwnProperty('workspaceData'));
+
+
+                            const workspaceGrupos = message.data.find(entry => entry.hasOwnProperty('workspaceGrupos'));
+                            console.log("TAMBOSANDBOX1: ", workspaceGrupos);
+
+
+
+                            
+                                workspaceGrupos.workspaceGrupos.forEach((item, index) => {
+                                    console.log("TAMBOSANDBOX2: ", item);
+                                    // AGREGAR AQUI LOS BOTONES CON LOS GRUPOS
+                                });
+
+
+
+
+                            //workspaceGrupos.forEach(element => {
+                            //    console.log("TAMBOSANDBOX1:", element);
+                            //});
+
+
+
 
                             // statusSandbox
                             const statusConnection = document.getElementById('statusConnection');
