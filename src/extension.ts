@@ -3,9 +3,7 @@ import * as vscode from 'vscode';
 //import * as fs from 'fs';
 //import * as path from 'path';
 //import * as os from 'os';
-
 import { Connection } from './connection';
-import { GruposTreeProvider, GrupoItem } from './grupos';
 
 // file deepcode ignore InsecureTLSConfig: <please specify a reason of ignoring this>
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
@@ -46,10 +44,6 @@ export function activate(context: vscode.ExtensionContext) {
 	});
 	context.subscriptions.push(cmdConnectionRefresh);
 
-
-	// VIEWPORT GRUPOS
-	const gruposTreeProvider = new GruposTreeProvider(context);
-	vscode.window.registerTreeDataProvider('tambo_viewport_grupos', gruposTreeProvider);
 
 
 	// Registrar el comando para seleccionar un grupo

@@ -34,11 +34,6 @@
           "type": "webview"
         },
         {
-          "id": "tambo_viewport_grupos",
-          "name": "Grupos",
-          "when": "hasGrupos"
-        },
-        {
           "id": "tambo_viewport_help",
           "name": "Ayuda",
           "visibility": "collapsed"

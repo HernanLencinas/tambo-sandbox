@@ -9,6 +9,7 @@ import { Gitlab } from './gitlab';
 import { globalConfig } from './globals';
 
 export class Connection {
+
     private provider?: ConnectionsViewProvider;
 
     async wizard() {
@@ -152,77 +153,21 @@ class ConnectionsViewProvider implements vscode.WebviewViewProvider {
         vscode.commands.executeCommand('setContext', 'tambo.configDefined', new Connection().isConfigured());
 
         webviewView.webview.onDidReceiveMessage(async (message) => {
+
             switch (message.command) {
+
                 case 'sandboxStatus':
 
-                    const workspaceStatus = await checkWorkspace();
-                    const sandboxStatus = workspaceStatus === false ? false : true;
-                    const workspaceStatusId = 0; //workspaceStatus.data?.estado;
-                    const gitStatus = await checkGitlab();
-
-                    /*                     switch (workspaceStatusId) {
-                                            case 0:
-                                                vscode.commands.executeCommand('setContext', 'hasGrupos', true);
-                                                break;
-                                            default:
-                                                //case 1:
-                                                //case 2:
-                                                vscode.commands.executeCommand('setContext', 'hasGrupos', false);
-                                                break;
-                                        } */
-
-                    const workspaceRepos = workspaceStatus.data.repos_disponibles.map((repo: any) => ({
-                        id: repo.id,
-                        name: repo.path.match(/clientes\/([^\/]+)\/tambo/)[1],
-                        repo: globalConfig.gitlabUrl + '/' + repo.path + '.git',
-                        branch: 'master'
-                    }));
-
-                    console.log("TAMBOSANDBOX:", workspaceRepos);
-
-
-                    const sandboxData = [
-                        { 'sandbox': sandboxStatus },
-                        { 'git': gitStatus },
-                        { 'workspace': (sandboxStatus === false || gitStatus === false) ? 4 : workspaceStatusId },
-                        { 'workspaceGrupos': workspaceRepos },
-                    ];
-
-                    webviewView.webview.postMessage({ command: 'sandboxData', data: sandboxData });
-                    break;
-
-                case 'sandboxWizard':
-                    vscode.commands.executeCommand('tambosandbox.connectionWizard');
-                    break;
-
-                case 'startWorkspace':
-
-                    const startWorkspaceRes = await vscode.window.showInformationMessage(
-                        '¿Iniciar un nuevo workspace de TAMBO Sandbox?',
-                        { modal: true }, // Modal para enfatizar la confirmación
-                        'Sí'
-                    );
-
-                    if (startWorkspaceRes === 'Sí') {
-                        vscode.window.showInformationMessage("TAMBO-SANDBOX: Iniciando Workspace de Sandbox");
-                    }
-                    break;
-
-                case 'destroyWorkspace':
-
-                    const destroyWorkspaceRes = await vscode.window.showInformationMessage(
-                        '¿Destruir el workspace actualmente en ejecuccion?',
-                        { modal: true }, // Modal para enfatizar la confirmación
-                        'Sí'
-                    );
-
-                    if (destroyWorkspaceRes === 'Sí') {
-                        vscode.window.showInformationMessage("TAMBO-SANDBOX: Destruyendo Workspace de Sandbox");
-                    }
+                    const htmlStatusSandbox = await updateStatus(this.context.extensionUri);
+                    webviewView.webview.postMessage({
+                        command: 'sandboxConnectionStatus',
+                        data: htmlStatusSandbox,
+                    });
                     break;
 
                 case 'openLink':
                     if (message.link) {
+                        vscode.window.showInformationMessage("Abriendo Link");
                         vscode.env.openExternal(vscode.Uri.parse(message.link));
                     }
                     break;
@@ -230,7 +175,75 @@ class ConnectionsViewProvider implements vscode.WebviewViewProvider {
                 case 'showMessage':
                     vscode.window.showInformationMessage(message.message);
                     break;
+
+                /*                 case 'sandboxStatus':
+                
+                                    const workspaceStatus = await checkWorkspace();
+                                    const sandboxStatus = workspaceStatus === false ? false : true;
+                                    const workspaceStatusId = 0; //workspaceStatus.data?.estado;
+                                    const gitStatus = await checkGitlab();
+                                    const workspaceRepos = workspaceStatus.data.repos_disponibles.map((repo: any) => ({
+                                        id: repo.id,
+                                        name: repo.path.match(/clientes\/([^\/]+)\/tambo/)[1],
+                                        repo: globalConfig.gitlabUrl + '/' + repo.path + '.git',
+                                        branch: 'master'
+                                    }));
+                
+                                    console.log("TAMBOSANDBOX:", workspaceRepos);
+                
+                
+                                    const sandboxData = [
+                                        { 'sandbox': sandboxStatus },
+                                        { 'git': gitStatus },
+                                        { 'workspace': (sandboxStatus === false || gitStatus === false) ? 4 : workspaceStatusId },
+                                        { 'workspaceGrupos': workspaceRepos },
+                                    ];
+                
+                                    webviewView.webview.postMessage({ command: 'sandboxData', data: sandboxData });
+                                    break; */
+
+                /*                 case 'sandboxWizard':
+                                    vscode.commands.executeCommand('tambosandbox.connectionWizard');
+                                    break;
+                
+                                case 'startWorkspace':
+                
+                                    const startWorkspaceRes = await vscode.window.showInformationMessage(
+                                        '¿Iniciar un nuevo workspace de TAMBO Sandbox?',
+                                        { modal: true }, // Modal para enfatizar la confirmación
+                                        'Sí'
+                                    );
+                
+                                    if (startWorkspaceRes === 'Sí') {
+                                        vscode.window.showInformationMessage("TAMBO-SANDBOX: Iniciando Workspace de Sandbox");
+                                    }
+                                    break;
+                
+                                case 'destroyWorkspace':
+                
+                                    const destroyWorkspaceRes = await vscode.window.showInformationMessage(
+                                        '¿Destruir el workspace actualmente en ejecuccion?',
+                                        { modal: true }, // Modal para enfatizar la confirmación
+                                        'Sí'
+                                    );
+                
+                                    if (destroyWorkspaceRes === 'Sí') {
+                                        vscode.window.showInformationMessage("TAMBO-SANDBOX: Destruyendo Workspace de Sandbox");
+                                    }
+                                    break;
+                
+                                case 'openLink':
+                                    if (message.link) {
+                                        vscode.env.openExternal(vscode.Uri.parse(message.link));
+                                    }
+                                    break;
+                
+                                case 'showMessage':
+                                    vscode.window.showInformationMessage(message.message);
+                                    break; */
+
             }
+
         });
     }
 
@@ -251,6 +264,8 @@ class ConnectionsViewProvider implements vscode.WebviewViewProvider {
         }
 
         const connection = new Connection();
+        globalConfig.vscodeUri = this.webviewView.webview.asWebviewUri(this.context.extensionUri);
+
         if (connection.isConfigured()) {
             this.webviewView.webview.html = this.getConnectionContent(
                 this.webviewView.webview.asWebviewUri(this.context.extensionUri)
@@ -297,7 +312,6 @@ class ConnectionsViewProvider implements vscode.WebviewViewProvider {
                         cursor: pointer;
                         transition: background-color 0.3s, color 0.3s;
                     }
-
                     .wizard-button:hover {
                         background-color: orange;
                         color: black;
@@ -445,7 +459,6 @@ class ConnectionsViewProvider implements vscode.WebviewViewProvider {
                             transform: rotate(360deg);
                         }
                     }
-
                     .apps-button {
                         display: flex; /* Flexbox para alinear contenido horizontalmente */
                         align-items: center; /* Centrar verticalmente */
@@ -454,15 +467,9 @@ class ConnectionsViewProvider implements vscode.WebviewViewProvider {
                         margin: -7px 10px 0px 10px;
                         border-radius: 5px;
                         font-size: 12px;
-                        
-                        /*  color: orange; */
-                        /*  background-color: transparent; */
-                        /*  border: 1px solid orange; */
-
                         color: #eee;
                         background-color: rgba(0, 0, 0, 0.1);
                         border: 1px solid rgba(0, 0, 0, 0.1);
-                        
                         text-align: center;
                         cursor: pointer;
                         transition: background-color 0.3s, color 0.3s;
@@ -477,12 +484,14 @@ class ConnectionsViewProvider implements vscode.WebviewViewProvider {
                         margin-right: 8px; /* Espacio entre el ícono y el texto */
                         margin-left: 10px;
                     }
+                    .app-button-selected {
+                        border: 1px solid white;
+                    }
                     .external-link-icon {
                         width: 10px; 
                         height: 10px;
                         padding-left: 8px;
                     }
-
                     .hidden {
                         display: none;
                     }
@@ -492,343 +501,38 @@ class ConnectionsViewProvider implements vscode.WebviewViewProvider {
                         justify-content: flex-start;
                         gap: 10px;
                     }
-                    
                 </style>
             </head>
             <body>
+                <!--// Sandbox Status //-->
+                <div id="sandboxPanelStatus"></div>
 
-                <!-- Sandbox Status -->
-                <div class="row">
-                    <div class="status">
-                        <span id="statusConnection" class="offline"></span>
-                        <b>Sandbox: </b><span id="statusConnectionText">Validando</span>
-                    </div>
-                </div>
-                <div class="row hidden" id="statusConnectionAlert">
-                    <div class="status-msg">
-                        <span class="arrow">&#x21B3;</span>
-                        <span class="icon">⚠️</span>
-                        <span class="msg" id="statusConnectionAlertText"></span>
-                    </div>
-                </div>
+                <!-- <div id="sandboxPanelTools"></div> -->
 
-                <!-- Gitlab Status -->
-                <div class="row">
-                    <div class="status">
-                        <span id="statusGit" class="offline"></span>
-                        <b>Git: </b><span id="statusGitText">Validando</span>
-                    </div>
-                </div>
-                <div class="row hidden" id="statusGitAlert">
-                    <div class="status-msg">
-                        <span class="arrow">&#x21B3;</span>
-                        <span class="icon">⚠️</span>
-                        <span class="msg" id="statusGitAlertText"></span>
-                    </div>
-                </div>
-
-                <!-- Workspace Status -->
-                <div class="row">
-                    <div class="status">
-                        <span id="statusWorkspace" class="offline"></span>
-                        <b>Workspace: </b><span id="statusWorkspaceText">Validando</span>
-                    </div>
-                </div>
-                <div class="row hidden" id="statusWorkspaceAlert">
-                    <div class="status-msg">
-                        <span class="arrow">&#x21B3;</span>
-                        <span class="icon">🚀</span>
-                        <span class="msg" id="statusWorkspaceAlertText"></span>
-                    </div>
-                </div>
-
-                <!-- Workspace Details -->
-                <div class="hidden" id="workspaceDetails">
-                    <div class="row" id="x1">
-                        <div class="status-msg">
-                            <span class="arrow">&#x21B3;</span>
-                            <span class1="msg" style="font-weight: bold" id="workspaceName">Texto de muestra</span>
-                        </div>
-                    </div>
-                    <div class="row" id="x1">
-                        <div class="status-msg">
-                            <span class="arrow"></span>
-                            <span class="icon"><b>usuario:</b></span>
-                            <span class="msg" id="x1">Texto de muestra</span>
-                        </div>
-                    </div>
-                    <div class="row" id="x1">
-                        <div class="status-msg">
-                            <span class="arrow">&#x21B3;</span>
-                            <span class="icon"><b>repo:</b></span>
-                            <span class="msg" id="x1">Texto de muestra</span>
-                        </div>
-                    </div>
-                    <div class="row" id="x1">
-                        <div class="status-msg">
-                            <span class="arrow">&#x21B3;</span>
-                            <span class="icon"><b>branch:</b></span>
-                            <span class="msg" id="x1">Texto de muestra</span>
-                        </div>
-                    </div>                    
-                    <div class="row" id="x1">
-                        <div class="status-msg">
-                            <span class="arrow">&#x21B3;</span>
-                            <span class="icon"><b>hash:</b></span>
-                            <span class="msg" id="x1">Texto de muestra</span>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Workspace Tools -->
-                <div class="row">
-                    <button id="actionSandboxButton" onclick="invokeWorkspace();" class="sandbox-button hidden">
-                        <div class="spinner"></div>
-                        <span id="actionSandboxButtonText"></span>
-                    </button>
-                </div>
-
-                <div id="toolsPanel" class="hidden">
-                    <div class="row" style="padding: 10px 0px 10px 10px;">
-                        <b>Herramientas:</b>
-                    </div>
-                    <div class="row">
-                        <button class="apps-button" data-link="https://tambo-playground.automation.teco.com.ar">
-                            <img src="${vscodeURI}/resources/logos/airflow.png" class="apps-button-icon"> Airflow <img src="${vscodeURI}/resources/icons/external-link.svg" class="external-link-icon" />
-                        </button>
-                    </div>
-                    <div class="row">
-                        <button class="apps-button" data-link="https://gitlab.com/groups/telecom-argentina/-/saml/sso?token=93NxX_B5">
-                            <img src="${vscodeURI}/resources/logos/gitlab.png" class="apps-button-icon"> Gitlab <img src="${vscodeURI}/resources/icons/external-link.svg" class="external-link-icon" />
-                        </button>
-                    </div>
-                    <div class="row">
-                        <button class="apps-button" data-link="https://automation.telecom.com.ar">
-                            <img src="${vscodeURI}/resources/logos/automation.svg" class="apps-button-icon"> Portal de Automatizacion <img src="${vscodeURI}/resources/icons/external-link.svg" class="external-link-icon" />
-                        </button>
-                    </div>   
-                </div>
-
-                <!-- LISTADO DE GRUPOS -->
-                <div id="toolsPanel1" class1="hidden">
-                    <div class="row" style="padding: 10px 0px 10px 10px;">
-                        <b>Grupos:</b>
-                    </div>
-
-
-                    <div class="row">
-                        <button class="apps-button" data-link="https://tambo-playground.automation.teco.com.ar">
-                            <img src="${vscodeURI}/resources/icons/git_dark.svg" class="apps-button-icon"> Airflow
-                        </button>
-                    </div>
-
-
-                </div>
 
 
                 <script>
                     const vscode = acquireVsCodeApi();
 
-                    document.addEventListener('DOMContentLoaded', () => {
-                            // Selecciona todos los botones con data-link
-                        const buttons = document.querySelectorAll('.apps-button[data-link]');
-
-                        buttons.forEach(button => {
-                            button.addEventListener('click', (event) => {
-                                const link = button.getAttribute('data-link');
-                                if (link) {
-                                    vscode.postMessage({ command: 'openLink', link });
-                                }
-                            });
-                        });
-                    });
-
                     window.addEventListener('message', (event) => {
-
                         const message = event.data;
-                        let currentStatus = 0;
+                        if (message.command === 'sandboxConnectionStatus') {
 
-                        console.log("TAMBOSANDBOX: ", message);
+                            const sPanelStatus = document.getElementById('sandboxPanelStatus');
+                            sPanelStatus.innerHTML = message.data;
 
-                        if (message.command === 'sandboxData') {
-
-                            const sandboxEntry = message.data.find(entry => entry.hasOwnProperty('sandbox'));
-                            const gitEntry = message.data.find(entry => entry.hasOwnProperty('git'));
-                            const workspaceEntry = message.data.find(entry => entry.hasOwnProperty('workspace'));
-                            const workspaceData = message.data.find(entry => entry.hasOwnProperty('workspaceData'));
-
-
-                            const workspaceGrupos = message.data.find(entry => entry.hasOwnProperty('workspaceGrupos'));
-                            console.log("TAMBOSANDBOX1: ", workspaceGrupos);
-
-
-
-                            
-                                workspaceGrupos.workspaceGrupos.forEach((item, index) => {
-                                    console.log("TAMBOSANDBOX2: ", item);
-                                    // AGREGAR AQUI LOS BOTONES CON LOS GRUPOS
+                            const buttons = sPanelStatus.querySelectorAll('.apps-button[data-link]');
+                            buttons.forEach(button => {
+                                button.addEventListener('click', (event) => {
+                                    const link = button.getAttribute('data-link');
+                                    if (link) {
+                                        vscode.postMessage({ command: 'openLink', link });
+                                    }
                                 });
+                            });
 
-
-
-
-                            //workspaceGrupos.forEach(element => {
-                            //    console.log("TAMBOSANDBOX1:", element);
-                            //});
-
-
-
-
-                            // statusSandbox
-                            const statusConnection = document.getElementById('statusConnection');
-                            const statusConnectionText = document.getElementById('statusConnectionText');
-                            const statusConnectionAlert = document.getElementById('statusConnectionAlert');
-                            const statusConnectionAlertText = document.getElementById('statusConnectionAlertText');
-
-                            if (sandboxEntry['sandbox']) {
-                                statusConnection.className = 'online';
-                                statusConnectionText.textContent = 'Conectado';
-                                statusConnectionAlert.classList.add('hidden');
-                            } else {
-                                statusConnection.className = 'offline';
-                                statusConnectionText.textContent = 'Desconectado';
-                                statusConnectionAlert.classList.remove('hidden');
-                                statusConnectionAlertText.textContent = "No se pudo establecer conexión con el servicio de Sandbox. Verifique su conexión a la red o asegúrese de estar conectado a la VPN.";
-                            }
-
-                            // statusGit
-                            const statusGit = document.getElementById('statusGit');
-                            const statusGitText = document.getElementById('statusGitText');
-                            const statusGitAlert = document.getElementById('statusGitAlert');
-                            const statusGitAlertText = document.getElementById('statusGitAlertText');
- 
-                            if (gitEntry['git']) {
-                                statusGit.className = 'online';
-                                statusGitText.textContent = 'Conectado';
-                                statusGitAlert.classList.add('hidden');
-                            } else {
-                                statusGit.className = 'offline';
-                                statusGitText.textContent = 'Desconectado';
-                                statusGitAlert.classList.remove('hidden');
-                                statusGitAlertText.textContent = "Autenticación fallida. Por favor, verifique que su usuario y token sean correctos.";
-                            }
-                        
-                            // statusWorkspace
-                            const statusWorkspace = document.getElementById('statusWorkspace');
-                            const statusWorkspaceText = document.getElementById('statusWorkspaceText');
-                            const statusWorkspaceAlert = document.getElementById('statusWorkspaceAlert');
-                            const statusWorkspaceAlertText = document.getElementById('statusWorkspaceAlertText');
-                            
-                            const actionSandboxButton = document.getElementById('actionSandboxButton');
-                            const actionSandboxButtonText = document.getElementById('actionSandboxButtonText');
-
-                            //const workspaceDetails = document.getElementById('workspaceDetails');
-                            //const workspaceName = document.getElementById('workspaceName');
-                            //const toolsPanel = document.getElementById('toolsPanel');
-
-                            switch (workspaceEntry['workspace']) {
-                                case 0: // Estado 0: Activado
-                                    statusWorkspace.className = 'online';
-                                    statusWorkspaceText.textContent = 'Activo';
-                                    statusWorkspaceAlert.classList.add('hidden');
-
-                                    actionSandboxButton.classList.remove('hidden');
-                                    actionSandboxButton.classList.remove('loading');
-                                    actionSandboxButton.disabled = false;
-                                    actionSandboxButtonText.textContent = 'DESTRUIR WORKSPACE';
-
-                                    //workspaceDetails.classList.remove('hidden');
-                                    //workspaceName.textContent = workspaceData.workspaceData.id;
-                                    toolsPanel.classList.remove('hidden');
-                                    break;
-
-                                case 1: // Estado 1: Inactivo
-                                    statusWorkspace.className = 'offline';
-                                    statusWorkspaceText.textContent = 'Inactivo';
-                                    statusWorkspaceAlert.classList.remove('hidden');
-                                    statusWorkspaceAlertText.innerHTML = 'No tienes un workspace asignado. Para crear uno nuevo, haz clic en el botón <b>Iniciar workspace</b> para comenzar';
-
-                                    actionSandboxButton.classList.remove('hidden');
-                                    actionSandboxButton.classList.remove('loading');
-                                    actionSandboxButton.disabled = false;
-                                    actionSandboxButtonText.innerHTML = 'INICIAR WORKSPACE';
-
-                                    //workspaceDetails.classList.add('hidden');
-                                    //toolsPanel.classList.add('hidden');
-                                    break;
-
-                                case 2: // Estado 2: En construccion
-                                    statusWorkspace.className = 'deploying';
-                                    statusWorkspaceText.textContent = 'Deployando';
-                                    statusWorkspaceAlert.classList.add('hidden');
-
-                                    actionSandboxButton.classList.add('hidden');
-                                    actionSandboxButton.classList.remove('loading');
-                                    actionSandboxButton.disabled = false;
-                                    actionSandboxButtonText.innerHTML = '';
-
-                                    //workspaceDetails.classList.add('hidden');
-                                    //toolsPanel.classList.add('hidden');
-                                    break;
-
-                                case 3: // Estado 3: En destruccion
-                                    statusWorkspace.className = 'destroying';
-                                    statusWorkspaceText.textContent = 'Destruyendo';
-                                    statusWorkspaceAlert.classList.add('hidden');
-
-                                    actionSandboxButton.classList.add('hidden');
-                                    actionSandboxButton.classList.remove('loading');
-                                    actionSandboxButton.disabled = false;
-                                    actionSandboxButtonText.innerHTML = '';
-
-                                    //workspaceDetails.classList.add('hidden');
-                                    //toolsPanel.classList.add('hidden');
-                                    break;
-
-                                case 4: // Estado 4: Desconectado
-                                    statusWorkspace.className = 'offline';
-                                    statusWorkspaceText.textContent = 'Desconectado';
-                                    statusWorkspaceAlert.classList.add('hidden');
-
-                                    actionSandboxButton.classList.add('hidden');
-                                    actionSandboxButton.classList.remove('loading');
-                                    actionSandboxButton.disabled = false;
-                                    actionSandboxButtonText.innerHTML = '';
-
-                                    //workspaceDetails.classList.add('hidden');
-                                    //toolsPanel.classList.add('hidden');
-                                    break;
-
-                                default: // Desconocido
-                                    statusWorkspace.className = 'unknown';
-                                    statusWorkspaceText.textContent = 'Desconocido';
-                                    statusWorkspaceAlert.classList.add('hidden');
-
-                                    actionSandboxButton.classList.add('hidden');
-                                    actionSandboxButton.classList.remove('loading');
-                                    actionSandboxButton.disabled = false;
-                                    actionSandboxButtonText.innerHTML = '';
-
-                                    //workspaceDetails.classList.add('hidden');
-                                    //toolsPanel.classList.add('hidden');
-                                    break;
-
-                            }
                         }
-
                     });
-
-                    function invokeWorkspace() {
-
-                        const actionSandboxButton = document.getElementById("actionSandboxButton");
-
-                        actionSandboxButton.classList.add("loading");
-                        actionSandboxButton.disabled = true;
-
-                        //vscode.postMessage({ command: "startWorkspace" });
-                        vscode.postMessage({ command: "destroyWorkspace" });
-
-                    }
 
                     function updateSandboxData() {
                         vscode.postMessage({ command: 'sandboxStatus' });
@@ -886,3 +590,161 @@ async function checkWorkspace(): Promise<any> {
     }
 
 }
+
+async function updateStatus(vscodeURI: any): Promise<any> {
+
+    const [workspaceStatus, gitStatus] = await Promise.all([checkWorkspace(), checkGitlab()]);
+    const sandboxStatus = !!workspaceStatus;
+
+    const estadoMap = {
+        0: { clase: 'online', texto: 'Conectado' },
+        1: { clase: 'offline', texto: 'Desconectado' },
+        2: { clase: 'deploying', texto: 'Deployando' },
+    };
+
+    const errorMessages = {
+        sandbox: "No se pudo establecer conexión con el servicio de Sandbox. Verifique sus credenciales o conexión a la red asegúrandose de estar conectado a la VPN Corporativa.",
+        git: "Autenticación fallida. Por favor, verifique que su usuario y token sean correctos.",
+        workspace: "No tienes un workspace asignado. Para crear uno nuevo, haz clic en el botón <b>Iniciar workspace</b> para comenzar.",
+    };
+
+    const originalWorkspaceStatus = workspaceStatus.data?.estado as keyof typeof estadoMap;
+
+    let workspaceEffectiveStatus = originalWorkspaceStatus;
+    if (!sandboxStatus && !gitStatus) {
+        workspaceEffectiveStatus = 1;
+    }
+
+    const estadoInfo = estadoMap[workspaceEffectiveStatus] || { clase: 'offline', texto: 'Desconectado' };
+
+    function createStatusHTML(title: string, status: any, isCustom = false, errorKey: 'sandbox' | 'git' | 'workspace' = 'sandbox', showOriginalError = false) {
+
+        const clase = isCustom ? status.clase : status ? 'online' : 'offline';
+        const texto = isCustom ? status.texto : status ? 'Conectado' : 'Desconectado';
+        const showError = clase === 'offline' && errorKey && (!showOriginalError || originalWorkspaceStatus === 1);
+
+        const errorSection = showError
+            ? `
+                <div class="row">
+                    <div class="status-msg">
+                        <span class="arrow">&#x21B3;</span>
+                        <span class="icon">⚠️</span>
+                        <span class="msg">${errorMessages[errorKey]}</span>
+                    </div>
+                </div>
+            `
+            : '';
+
+        return `
+            <div class="row">
+                <div class="status">
+                    <span class="${clase}"></span>
+                    <b>${title}: </b>
+                    <span>${texto}</span>
+                </div>
+            </div>
+            ${errorSection}
+        `;
+    }
+
+    const htmlStatusSandbox = createStatusHTML('Sandbox', sandboxStatus, false, 'sandbox');
+    const htmlStatusGit = createStatusHTML('Git', gitStatus, false, 'git');
+    const htmlStatusWorkspace = createStatusHTML('Workspace', estadoInfo, true, 'workspace', true);
+
+    let actionButtonHTML = '';
+
+    if (sandboxStatus) {
+        if (workspaceEffectiveStatus === 0) {
+            const toolsHTML = await updateTools();
+            actionButtonHTML = `
+            <div class="row">
+                <button id="actionSandboxButton" onclick="invokeWorkspace();" class="sandbox-button">
+                    <div class="spinner"></div>
+                    <span id="actionSandboxButtonText">DESTRUIR WORKSPACE</span>
+                </button>
+            </div>
+            ${toolsHTML}
+        `;
+        } else if (workspaceEffectiveStatus === 1) {
+            const toolsHTML = await updateTools();
+            const gruposHTML = await updateRepository(workspaceStatus);
+            actionButtonHTML = `
+            <div class="row">
+                <button id="actionSandboxButton" onclick="invokeWorkspace();" class="sandbox-button">
+                    <div class="spinner"></div>
+                    <span id="actionSandboxButtonText">CREAR WORKSPACE</span>
+                </button>
+            </div>
+            ${toolsHTML}
+            ${gruposHTML}
+            `;
+        }
+    }
+
+    return htmlStatusSandbox + htmlStatusGit + htmlStatusWorkspace + actionButtonHTML;
+
+}
+
+async function updateRepository(workspaceStatus: any): Promise<string> {
+    let html = `
+        <div class="row" style="padding: 10px 0px 10px 10px;">
+            <b>Grupos:</b>
+        </div>
+    `;
+
+    // Extraer y ordenar los grupos alfabéticamente
+    const sortedGroups = workspaceStatus.data.repos_disponibles
+        .map((repo: any) => {
+            const match = repo.path.match(/clientes\/(.*?)\/tambo/);
+            return match ? match[1] : null; // Extraer el grupo
+        })
+        .filter((grupo: string | null) => grupo !== null) // Filtrar valores null
+        .sort((a: string, b: string) => a.toLowerCase().localeCompare(b.toLowerCase())); // Ordenar alfabéticamente ignorando mayúsculas
+
+    // Generar el HTML con los grupos ordenados
+    sortedGroups.forEach((grupo: string) => {
+        const vscodeURI = globalConfig.vscodeUri;
+
+        html += `
+            <div class="row">
+                <button class="apps-button">
+                    <img src="${vscodeURI}/resources/icons/git_dark.svg" class="apps-button-icon">${grupo.toUpperCase()}
+                </button>
+            </div>
+        `;
+    });
+
+    return html;
+}
+
+async function updateTools(): Promise<string> {
+
+    const vscodeURI = globalConfig.vscodeUri;
+    const configuration = vscode.workspace.getConfiguration('tambo.sandbox.gitlab');
+    const currentUsername = configuration.get('username');
+
+    const html = `
+        <div class="row" style="padding: 10px 0px 10px 10px;">
+            <b>Herramientas:</b>
+        </div>
+        <div class="row">
+            <button class="apps-button" data-link="https://airflow-sandbox-${currentUsername}.dev.apps.automation.teco.com.ar/airflow/home">
+                <img src="${vscodeURI}/resources/logos/airflow.png" class="apps-button-icon"> AIRFLOW <img src="${vscodeURI}/resources/icons/external-link.svg" class="external-link-icon" />
+            </button>
+        </div>
+        <div class="row">
+            <button class="apps-button" data-link="https://gitlab.com/groups/telecom-argentina/-/saml/sso?token=93NxX_B5">
+                <img src="${vscodeURI}/resources/logos/gitlab.png" class="apps-button-icon"> GITLAB <img src="${vscodeURI}/resources/icons/external-link.svg" class="external-link-icon" />
+            </button>
+        </div>
+        <div class="row">
+            <button class="apps-button" data-link="https://automation.telecom.com.ar">
+                <img src="${vscodeURI}/resources/logos/automation.svg" class="apps-button-icon"> PORTAL AUTOMATIZACION <img src="${vscodeURI}/resources/icons/external-link.svg" class="external-link-icon" />
+            </button>
+        </div>
+    `;
+
+    return html;
+
+}
+

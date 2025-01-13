@@ -8,4 +8,6 @@ export const globalConfig = {
     sandboxAPICommit: '/sandbox' as string,
     gitlabUrl: 'https://gitlab.com' as string,
     gitlabAPIUser: '/api/v4/user' as string,
+    sandboxState: undefined as number | undefined,
+    vscodeUri: undefined as vscode.Uri | undefined
 };
