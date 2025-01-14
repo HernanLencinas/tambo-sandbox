@@ -211,6 +211,8 @@ class ConnectionsViewProvider implements vscode.WebviewViewProvider {
                     );
 
                     if (destroyWorkspaceRes === 'Sí') {
+                        const sandbox = new Sandbox();
+                        await sandbox.destroyWorkspace();
                         vscode.window.showInformationMessage("Destruyendo Workspace de Sandbox");
                     }
 
@@ -450,7 +452,8 @@ class ConnectionsViewProvider implements vscode.WebviewViewProvider {
                     }
                     .apps-button:hover {
                         background-color: orange;
-                        color: black;
+                        color: #eee;
+                        font-weight: bold;
                     }
                     .apps-button-icon {
                         width: 16px; /* Ajusta el tamaño del ícono */
@@ -580,6 +583,7 @@ async function updateStatus(vscodeURI: any): Promise<any> {
         0: { clase: 'online', texto: 'Conectado' },
         1: { clase: 'offline', texto: 'Desconectado' },
         2: { clase: 'deploying', texto: 'Deployando' },
+        3: { clase: 'deploying', texto: 'Deployando' },
     };
 
     const errorMessages = {

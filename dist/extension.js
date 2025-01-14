@@ -154,6 +154,8 @@ class ConnectionsViewProvider {
                     const destroyWorkspaceRes = await vscode.window.showInformationMessage('¿Destruir el workspace actualmente en ejecuccion?', { modal: true }, // Modal para enfatizar la confirmación
                     'Sí');
                     if (destroyWorkspaceRes === 'Sí') {
+                        const sandbox = new sandbox_1.Sandbox();
+                        await sandbox.destroyWorkspace();
                         vscode.window.showInformationMessage("Destruyendo Workspace de Sandbox");
                     }
                     break;
@@ -375,7 +377,8 @@ class ConnectionsViewProvider {
                     }
                     .apps-button:hover {
                         background-color: orange;
-                        color: black;
+                        color: #eee;
+                        font-weight: bold;
                     }
                     .apps-button-icon {
                         width: 16px; /* Ajusta el tamaño del ícono */
@@ -489,6 +492,7 @@ async function updateStatus(vscodeURI) {
         0: { clase: 'online', texto: 'Conectado' },
         1: { clase: 'offline', texto: 'Desconectado' },
         2: { clase: 'deploying', texto: 'Deployando' },
+        3: { clase: 'deploying', texto: 'Deployando' },
     };
     const errorMessages = {
         sandbox: "No se pudo establecer conexión con el servicio de Sandbox. Verifique sus credenciales o conexión a la red asegúrandose de estar conectado a la VPN Corporativa.",
