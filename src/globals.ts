@@ -9,5 +9,6 @@ export const globalConfig = {
     gitlabUrl: 'https://gitlab.com' as string,
     gitlabAPIUser: '/api/v4/user' as string,
     sandboxState: undefined as number | undefined,
-    vscodeUri: undefined as vscode.Uri | undefined
+    vscodeUri: undefined as vscode.Uri | undefined,
+    workspaceStatusHash: undefined as string | undefined
 };

@@ -28,7 +28,7 @@ export class Gitlab {
 
         } catch (error) {
 
-            console.error("TAMBOSANDBOX.Gitlab.status: ", error);
+            console.error("TAMBOSANDBOX.gitlab.status: ", error);
             return false;
 
         }

@@ -1,3 +1,6 @@
+/// SWAGGER TAMBO SANDBOX ///
+/// https://backend-sandbox.dev.apps.automation.teco.com.ar/docs
+
 import * as vscode from 'vscode';
 //import simpleGit, { SimpleGit, SimpleGitOptions } from 'simple-git';
 //import * as fs from 'fs';

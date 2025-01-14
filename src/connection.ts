@@ -7,6 +7,7 @@ import { encrypt } from './utils';
 import { Sandbox } from './sandbox';
 import { Gitlab } from './gitlab';
 import { globalConfig } from './globals';
+import { md5 } from "hash-wasm";
 
 export class Connection {
 
@@ -101,7 +102,7 @@ export class Connection {
                 )
             );
         } catch (error) {
-            console.error("TAMBOSANDBOX.Connection.load: ", error);
+            console.error("TAMBOSANDBOX.connection.load: ", error);
         }
 
     }
@@ -121,7 +122,7 @@ export class Connection {
         if (this.provider) {
             this.provider.refreshView();
         } else {
-            console.error("TAMBOSANDBOX.Connection.refresh: No se pudo actualizar la vista.");
+            console.error("TAMBOSANDBOX.connection.refresh: No se pudo actualizar la vista.");
         }
 
     }
@@ -157,12 +158,18 @@ class ConnectionsViewProvider implements vscode.WebviewViewProvider {
             switch (message.command) {
 
                 case 'sandboxStatus':
-
                     const htmlStatusSandbox = await updateStatus(this.context.extensionUri);
-                    webviewView.webview.postMessage({
-                        command: 'sandboxConnectionStatus',
-                        data: htmlStatusSandbox,
-                    });
+                    const hash = (await md5(htmlStatusSandbox)).slice(-5);
+
+                    if (globalConfig.workspaceStatusHash !== hash) {
+
+                        globalConfig.workspaceStatusHash = hash;
+                        webviewView.webview.postMessage({
+                            command: 'sandboxConnectionStatus',
+                            data: htmlStatusSandbox,
+                        });
+
+                    }
                     break;
 
                 case 'openLink':
@@ -176,71 +183,38 @@ class ConnectionsViewProvider implements vscode.WebviewViewProvider {
                     vscode.window.showInformationMessage(message.message);
                     break;
 
-                /*                 case 'sandboxStatus':
-                
-                                    const workspaceStatus = await checkWorkspace();
-                                    const sandboxStatus = workspaceStatus === false ? false : true;
-                                    const workspaceStatusId = 0; //workspaceStatus.data?.estado;
-                                    const gitStatus = await checkGitlab();
-                                    const workspaceRepos = workspaceStatus.data.repos_disponibles.map((repo: any) => ({
-                                        id: repo.id,
-                                        name: repo.path.match(/clientes\/([^\/]+)\/tambo/)[1],
-                                        repo: globalConfig.gitlabUrl + '/' + repo.path + '.git',
-                                        branch: 'master'
-                                    }));
-                
-                                    console.log("TAMBOSANDBOX:", workspaceRepos);
-                
-                
-                                    const sandboxData = [
-                                        { 'sandbox': sandboxStatus },
-                                        { 'git': gitStatus },
-                                        { 'workspace': (sandboxStatus === false || gitStatus === false) ? 4 : workspaceStatusId },
-                                        { 'workspaceGrupos': workspaceRepos },
-                                    ];
-                
-                                    webviewView.webview.postMessage({ command: 'sandboxData', data: sandboxData });
-                                    break; */
+                case 'sandboxCreate':
 
-                /*                 case 'sandboxWizard':
-                                    vscode.commands.executeCommand('tambosandbox.connectionWizard');
-                                    break;
-                
-                                case 'startWorkspace':
-                
-                                    const startWorkspaceRes = await vscode.window.showInformationMessage(
-                                        '¿Iniciar un nuevo workspace de TAMBO Sandbox?',
-                                        { modal: true }, // Modal para enfatizar la confirmación
-                                        'Sí'
-                                    );
-                
-                                    if (startWorkspaceRes === 'Sí') {
-                                        vscode.window.showInformationMessage("TAMBO-SANDBOX: Iniciando Workspace de Sandbox");
-                                    }
-                                    break;
-                
-                                case 'destroyWorkspace':
-                
-                                    const destroyWorkspaceRes = await vscode.window.showInformationMessage(
-                                        '¿Destruir el workspace actualmente en ejecuccion?',
-                                        { modal: true }, // Modal para enfatizar la confirmación
-                                        'Sí'
-                                    );
-                
-                                    if (destroyWorkspaceRes === 'Sí') {
-                                        vscode.window.showInformationMessage("TAMBO-SANDBOX: Destruyendo Workspace de Sandbox");
-                                    }
-                                    break;
-                
-                                case 'openLink':
-                                    if (message.link) {
-                                        vscode.env.openExternal(vscode.Uri.parse(message.link));
-                                    }
-                                    break;
-                
-                                case 'showMessage':
-                                    vscode.window.showInformationMessage(message.message);
-                                    break; */
+
+                    const createWorkspaceRes = await vscode.window.showInformationMessage(
+                        '¿Desplegar un nuevo Workspace en Tambo Sandbox?',
+                        { modal: true }, // Modal para enfatizar la confirmación
+                        'Sí'
+                    );
+
+                    if (createWorkspaceRes === 'Sí') {
+
+                        const sandbox = new Sandbox();
+                        await sandbox.createWorkspace();
+                        vscode.window.showInformationMessage("Creando sandbox");
+
+                    }
+
+                    break;
+
+                case 'sandboxDestroy':
+
+                    const destroyWorkspaceRes = await vscode.window.showInformationMessage(
+                        '¿Destruir el workspace actualmente en ejecuccion?',
+                        { modal: true }, // Modal para enfatizar la confirmación
+                        'Sí'
+                    );
+
+                    if (destroyWorkspaceRes === 'Sí') {
+                        vscode.window.showInformationMessage("Destruyendo Workspace de Sandbox");
+                    }
+
+                    break;
 
             }
 
@@ -252,7 +226,7 @@ class ConnectionsViewProvider implements vscode.WebviewViewProvider {
         if (this.webviewView) {
             this.updateWebviewContent();
         } else {
-            console.error("TAMBOSANDBOX.ConnectionViewProvider.refreshview: No se puede refrescar, el WebView no está inicializado.");
+            console.error("TAMBOSANDBOX.connectionViewProvider.refreshview: No se puede refrescar, el WebView no está inicializado.");
         }
 
     }
@@ -504,12 +478,8 @@ class ConnectionsViewProvider implements vscode.WebviewViewProvider {
                 </style>
             </head>
             <body>
-                <!--// Sandbox Status //-->
+
                 <div id="sandboxPanelStatus"></div>
-
-                <!-- <div id="sandboxPanelTools"></div> -->
-
-
 
                 <script>
                     const vscode = acquireVsCodeApi();
@@ -534,12 +504,22 @@ class ConnectionsViewProvider implements vscode.WebviewViewProvider {
                         }
                     });
 
+                    function createSandbox() {
+                        vscode.postMessage({ command: 'sandboxCreate' });
+                    }
+
+                    function destroySandbox() {
+                        vscode.postMessage({ command: 'sandboxDestroy' });
+                    }
+
                     function updateSandboxData() {
                         vscode.postMessage({ command: 'sandboxStatus' });
                     }
 
                     //updateSandboxData();
                     setInterval(updateSandboxData, 3000);
+
+
 
                 </script>
             </body>
@@ -621,7 +601,18 @@ async function updateStatus(vscodeURI: any): Promise<any> {
 
         const clase = isCustom ? status.clase : status ? 'online' : 'offline';
         const texto = isCustom ? status.texto : status ? 'Conectado' : 'Desconectado';
-        const showError = clase === 'offline' && errorKey && (!showOriginalError || originalWorkspaceStatus === 1);
+        let showError = clase === 'offline' && errorKey && (!showOriginalError || originalWorkspaceStatus === 1);
+
+        let additionalMessage = "";
+        if (isCustom && workspaceEffectiveStatus === 2 && errorKey === 'workspace') { // Estado "deploying" solo para workspace
+            additionalMessage = `<div class="row">
+                                    <div class="status-msg">
+                                        <span class="arrow">&#x21B3;</span>
+                                        <span class="icon">⚠️</span>
+                                        <span class="msg">Se esta deployando su espacio de trabajo, esto puede demorar aproximadamente 5 minutos.</span>
+                                    </div>
+                                </div>`;
+        }
 
         const errorSection = showError
             ? `
@@ -644,6 +635,7 @@ async function updateStatus(vscodeURI: any): Promise<any> {
                 </div>
             </div>
             ${errorSection}
+            ${additionalMessage}
         `;
     }
 
@@ -656,33 +648,30 @@ async function updateStatus(vscodeURI: any): Promise<any> {
     if (sandboxStatus) {
         if (workspaceEffectiveStatus === 0) {
             const toolsHTML = await updateTools();
+            const gruposHTML = await updateRepository(workspaceStatus);
             actionButtonHTML = `
             <div class="row">
-                <button id="actionSandboxButton" onclick="invokeWorkspace();" class="sandbox-button">
+                <button id="actionSandboxButton" onclick="destroySandbox();" class="sandbox-button">
                     <div class="spinner"></div>
                     <span id="actionSandboxButtonText">DESTRUIR WORKSPACE</span>
                 </button>
             </div>
             ${toolsHTML}
+            ${gruposHTML}
         `;
         } else if (workspaceEffectiveStatus === 1) {
-            const toolsHTML = await updateTools();
-            const gruposHTML = await updateRepository(workspaceStatus);
             actionButtonHTML = `
             <div class="row">
-                <button id="actionSandboxButton" onclick="invokeWorkspace();" class="sandbox-button">
+                <button id="actionSandboxButton" onclick="createSandbox();" class="sandbox-button">
                     <div class="spinner"></div>
                     <span id="actionSandboxButtonText">CREAR WORKSPACE</span>
                 </button>
             </div>
-            ${toolsHTML}
-            ${gruposHTML}
             `;
         }
     }
 
     return htmlStatusSandbox + htmlStatusGit + htmlStatusWorkspace + actionButtonHTML;
-
 }
 
 async function updateRepository(workspaceStatus: any): Promise<string> {
