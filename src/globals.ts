@@ -10,5 +10,6 @@ export const globalConfig = {
     gitlabAPIUser: '/api/v4/user' as string,
     sandboxState: undefined as number | undefined,
     vscodeUri: undefined as vscode.Uri | undefined,
-    workspaceStatusHash: undefined as string | undefined
+    workspaceStatusHash: undefined as string | undefined,
+    axiosTimeout: 15000 as number
 };

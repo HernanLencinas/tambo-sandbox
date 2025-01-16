@@ -1,6 +1,181 @@
 /******/ (() => { // webpackBootstrap
 /******/ 	var __webpack_modules__ = ([
-/* 0 */,
+/* 0 */
+/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
+
+"use strict";
+
+/// SWAGGER TAMBO SANDBOX ///
+/// https://backend-sandbox.dev.apps.automation.teco.com.ar/docs
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.activate = activate;
+exports.deactivate = deactivate;
+const vscode = __importStar(__webpack_require__(1));
+//import simpleGit, { SimpleGit, SimpleGitOptions } from 'simple-git';
+//import * as fs from 'fs';
+//import * as path from 'path';
+//import * as os from 'os';
+const connection_1 = __webpack_require__(2);
+// file deepcode ignore InsecureTLSConfig: <please specify a reason of ignoring this>
+process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
+function activate(context) {
+    // CARGAR CONFIGURACION DE CONExión A TAMBO SANDBOX
+    const connection = new connection_1.Connection();
+    connection.load(context);
+    // ESCUCHAR CAMBIOS EN LA CONFIGURACION
+    vscode.workspace.onDidChangeConfiguration(event => {
+        if (event.affectsConfiguration('tambo.sandbox.gitlab.username') ||
+            event.affectsConfiguration('tambo.sandbox.gitlab.token')) {
+            vscode.commands.executeCommand('tambosandbox.connectionRefresh');
+        }
+    });
+    // COMANDOS DE CONExión
+    const cmdConnectionWizard = vscode.commands.registerCommand('tambosandbox.connectionWizard', async () => {
+        connection.wizard();
+    });
+    context.subscriptions.push(cmdConnectionWizard);
+    const cmdConnectionEdit = vscode.commands.registerCommand('tambosandbox.connectionEdit', async () => {
+        connection.edit();
+        vscode.commands.executeCommand('tambosandbox.connectionRefresh');
+    });
+    context.subscriptions.push(cmdConnectionEdit);
+    const cmdConnectionDelete = vscode.commands.registerCommand('tambosandbox.connectionDelete', async () => {
+        connection.delete();
+    });
+    context.subscriptions.push(cmdConnectionDelete);
+    const cmdConnectionRefresh = vscode.commands.registerCommand('tambosandbox.connectionRefresh', async () => {
+        connection.refresh();
+    });
+    context.subscriptions.push(cmdConnectionRefresh);
+    // Registrar el comando para seleccionar un grupo
+    /*     context.subscriptions.push(
+            vscode.commands.registerCommand('tambo.grupos.select', (item) => {
+                vscode.window.showInformationMessage(`Repositorio seleccionado: ${item.repositorio}`);
+            })
+        ); */
+    // Registrar un comando para refrescar el árbol (opcional)
+    /*     context.subscriptions.push(
+            vscode.commands.registerCommand('tambo.grupos.refresh', () => gruposTreeProvider.refresh())
+        ); */
+    /// CAPTURAR EL EVENTO DE GUARDADO ///	
+    /* let saveListener = vscode.workspace.onDidSaveTextDocument(async (document: vscode.TextDocument) => {
+        vscode.window.showInformationMessage('Capturando eventos');
+        pushRepository();
+    });
+    context.subscriptions.push(saveListener); */
+    /// CLONAR REPOSITORIO ///
+    /* const cmdCloneRepository = vscode.commands.registerCommand('tambosandbox.cloneRepository', async () => {
+        cloneRepository();
+    });
+    context.subscriptions.push(cmdCloneRepository); */
+}
+function deactivate() { }
+/* function cloneRepository() {
+
+    const git: SimpleGit = simpleGit();
+    const repoUrl = 'https://git.cloudvalley.telecom.com.ar/automatizacion/ansible-test.git';
+    const tempDir = path.join(os.tmpdir(), 'vscode-tambosandbox');
+
+    // Verificar si la carpeta existe y eliminarla si es necesario
+    if (fs.existsSync(tempDir)) {
+        fs.rmSync(tempDir, { recursive: true, force: true });
+    }
+
+    // Clonar el repositorio
+    git.clone(repoUrl, tempDir)
+        .then(() => {
+
+            // Abrir el nuevo espacio de trabajo
+            vscode.workspace.updateWorkspaceFolders(0, null, { uri: vscode.Uri.file(tempDir), name: 'TAMBOSANDBOX' });
+
+            // Establecer el rootPath en el explorador de archivos
+            const newWorkspace = vscode.workspace.workspaceFolders?.find(folder => folder.uri.fsPath === tempDir);
+            if (newWorkspace) {
+                vscode.workspace.updateWorkspaceFolders(0, null, { uri: newWorkspace.uri, name: 'TAMBOSANDBOX' });
+            }
+
+            vscode.window.showInformationMessage('Repositorio Clonado.');
+
+        })
+        .catch((error) => {
+            vscode.window.showErrorMessage(`Error al Clonar: ${error}`);
+        });
+
+} */
+/* function pushRepository() {
+
+    // Configuración de simple-git
+    const options: Partial<SimpleGitOptions> = {
+        baseDir: vscode.workspace.rootPath,
+        binary: 'git',
+        config: ['core.autocrlf=false'],
+    };
+    const git: SimpleGit = simpleGit(options);
+
+    try {
+        // Realiza git add para todos los cambios
+        git.add('.');
+        // Crea el commit automáticamente
+        git.commit('Auto-commit desde VSCode');
+        // Realiza el push de los cambios
+        git.push();
+
+        vscode.window.showInformationMessage('TAMBO: Repositorio Actualizado');
+    } catch (error) {
+        vscode.window.showErrorMessage(`TAMBO: Error al Actualizar - ${error}`);
+    }
+
+} */
+/* 	// Configuración de simple-git
+    const options: Partial<SimpleGitOptions> = {
+        baseDir: vscode.workspace.rootPath,
+        binary: 'git',
+        config: ['core.autocrlf=false'],
+    };
+    const git: SimpleGit = simpleGit(options);
+    
+    // Capturar el evento de guardado
+    let saveListener = vscode.workspace.onDidSaveTextDocument(async (document: vscode.TextDocument) => {
+        try {
+            // Realiza git add para todos los cambios
+            await git.add('.');
+            // Crea el commit automáticamente
+            await git.commit('Auto-commit desde VSCode');
+            // Realiza el push de los cambios
+            await git.push();
+    
+            vscode.window.showInformationMessage('TAMBO: Repositorio Actualizado');
+        } catch (error) {
+            vscode.window.showErrorMessage(`TAMBO: Error al Actualizar - ${error}`);
+        }
+    });
+    context.subscriptions.push(saveListener); */
+
+
+/***/ }),
 /* 1 */
 /***/ ((module) => {
 
@@ -9,14 +184,37 @@ module.exports = require("vscode");
 
 /***/ }),
 /* 2 */
-/***/ ((__unused_webpack_module, exports, __webpack_require__) => {
+/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
 
 "use strict";
 
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
+};
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.Connection = void 0;
 /* eslint-disable @typescript-eslint/naming-convention */
-const vscode = __webpack_require__(1);
+const vscode = __importStar(__webpack_require__(1));
 const utils_1 = __webpack_require__(3);
 //import * as https from 'https';
 //import axios from 'axios';
@@ -447,8 +645,6 @@ class ConnectionsViewProvider {
                     //updateSandboxData();
                     setInterval(updateSandboxData, 3000);
 
-
-
                 </script>
             </body>
             </html>
@@ -631,14 +827,37 @@ async function updateTools() {
 
 /***/ }),
 /* 3 */
-/***/ ((__unused_webpack_module, exports, __webpack_require__) => {
+/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
 
 "use strict";
 
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
+};
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.encrypt = encrypt;
 exports.decrypt = decrypt;
-const crypto = __webpack_require__(4);
+const crypto = __importStar(__webpack_require__(4));
 // file deepcode ignore HardcodedSecret: <please specify a reason of ignoring this>, file deepcode ignore HardcodedNonCryptoSecret: <please specify a reason of ignoring this>
 const secretKey = 'MY1SUPER2KEY3ENCRYPTED4PUBLIC376';
 function encrypt(text) {
@@ -677,17 +896,43 @@ module.exports = require("crypto");
 
 /***/ }),
 /* 5 */
-/***/ ((__unused_webpack_module, exports, __webpack_require__) => {
+/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
 
 "use strict";
 
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
+};
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.Sandbox = void 0;
 /* eslint-disable @typescript-eslint/naming-convention */
-const vscode = __webpack_require__(1);
+const vscode = __importStar(__webpack_require__(1));
 const utils_1 = __webpack_require__(3);
-const https = __webpack_require__(6);
-const axios_1 = __webpack_require__(7);
+const https = __importStar(__webpack_require__(6));
+const axios_1 = __importDefault(__webpack_require__(7));
 const globals_1 = __webpack_require__(46);
 class Sandbox {
     async statusWorkspace() {
@@ -704,7 +949,8 @@ class Sandbox {
                 headers: {
                     'usuario': username,
                     'token': token
-                }
+                },
+                timeout: globals_1.globalConfig.axiosTimeout
             });
             return response;
         }
@@ -713,22 +959,60 @@ class Sandbox {
             return false;
         }
     }
+    /*     async createWorkspace(): Promise<boolean> {
+    
+            try {
+    
+                const sandboxUrl = globalConfig.sandboxUrl + globalConfig.sandboxAPICreate;
+                const config = vscode.workspace.getConfiguration('tambo.sandbox.gitlab');
+                const username = config.get<string>('username');
+    
+                if (!username) {
+                    return false;
+                }
+    
+                const response = await axios.post(sandboxUrl + "?usuario=" + username, {
+                    httpsAgent: new https.Agent({ rejectUnauthorized: false }),
+                    timeout: globalConfig.axiosTimeout,
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                });
+    
+                console.log(response);
+    
+                return true;
+    
+            } catch (error) {
+    
+                console.error("TAMBOSANDBOX.sandbox.create: ", error);
+                return false;
+    
+            }
+    
+        } */
     async createWorkspace() {
         try {
-            const sandboxUrl = globals_1.globalConfig.sandboxUrl + globals_1.globalConfig.sandboxAPICreate;
+            const sandboxUrl = `${globals_1.globalConfig.sandboxUrl}${globals_1.globalConfig.sandboxAPICreate}`;
             const config = vscode.workspace.getConfiguration('tambo.sandbox.gitlab');
             const username = config.get('username');
             if (!username) {
+                console.warn("No se encontró el nombre de usuario en la configuración.");
                 return false;
             }
-            const response = await axios_1.default.post(sandboxUrl + "?usuario=" + username, {
+            const axiosConfig = {
                 httpsAgent: new https.Agent({ rejectUnauthorized: false }),
-                data: "{}"
-            });
+                timeout: globals_1.globalConfig.axiosTimeout,
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+            };
+            const response = await axios_1.default.post(`${sandboxUrl}?usuario=${encodeURIComponent(username)}`, {}, axiosConfig);
+            console.log("Respuesta recibida:", response.data);
             return true;
         }
         catch (error) {
-            console.error("TAMBOSANDBOX.sandbox.create: ", error);
+            console.error("Error al crear el workspace en TAMBOSANDBOX.sandbox.create:", error);
             return false;
         }
     }
@@ -742,7 +1026,8 @@ class Sandbox {
             }
             const response = await axios_1.default.delete(sandboxUrl + "?usuario=" + username, {
                 httpsAgent: new https.Agent({ rejectUnauthorized: false }),
-                data: "{}"
+                data: "{}",
+                timeout: globals_1.globalConfig.axiosTimeout
             });
             return true;
         }
@@ -9114,23 +9399,50 @@ exports.globalConfig = {
     gitlabAPIUser: '/api/v4/user',
     sandboxState: undefined,
     vscodeUri: undefined,
-    workspaceStatusHash: undefined
+    workspaceStatusHash: undefined,
+    axiosTimeout: 15000
 };
 
 
 /***/ }),
 /* 47 */
-/***/ ((__unused_webpack_module, exports, __webpack_require__) => {
+/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
 
 "use strict";
 
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
+};
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.Gitlab = void 0;
 /* eslint-disable @typescript-eslint/naming-convention */
-const vscode = __webpack_require__(1);
+const vscode = __importStar(__webpack_require__(1));
 const utils_1 = __webpack_require__(3);
-const https = __webpack_require__(6);
-const axios_1 = __webpack_require__(7);
+const https = __importStar(__webpack_require__(6));
+const axios_1 = __importDefault(__webpack_require__(7));
 const globals_1 = __webpack_require__(46);
 class Gitlab {
     async status() {
@@ -9145,6 +9457,7 @@ class Gitlab {
             const response = await axios_1.default.get(gitlabUrl, {
                 httpsAgent: new https.Agent({ rejectUnauthorized: false }),
                 headers: { Authorization: `Bearer ${token}` },
+                timeout: globals_1.globalConfig.axiosTimeout
             });
             return response;
         }
@@ -11912,7 +12225,7 @@ function createSM3() {
 /******/ 		};
 /******/ 	
 /******/ 		// Execute the module function
-/******/ 		__webpack_modules__[moduleId](module, module.exports, __webpack_require__);
+/******/ 		__webpack_modules__[moduleId].call(module.exports, module, module.exports, __webpack_require__);
 /******/ 	
 /******/ 		// Return the exports of the module
 /******/ 		return module.exports;
@@ -11948,161 +12261,13 @@ function createSM3() {
 /******/ 	})();
 /******/ 	
 /************************************************************************/
-var __webpack_exports__ = {};
-// This entry need to be wrapped in an IIFE because it need to be in strict mode.
-(() => {
-"use strict";
-var exports = __webpack_exports__;
-
-/// SWAGGER TAMBO SANDBOX ///
-/// https://backend-sandbox.dev.apps.automation.teco.com.ar/docs
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.activate = activate;
-exports.deactivate = deactivate;
-const vscode = __webpack_require__(1);
-//import simpleGit, { SimpleGit, SimpleGitOptions } from 'simple-git';
-//import * as fs from 'fs';
-//import * as path from 'path';
-//import * as os from 'os';
-const connection_1 = __webpack_require__(2);
-// file deepcode ignore InsecureTLSConfig: <please specify a reason of ignoring this>
-process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
-function activate(context) {
-    // CARGAR CONFIGURACION DE CONExión A TAMBO SANDBOX
-    const connection = new connection_1.Connection();
-    connection.load(context);
-    // ESCUCHAR CAMBIOS EN LA CONFIGURACION
-    vscode.workspace.onDidChangeConfiguration(event => {
-        if (event.affectsConfiguration('tambo.sandbox.gitlab.username') ||
-            event.affectsConfiguration('tambo.sandbox.gitlab.token')) {
-            vscode.commands.executeCommand('tambosandbox.connectionRefresh');
-        }
-    });
-    // COMANDOS DE CONExión
-    const cmdConnectionWizard = vscode.commands.registerCommand('tambosandbox.connectionWizard', async () => {
-        connection.wizard();
-    });
-    context.subscriptions.push(cmdConnectionWizard);
-    const cmdConnectionEdit = vscode.commands.registerCommand('tambosandbox.connectionEdit', async () => {
-        connection.edit();
-        vscode.commands.executeCommand('tambosandbox.connectionRefresh');
-    });
-    context.subscriptions.push(cmdConnectionEdit);
-    const cmdConnectionDelete = vscode.commands.registerCommand('tambosandbox.connectionDelete', async () => {
-        connection.delete();
-    });
-    context.subscriptions.push(cmdConnectionDelete);
-    const cmdConnectionRefresh = vscode.commands.registerCommand('tambosandbox.connectionRefresh', async () => {
-        connection.refresh();
-    });
-    context.subscriptions.push(cmdConnectionRefresh);
-    // Registrar el comando para seleccionar un grupo
-    /*     context.subscriptions.push(
-            vscode.commands.registerCommand('tambo.grupos.select', (item) => {
-                vscode.window.showInformationMessage(`Repositorio seleccionado: ${item.repositorio}`);
-            })
-        ); */
-    // Registrar un comando para refrescar el árbol (opcional)
-    /*     context.subscriptions.push(
-            vscode.commands.registerCommand('tambo.grupos.refresh', () => gruposTreeProvider.refresh())
-        ); */
-    /// CAPTURAR EL EVENTO DE GUARDADO ///	
-    /* let saveListener = vscode.workspace.onDidSaveTextDocument(async (document: vscode.TextDocument) => {
-        vscode.window.showInformationMessage('Capturando eventos');
-        pushRepository();
-    });
-    context.subscriptions.push(saveListener); */
-    /// CLONAR REPOSITORIO ///
-    /* const cmdCloneRepository = vscode.commands.registerCommand('tambosandbox.cloneRepository', async () => {
-        cloneRepository();
-    });
-    context.subscriptions.push(cmdCloneRepository); */
-}
-function deactivate() { }
-/* function cloneRepository() {
-
-    const git: SimpleGit = simpleGit();
-    const repoUrl = 'https://git.cloudvalley.telecom.com.ar/automatizacion/ansible-test.git';
-    const tempDir = path.join(os.tmpdir(), 'vscode-tambosandbox');
-
-    // Verificar si la carpeta existe y eliminarla si es necesario
-    if (fs.existsSync(tempDir)) {
-        fs.rmSync(tempDir, { recursive: true, force: true });
-    }
-
-    // Clonar el repositorio
-    git.clone(repoUrl, tempDir)
-        .then(() => {
-
-            // Abrir el nuevo espacio de trabajo
-            vscode.workspace.updateWorkspaceFolders(0, null, { uri: vscode.Uri.file(tempDir), name: 'TAMBOSANDBOX' });
-
-            // Establecer el rootPath en el explorador de archivos
-            const newWorkspace = vscode.workspace.workspaceFolders?.find(folder => folder.uri.fsPath === tempDir);
-            if (newWorkspace) {
-                vscode.workspace.updateWorkspaceFolders(0, null, { uri: newWorkspace.uri, name: 'TAMBOSANDBOX' });
-            }
-
-            vscode.window.showInformationMessage('Repositorio Clonado.');
-
-        })
-        .catch((error) => {
-            vscode.window.showErrorMessage(`Error al Clonar: ${error}`);
-        });
-
-} */
-/* function pushRepository() {
-
-    // Configuración de simple-git
-    const options: Partial<SimpleGitOptions> = {
-        baseDir: vscode.workspace.rootPath,
-        binary: 'git',
-        config: ['core.autocrlf=false'],
-    };
-    const git: SimpleGit = simpleGit(options);
-
-    try {
-        // Realiza git add para todos los cambios
-        git.add('.');
-        // Crea el commit automáticamente
-        git.commit('Auto-commit desde VSCode');
-        // Realiza el push de los cambios
-        git.push();
-
-        vscode.window.showInformationMessage('TAMBO: Repositorio Actualizado');
-    } catch (error) {
-        vscode.window.showErrorMessage(`TAMBO: Error al Actualizar - ${error}`);
-    }
-
-} */
-/* 	// Configuración de simple-git
-    const options: Partial<SimpleGitOptions> = {
-        baseDir: vscode.workspace.rootPath,
-        binary: 'git',
-        config: ['core.autocrlf=false'],
-    };
-    const git: SimpleGit = simpleGit(options);
-    
-    // Capturar el evento de guardado
-    let saveListener = vscode.workspace.onDidSaveTextDocument(async (document: vscode.TextDocument) => {
-        try {
-            // Realiza git add para todos los cambios
-            await git.add('.');
-            // Crea el commit automáticamente
-            await git.commit('Auto-commit desde VSCode');
-            // Realiza el push de los cambios
-            await git.push();
-    
-            vscode.window.showInformationMessage('TAMBO: Repositorio Actualizado');
-        } catch (error) {
-            vscode.window.showErrorMessage(`TAMBO: Error al Actualizar - ${error}`);
-        }
-    });
-    context.subscriptions.push(saveListener); */
-
-})();
-
-module.exports = __webpack_exports__;
+/******/ 	
+/******/ 	// startup
+/******/ 	// Load entry module and return exports
+/******/ 	// This entry module is referenced by other modules so it can't be inlined
+/******/ 	var __webpack_exports__ = __webpack_require__(0);
+/******/ 	module.exports = __webpack_exports__;
+/******/ 	
 /******/ })()
 ;
 //# sourceMappingURL=extension.js.map

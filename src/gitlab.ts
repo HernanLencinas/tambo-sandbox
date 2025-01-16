@@ -23,6 +23,7 @@ export class Gitlab {
             const response = await axios.get(gitlabUrl, {
                 httpsAgent: new https.Agent({ rejectUnauthorized: false }),
                 headers: { Authorization: `Bearer ${token}` },
+                timeout: globalConfig.axiosTimeout
             });
             return response;
 

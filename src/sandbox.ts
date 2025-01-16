@@ -25,7 +25,9 @@ export class Sandbox {
                 headers: {
                     'usuario': username,
                     'token': token
-                }
+                },
+                timeout: globalConfig.axiosTimeout
+
             });
 
             return response;
@@ -39,32 +41,70 @@ export class Sandbox {
 
     }
 
+    /*     async createWorkspace(): Promise<boolean> {
+    
+            try {
+    
+                const sandboxUrl = globalConfig.sandboxUrl + globalConfig.sandboxAPICreate;
+                const config = vscode.workspace.getConfiguration('tambo.sandbox.gitlab');
+                const username = config.get<string>('username');
+    
+                if (!username) {
+                    return false;
+                }
+    
+                const response = await axios.post(sandboxUrl + "?usuario=" + username, {
+                    httpsAgent: new https.Agent({ rejectUnauthorized: false }),
+                    timeout: globalConfig.axiosTimeout,
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                });
+    
+                console.log(response);
+    
+                return true;
+    
+            } catch (error) {
+    
+                console.error("TAMBOSANDBOX.sandbox.create: ", error);
+                return false;
+    
+            }
+    
+        } */
+
     async createWorkspace(): Promise<boolean> {
 
         try {
-
-            const sandboxUrl = globalConfig.sandboxUrl + globalConfig.sandboxAPICreate;
+            const sandboxUrl = `${globalConfig.sandboxUrl}${globalConfig.sandboxAPICreate}`;
             const config = vscode.workspace.getConfiguration('tambo.sandbox.gitlab');
             const username = config.get<string>('username');
 
             if (!username) {
+                console.warn("No se encontró el nombre de usuario en la configuración.");
                 return false;
             }
 
-            const response = await axios.post(sandboxUrl + "?usuario=" + username, {
+            const axiosConfig = {
                 httpsAgent: new https.Agent({ rejectUnauthorized: false }),
-                data: "{}"
-            });
+                timeout: globalConfig.axiosTimeout,
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+            };
+
+            const response = await axios.post(`${sandboxUrl}?usuario=${encodeURIComponent(username)}`, {}, axiosConfig);
+
+            console.log("Respuesta recibida:", response.data);
 
             return true;
 
         } catch (error) {
-
-            console.error("TAMBOSANDBOX.sandbox.create: ", error);
+            console.error("Error al crear el workspace en TAMBOSANDBOX.sandbox.create:", error);
             return false;
-
         }
-
+        
     }
 
     async destroyWorkspace() {
@@ -81,7 +121,8 @@ export class Sandbox {
 
             const response = await axios.delete(sandboxUrl + "?usuario=" + username, {
                 httpsAgent: new https.Agent({ rejectUnauthorized: false }),
-                data: "{}"
+                data: "{}",
+                timeout: globalConfig.axiosTimeout
             });
 
             return true;
@@ -92,7 +133,7 @@ export class Sandbox {
             return false;
 
         }
-                
+
     }
 
     async commitWorkspace() {

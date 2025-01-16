@@ -522,8 +522,6 @@ class ConnectionsViewProvider implements vscode.WebviewViewProvider {
                     //updateSandboxData();
                     setInterval(updateSandboxData, 3000);
 
-
-
                 </script>
             </body>
             </html>
