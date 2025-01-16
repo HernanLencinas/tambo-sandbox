@@ -41,39 +41,6 @@ export class Sandbox {
 
     }
 
-    /*     async createWorkspace(): Promise<boolean> {
-    
-            try {
-    
-                const sandboxUrl = globalConfig.sandboxUrl + globalConfig.sandboxAPICreate;
-                const config = vscode.workspace.getConfiguration('tambo.sandbox.gitlab');
-                const username = config.get<string>('username');
-    
-                if (!username) {
-                    return false;
-                }
-    
-                const response = await axios.post(sandboxUrl + "?usuario=" + username, {
-                    httpsAgent: new https.Agent({ rejectUnauthorized: false }),
-                    timeout: globalConfig.axiosTimeout,
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                });
-    
-                console.log(response);
-    
-                return true;
-    
-            } catch (error) {
-    
-                console.error("TAMBOSANDBOX.sandbox.create: ", error);
-                return false;
-    
-            }
-    
-        } */
-
     async createWorkspace(): Promise<boolean> {
 
         try {
