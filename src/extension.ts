@@ -7,15 +7,22 @@ import * as vscode from 'vscode';
 //import * as path from 'path';
 //import * as os from 'os';
 import { Connection } from './connection';
+import { Sandbox } from './sandbox';
+import { globalConfig } from './globals';
 
 // file deepcode ignore InsecureTLSConfig: <please specify a reason of ignoring this>
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
 
-export function activate(context: vscode.ExtensionContext) {
+export async function activate(context: vscode.ExtensionContext) {
 
 	// CARGAR CONFIGURACION DE CONExión A TAMBO SANDBOX
 	const connection = new Connection();
 	connection.load(context);
+
+	// CARGAR REPOSITORIOS DE TRABAJO
+	const sandbox = new Sandbox();
+	globalConfig.workspaceRepositories = await sandbox.respositories();
+
 
 	// ESCUCHAR CAMBIOS EN LA CONFIGURACION
 	vscode.workspace.onDidChangeConfiguration(event => {

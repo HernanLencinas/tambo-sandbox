@@ -55,63 +55,57 @@ export class Sandbox {
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                validateStatus: (status: number) => [200, 404].includes(status)
+                validateStatus: (status: number) => [200].includes(status)
             };
 
-            const response = await axios.get(`${sandboxUrl}?usuario=${encodeURIComponent(username)}`, axiosConfig);
-            
-            return response.data.estado;
+            return (await axios.get(`${sandboxUrl}?usuario=${encodeURIComponent(username)}`, axiosConfig)).data.estado;
 
         } catch (error) {
-            console.error("TAMBOSANDBOX.sandbox.create:", error);
             return 1;
         }
 
     }
 
-/*     async statusWorkspace(): Promise<any> {
+    async respositories(): Promise<any> {
 
         try {
-
-            const sandboxUrl = globalConfig.sandboxUrl + globalConfig.sandboxAPIStatus;
+            const sandboxUrl = `${globalConfig.sandboxUrl}${globalConfig.sandboxAPIStatus}`;
             const config = vscode.workspace.getConfiguration('tambo.sandbox.gitlab');
             const username = config.get<string>('username');
-            const token = config.get<string>('token') ? decrypt(config.get<string>('token')!) : null;
+            const encryptedToken = config.get<string>('token');
+            const token = encryptedToken ? decrypt(encryptedToken) : null;
 
             if (!username || !token) {
-                return false;
+                return {};
             }
 
-            const response = await axios.get(sandboxUrl, {
+            const axiosConfig = {
                 httpsAgent: new https.Agent({ rejectUnauthorized: false }),
+                timeout: globalConfig.axiosTimeout,
                 headers: {
-                    'usuario': username,
-                    'token': token
+                    'Content-Type': 'application/json',
+                    usuario: username,
+                    token: token
                 },
-                timeout: globalConfig.axiosTimeout
+                validateStatus: (status: number) => [200].includes(status)
+            };
 
-            });
-
-            return response;
+            return (await axios.get(sandboxUrl, axiosConfig)).data.repos_disponibles;
 
         } catch (error) {
-
-            console.error("TAMBOSANDBOX.sandbox.status: ", error);
-            return false;
-
+            return {};
         }
 
-    } */
+    }
 
-/*     async createWorkspace(): Promise<boolean> {
+    async createWorkspace(): Promise<boolean> {
 
         try {
-            const sandboxUrl = `${globalConfig.sandboxUrl}${globalConfig.sandboxAPICreate}`;
+            const sandboxUrl = `${globalConfig.sandboxUrl}${globalConfig.sandboxAPISandbox}`;
             const config = vscode.workspace.getConfiguration('tambo.sandbox.gitlab');
             const username = config.get<string>('username');
 
             if (!username) {
-                console.warn("No se encontró el nombre de usuario en la configuración.");
                 return false;
             }
 
@@ -123,22 +117,20 @@ export class Sandbox {
                 },
             };
 
-            const response = await axios.post(`${sandboxUrl}?usuario=${encodeURIComponent(username)}`, {}, axiosConfig);
+            await axios.post(`${sandboxUrl}?usuario=${encodeURIComponent(username)}`, {}, axiosConfig);
 
             return true;
 
         } catch (error) {
-            console.error("TAMBOSANDBOX.sandbox.create:", error);
             return false;
         }
 
-    } */
+    }
 
-/*     async destroyWorkspace() {
+    async destroyWorkspace(): Promise<boolean> {
 
         try {
-
-            const sandboxUrl = globalConfig.sandboxUrl + globalConfig.sandboxAPICreate;
+            const sandboxUrl = globalConfig.sandboxUrl + globalConfig.sandboxAPISandbox;
             const config = vscode.workspace.getConfiguration('tambo.sandbox.gitlab');
             const username = config.get<string>('username');
 
@@ -155,16 +147,9 @@ export class Sandbox {
             return true;
 
         } catch (error) {
-
-            console.error("TAMBOSANDBOX.sandbox.destroy: ", error);
             return false;
-
         }
 
-    } */
-
-/*     async commitWorkspace() {
-
-    } */
+    }
 
 }

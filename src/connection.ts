@@ -3,7 +3,6 @@ import * as vscode from 'vscode';
 import { encrypt } from './utils';
 //import * as https from 'https';
 //import axios from 'axios';
-//import { globalConfig } from './globals';
 import { Sandbox } from './sandbox';
 import { Gitlab } from './gitlab';
 import { globalConfig } from './globals';
@@ -159,28 +158,18 @@ class ConnectionsViewProvider implements vscode.WebviewViewProvider {
 
                 case 'sandboxStatus':
                     const htmlStatusSandbox = await updateStatus(this.context.extensionUri);
+                    const hash = (await md5(htmlStatusSandbox)).slice(-5);
 
-                    webviewView.webview.postMessage({
-                        command: 'sandboxConnectionStatus',
-                        data: htmlStatusSandbox,
-                    });
+                    if (globalConfig.workspaceStatusHash !== hash) {
+                        globalConfig.workspaceStatusHash = hash;
+                        webviewView.webview.postMessage({
+                            command: 'sandboxConnectionStatus',
+                            data: htmlStatusSandbox,
+                        });
+
+                    }
 
                     break;
-
-                /*                 case 'sandboxStatus1':
-                                    const htmlStatusSandbox = await updateStatus(this.context.extensionUri);
-                                    const hash = (await md5(htmlStatusSandbox)).slice(-5);
-                
-                                    if (globalConfig.workspaceStatusHash !== hash) {
-                
-                                        globalConfig.workspaceStatusHash = hash;
-                                        webviewView.webview.postMessage({
-                                            command: 'sandboxConnectionStatus',
-                                            data: htmlStatusSandbox,
-                                        });
-                
-                                    }
-                                    break; */
 
                 case 'openLink':
                     if (message.link) {
@@ -193,40 +182,48 @@ class ConnectionsViewProvider implements vscode.WebviewViewProvider {
                     vscode.window.showInformationMessage(message.message);
                     break;
 
-                /*                 case 'sandboxCreate':
-                
-                
-                                    const createWorkspaceRes = await vscode.window.showInformationMessage(
-                                        '¿Desplegar un nuevo Workspace en Tambo Sandbox?',
-                                        { modal: true }, // Modal para enfatizar la confirmación
-                                        'Sí'
-                                    );
-                
-                                    if (createWorkspaceRes === 'Sí') {
-                
-                                        const sandbox = new Sandbox();
-                                        await sandbox.createWorkspace();
-                                        vscode.window.showInformationMessage("Creando sandbox");
-                
-                                    }
-                
-                                    break; */
+                case 'sandboxCreate':
 
-                /*                 case 'sandboxDestroy':
-                
-                                    const destroyWorkspaceRes = await vscode.window.showInformationMessage(
-                                        '¿Destruir el workspace actualmente en ejecuccion?',
-                                        { modal: true }, // Modal para enfatizar la confirmación
-                                        'Sí'
-                                    );
-                
-                                    if (destroyWorkspaceRes === 'Sí') {
-                                        const sandbox = new Sandbox();
-                                        await sandbox.destroyWorkspace();
-                                        vscode.window.showInformationMessage("Destruyendo Workspace de Sandbox");
-                                    }
-                
-                                    break; */
+
+                    const createWorkspaceRes = await vscode.window.showInformationMessage(
+                        '¿Desplegar un nuevo Workspace en Tambo Sandbox?',
+                        { modal: true },
+                        'Sí'
+                    );
+
+                    if (createWorkspaceRes === 'Sí') {
+
+                        const sandbox = new Sandbox();
+                        const response = await sandbox.createWorkspace();
+                        if (response) {
+                            vscode.window.showInformationMessage("TAMBO: Se inicio la creacion del workspace en Sandbox");
+                        } else {
+                            vscode.window.showErrorMessage("TAMBO: Ha ocurrido un error al intentar iniciar el workspace en Sandbox");
+                        }
+
+                    }
+
+                    break;
+
+                case 'sandboxDestroy':
+
+                    const destroyWorkspaceRes = await vscode.window.showInformationMessage(
+                        '¿Destruir el workspace actualmente en ejecuccion?',
+                        { modal: true }, // Modal para enfatizar la confirmación
+                        'Sí'
+                    );
+
+                    if (destroyWorkspaceRes === 'Sí') {
+                        const sandbox = new Sandbox();
+                        const response = await sandbox.destroyWorkspace();
+                        if (response) {
+                            vscode.window.showInformationMessage("TAMBO: Destruyendo workspace en Sandbox");
+                        } else {
+                            vscode.window.showErrorMessage("TAMBO: Ha ocurrido un error intentando destruir el workspace en Sandbox");
+                        }
+                    }
+
+                    break;
 
             }
 
@@ -488,7 +485,51 @@ class ConnectionsViewProvider implements vscode.WebviewViewProvider {
                         justify-content: flex-start;
                         gap: 10px;
                     }
-                </style>
+                    .select-container {
+                        position: relative;
+                        width: 100%;
+                        max-width: 600px;
+                    }
+                    .custom-select {
+                        width: 100%;
+                        background-color: #202233;
+                        border: 1px solid #444; 
+                        border-radius: 5px; 
+                        padding: 10px 15px;
+                        font-size: 13px;
+                        color: #FFFFFF;
+                        cursor: pointer;
+                        appearance: none;
+                        -webkit-appearance: none; 
+                        -moz-appearance: none;
+                    }
+                    .custom-select:focus {
+                        outline: none;
+                        border-color: white; 
+                    }
+                    .custom-select option {
+                        background-color: #1E1E2F; 
+                        color: #FFFFFF;
+                        padding: 10px;
+                    }
+                    .custom-select option:hover {
+                        background-color: #4CAF50;
+                        color: #FFFFFF;
+                    }
+                    .custom-select-arrow {
+                        position: absolute;
+                        right: 15px;
+                        top: 50%;
+                        transform: translateY(-50%);
+                        pointer-events: none;
+                        width: 0;
+                        height: 0;
+                        border-left: 6px solid transparent;
+                        border-right: 6px solid transparent;
+                        border-top: 6px solid #FFFFFF;
+                    }               
+
+                    </style>
             </head>
             <body>
 
@@ -540,289 +581,129 @@ class ConnectionsViewProvider implements vscode.WebviewViewProvider {
     }
 }
 
+
 async function updateStatus(vscodeURI: vscode.Uri) {
 
     const sandbox = new Sandbox();
     const gitlab = new Gitlab();
-
     const [sandboxStatus, gitStatus] = await Promise.all([sandbox.status(), gitlab.status()]);
 
-    const estadoMap = {
-        0: { clase: 'online', texto: 'Conectado' },
-        1: { clase: 'offline', texto: 'Desconectado' },
-        2: { clase: 'deploying', texto: 'Deployando' },
-        3: { clase: 'deploying', texto: 'Deployando' },
-    };
-
-    const errorMessages = {
-        sandbox: "No se pudo establecer conexión con el servicio de Sandbox. Verifique sus credenciales o conexión a la red asegúrandose de estar conectado a la VPN Corporativa.",
-        git: "Autenticación fallida. Por favor, verifique que su usuario y token sean correctos.",
-        workspace: "No tienes un workspace asignado. Para crear uno nuevo, haz clic en el botón <b>Iniciar workspace</b> para comenzar.",
-    };
-
-    let workspaceStatus = { data: { estado: 1 } };
-    let workspaceEffectiveStatus: keyof typeof estadoMap = 1;
-
-    try {
-
-        if (sandboxStatus && gitStatus) {
-            const workspaceResponse = await sandbox.workspaceStatus();
-
-            if (typeof workspaceResponse === 'number') {
-                workspaceEffectiveStatus = workspaceResponse as 0 | 1 | 2 | 3;
-            } else if (
-                workspaceResponse &&
-                typeof workspaceResponse === 'object' &&
-                (workspaceResponse as { data: { estado: number } }).data?.estado !== undefined
-            ) {
-                workspaceEffectiveStatus = (workspaceResponse as { data: { estado: 0 | 1 | 2 | 3 } }).data.estado;
-            }
-
-        }
-
-    } catch (error) {
-        workspaceEffectiveStatus = 1;
-    }
-
-    const estadoInfo = estadoMap[workspaceEffectiveStatus] || { clase: 'offline', texto: 'Desconectado' };
-
-    function createStatusHTML(
-        title: string, status: any, isCustom = false, errorKey = 'sandbox', showOriginalError = false
-    ) {
-        const clase = isCustom ? status.clase : status ? 'online' : 'offline';
-        const texto = isCustom ? status.texto : status ? 'Conectado' : 'Desconectado';
-
-        const showError =
-            clase === 'offline' &&
-            errorKey === 'workspace' &&
-            sandboxStatus &&
-            gitStatus &&
-            workspaceEffectiveStatus === 1;
-
-        let additionalMessage = "";
-        if (isCustom && workspaceEffectiveStatus === 2 && errorKey === 'workspace') {
-            additionalMessage = `<div class="row">
-                                    <div class="status-msg">
-                                        <span class="arrow">&#x21B3;</span>
-                                        <span class="icon">⚠️</span>
-                                        <span class="msg">Se está deployando su espacio de trabajo, esto puede demorar aproximadamente 5 minutos.</span>
-                                    </div>
-                                </div>`;
-        }
-
-        const errorSection = showError
-            ? `
-                <div class="row">
-                    <div class="status-msg">
-                        <span class="arrow">&#x21B3;</span>
-                        <span class="icon">⚠️</span>
-                        <span class="msg">${errorMessages[errorKey]}</span>
-                    </div>
-                </div>
-            `
-            : '';
-
-        return `
-            <div class="row">
-                <div class="status">
-                    <span class="${clase}"></span>
-                    <b>${title}: </b>
-                    <span>${texto}</span>
-                </div>
-            </div>
-            ${errorSection}
-            ${additionalMessage}
-        `;
-    }
-
-    const htmlStatusSandbox = createStatusHTML('Sandbox', sandboxStatus, false, 'sandbox');
-    const htmlStatusGit = createStatusHTML('Git', gitStatus, false, 'git');
-    const htmlStatusWorkspace = createStatusHTML('Workspace', estadoInfo, true, 'workspace', true);
-
+    let workspaceStatus: { estado: number; clase: string; texto: string; warningMessage?: string } = { estado: 1, clase: 'offline', texto: 'Desconectado' };
     let actionButtonHTML = '';
-    if (workspaceEffectiveStatus === 0) {
-        actionButtonHTML = `
-        <div class="row">
-            <button id="actionSandboxButton" onclick="destroySandbox();" class="sandbox-button">
-                <div class="spinner"></div>
-                <span id="actionSandboxButtonText">DESTRUIR WORKSPACE</span>
-            </button>
-        </div>
-    `;
-    } else if (workspaceEffectiveStatus === 1) {
-        actionButtonHTML = `
-        <div class="row">
-            <button id="actionSandboxButton" onclick="createSandbox();" class="sandbox-button">
-                <div class="spinner"></div>
-                <span id="actionSandboxButtonText">CREAR WORKSPACE</span>
-            </button>
-        </div>
-        `;
-    }
-
-    const html = `
-        ${htmlStatusSandbox}
-        ${htmlStatusGit}
-        ${htmlStatusWorkspace}
-        ${actionButtonHTML}
-    `;
-
-    return html;
-
-}
-
-/* async function updateStatus(vscodeURI: any): Promise<any> {
-
-    const sandbox = new Sandbox();
-    const gitlab = new Gitlab();
-
-    const [sandboxStatus, gitStatus] = await Promise.all([sandbox.status(), gitlab.status()]);
 
     if (sandboxStatus && gitStatus) {
 
+        const workspaceEffectiveStatus = await sandbox.workspaceStatus();
 
-
+        switch (workspaceEffectiveStatus) {
+            case 0:
+                workspaceStatus = { estado: 0, clase: 'online', texto: 'Conectado' };
+                actionButtonHTML = `
+                    <div class="row">
+                        <button id="actionSandboxButton" onclick="destroySandbox();" class="sandbox-button">
+                            <div class="spinner"></div>
+                            <span id="actionSandboxButtonText">DESTRUIR WORKSPACE</span>
+                        </button>
+                    </div>
+                `;
+                break;
+            case 1:
+                const workspaceReposHTML = await htmlRepos(globalConfig.workspaceRepositories);
+                workspaceStatus = { estado: 1, clase: 'offline', texto: 'Desconectado', warningMessage: 'No tienes un workspace asignado. Para iniciar uno nuevo, haz clic en el botón <b>Iniciar workspace</b> para comenzar.' };
+                actionButtonHTML = `
+                    ${workspaceReposHTML}
+                    <div class="row">
+                        <button id="actionSandboxButton" onclick="createSandbox();" class="sandbox-button">
+                            <div class="spinner"></div>
+                            <span id="actionSandboxButtonText">INICIAR WORKSPACE</span>
+                        </button>
+                    </div>
+                `;
+                break;
+            case 2:
+                workspaceStatus = { estado: 2, clase: 'deploying', texto: 'Deployando', warningMessage: 'Se está deployando su espacio de trabajo, esto puede demorar aproximadamente 3 minutos.' };
+                break;
+            case 3:
+                workspaceStatus = { estado: 3, clase: 'deploying', texto: 'Deployando', warningMessage: 'Se está deployando su espacio de trabajo, esto puede demorar aproximadamente 3 minutos.' };
+                break;
+        }
     }
 
-    return false;
+    let html1 = '';
 
-} */
+    html1 += createStatusHTML1("Sandbox", sandboxStatus ? "Conectado" : "Desconectado", sandboxStatus ? 'online' : 'offline', sandboxStatus ? "" : "No se pudo establecer conexión con el servicio de Sandbox. Verifique sus credenciales o conexión a la red asegúrandose de estar conectado a la VPN Corporativa.");
+    html1 += createStatusHTML1("Git", gitStatus ? "Conectado" : "Desconectado", gitStatus ? 'online' : 'offline', gitStatus ? "" : "Autenticación fallida. Por favor, verifique que su usuario y token sean correctos.");
+    html1 += createStatusHTML1("Workspace", workspaceStatus.texto, workspaceStatus.clase, workspaceStatus.warningMessage);
+    html1 += actionButtonHTML;
 
-/* async function updateStatus(vscodeURI: any): Promise<any> {
-
-    const [workspaceStatus, gitStatus] = await Promise.all([checkWorkspace(), checkGitlab()]);
-    const sandboxStatus = !!workspaceStatus;
-
-    const estadoMap = {
-        0: { clase: 'online', texto: 'Conectado' },
-        1: { clase: 'offline', texto: 'Desconectado' },
-        2: { clase: 'deploying', texto: 'Deployando' },
-        3: { clase: 'deploying', texto: 'Deployando' },
-    };
-
-    const errorMessages = {
-        sandbox: "No se pudo establecer conexión con el servicio de Sandbox. Verifique sus credenciales o conexión a la red asegúrandose de estar conectado a la VPN Corporativa.",
-        git: "Autenticación fallida. Por favor, verifique que su usuario y token sean correctos.",
-        workspace: "No tienes un workspace asignado. Para crear uno nuevo, haz clic en el botón <b>Iniciar workspace</b> para comenzar.",
-    };
-
-    const originalWorkspaceStatus = workspaceStatus.data?.estado as keyof typeof estadoMap;
-
-    let workspaceEffectiveStatus = originalWorkspaceStatus;
-    if (!sandboxStatus && !gitStatus) {
-        workspaceEffectiveStatus = 1;
-    }
-
-    const estadoInfo = estadoMap[workspaceEffectiveStatus] || { clase: 'offline', texto: 'Desconectado' };
-
-    function createStatusHTML(title: string, status: any, isCustom = false, errorKey: 'sandbox' | 'git' | 'workspace' = 'sandbox', showOriginalError = false) {
-
-        const clase = isCustom ? status.clase : status ? 'online' : 'offline';
-        const texto = isCustom ? status.texto : status ? 'Conectado' : 'Desconectado';
-        let showError = clase === 'offline' && errorKey && (!showOriginalError || originalWorkspaceStatus === 1);
+    function createStatusHTML1(
+        title: string,
+        status: any,
+        clase: string,
+        warningMessage?: string
+    ) {
 
         let additionalMessage = "";
-        if (isCustom && workspaceEffectiveStatus === 2 && errorKey === 'workspace') { // Estado "deploying" solo para workspace
+        if (warningMessage) {
             additionalMessage = `<div class="row">
-                                    <div class="status-msg">
-                                        <span class="arrow">&#x21B3;</span>
-                                        <span class="icon">⚠️</span>
-                                        <span class="msg">Se esta deployando su espacio de trabajo, esto puede demorar aproximadamente 5 minutos.</span>
-                                    </div>
-                                </div>`;
+                                <div class="status-msg">
+                                    <span class="arrow">&#x21B3;</span>
+                                    <span class="icon">⚠️</span>
+                                    <span class="msg">${warningMessage}</span>
+                                </div>
+                            </div>`;
         }
-
-        const errorSection = showError
-            ? `
-                <div class="row">
-                    <div class="status-msg">
-                        <span class="arrow">&#x21B3;</span>
-                        <span class="icon">⚠️</span>
-                        <span class="msg">${errorMessages[errorKey]}</span>
-                    </div>
-                </div>
-            `
-            : '';
 
         return `
             <div class="row">
                 <div class="status">
                     <span class="${clase}"></span>
                     <b>${title}: </b>
-                    <span>${texto}</span>
+                    <span>${status}</span>
                 </div>
             </div>
-            ${errorSection}
             ${additionalMessage}
         `;
     }
 
-    const htmlStatusSandbox = createStatusHTML('Sandbox', sandboxStatus, false, 'sandbox');
-    const htmlStatusGit = createStatusHTML('Git', gitStatus, false, 'git');
-    const htmlStatusWorkspace = createStatusHTML('Workspace', estadoInfo, true, 'workspace', true);
+    return html1;
 
-    let actionButtonHTML = '';
+}
 
-    if (sandboxStatus) {
-        if (workspaceEffectiveStatus === 0) {
-            const toolsHTML = await updateTools();
-            const gruposHTML = await updateRepository(workspaceStatus);
-            actionButtonHTML = `
-            <div class="row">
-                <button id="actionSandboxButton" onclick="destroySandbox();" class="sandbox-button">
-                    <div class="spinner"></div>
-                    <span id="actionSandboxButtonText">DESTRUIR WORKSPACE</span>
-                </button>
-            </div>
-            ${toolsHTML}
-            ${gruposHTML}
-        `;
-        } else if (workspaceEffectiveStatus === 1) {
-            actionButtonHTML = `
-            <div class="row">
-                <button id="actionSandboxButton" onclick="createSandbox();" class="sandbox-button">
-                    <div class="spinner"></div>
-                    <span id="actionSandboxButtonText">CREAR WORKSPACE</span>
-                </button>
-            </div>
-            `;
-        }
-    }
+async function htmlRepos(repositoriesList: any): Promise<string> {
 
-    return htmlStatusSandbox + htmlStatusGit + htmlStatusWorkspace + actionButtonHTML;
-} */
-
-async function updateRepository(workspaceStatus: any): Promise<string> {
+    const sortedGroups = repositoriesList
+        .map((repo: { path: string }) => {
+            const match = repo.path.match(/clientes\/(.*?)\/tambo/);
+            return match ? match[1] : null;
+        })
+        .filter((grupo: string | null) => grupo !== null)
+        .sort((a: string, b: string) => a.toLowerCase().localeCompare(b.toLowerCase()));
 
     let html = `
-        <div class="row" style="padding: 10px 0px 10px 10px;">
+        <div class="row" style="padding: 5px 0px 0px 10px;">
             <b>Grupos:</b>
         </div>
+        <div class="row" style="padding: 5px 10px 5px 10px;">
+            <div class="select-container">
+                <select class="custom-select">
     `;
 
-    // Extraer y ordenar los grupos alfabéticamente
-    const sortedGroups = workspaceStatus.data.repos_disponibles
-        .map((repo: any) => {
-            const match = repo.path.match(/clientes\/(.*?)\/tambo/);
-            return match ? match[1] : null; // Extraer el grupo
-        })
-        .filter((grupo: string | null) => grupo !== null) // Filtrar valores null
-        .sort((a: string, b: string) => a.toLowerCase().localeCompare(b.toLowerCase())); // Ordenar alfabéticamente ignorando mayúsculas
-
-    // Generar el HTML con los grupos ordenados
     sortedGroups.forEach((grupo: string) => {
-        const vscodeURI = globalConfig.vscodeUri;
-
         html += `
-            <div class="row">
-                <button class="apps-button">
-                    <img src="${vscodeURI}/resources/icons/git_dark.svg" class="apps-button-icon">${grupo.toUpperCase()}
-                </button>
-            </div>
+            <option value="${grupo.toUpperCase()}">${grupo.toUpperCase()}</option>
         `;
     });
 
+    html += `
+                </select>
+                <div class="custom-select-arrow"></div>
+            </div>
+        </div>
+    `;
+
     return html;
+
 }
 
 async function updateTools(): Promise<string> {
