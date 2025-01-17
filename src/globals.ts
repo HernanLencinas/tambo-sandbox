@@ -3,6 +3,7 @@ import * as vscode from 'vscode';
 export const globalConfig = {
     sandboxUrl: 'https://backend-sandbox.dev.apps.automation.teco.com.ar' as string,
     sandboxAPIStatus: '/status' as string,
+    sandboxAPISandbox: '/sandbox/' as string,
     sandboxAPICreate: '/sandbox' as string,
     sandboxAPIDestroy: '/sandbox' as string,
     sandboxAPICommit: '/sandbox' as string,
@@ -11,5 +12,5 @@ export const globalConfig = {
     sandboxState: undefined as number | undefined,
     vscodeUri: undefined as vscode.Uri | undefined,
     workspaceStatusHash: undefined as string | undefined,
-    axiosTimeout: 15000 as number
+    axiosTimeout: 10000 as number
 };

@@ -7,25 +7,29 @@ import { globalConfig } from './globals';
 
 export class Gitlab {
 
-    async status(): Promise<any> {
+    async status(): Promise<boolean> {
 
         try {
 
             const gitlabUrl = globalConfig.gitlabUrl + globalConfig.gitlabAPIUser;
             const config = vscode.workspace.getConfiguration('tambo.sandbox.gitlab');
-            const username = config.get<string>('username');
             const token = config.get<string>('token') ? decrypt(config.get<string>('token')!) : null;
 
-            if (!username || !token) {
+            if (!token) {
                 return false;
             }
 
             const response = await axios.get(gitlabUrl, {
                 httpsAgent: new https.Agent({ rejectUnauthorized: false }),
-                headers: { Authorization: `Bearer ${token}` },
-                timeout: globalConfig.axiosTimeout
+                headers: {
+                    'Content-Type': 'application/json',
+                    Authorization: `Bearer ${token}`
+                },
+                timeout: globalConfig.axiosTimeout,
+                validateStatus: (status: number) => [200].includes(status)
             });
-            return response;
+
+            return [200].includes(response.status);
 
         } catch (error) {
 
