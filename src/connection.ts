@@ -161,7 +161,9 @@ class ConnectionsViewProvider implements vscode.WebviewViewProvider {
                     const hash = (await md5(htmlStatusSandbox)).slice(-5);
 
                     if (globalConfig.workspaceStatusHash !== hash) {
+
                         globalConfig.workspaceStatusHash = hash;
+
                         webviewView.webview.postMessage({
                             command: 'sandboxConnectionStatus',
                             data: htmlStatusSandbox,
@@ -223,6 +225,11 @@ class ConnectionsViewProvider implements vscode.WebviewViewProvider {
                         }
                     }
 
+                    break;
+
+                case 'sandboxChangeGroup':
+                    globalConfig.workspaceRepository = { path: message.data.path, repoid: message.data.repoid, commit: message.data.commit };
+                    console.log("CAMBIO DE GRUPO: ", globalConfig.workspaceRepository);
                     break;
 
             }
@@ -570,6 +577,18 @@ class ConnectionsViewProvider implements vscode.WebviewViewProvider {
                         vscode.postMessage({ command: 'sandboxStatus' });
                     }
 
+                    function sandboxChangeGroup(event) {
+                        const selectedOption = event.target.options[event.target.selectedIndex];
+                        vscode.postMessage({ 
+                            command: 'sandboxChangeGroup', 
+                            data: { 
+                                path: selectedOption.value, 
+                                repoid: selectedOption.dataset.repoid,
+                                commit: false
+                            } 
+                        });
+                    }
+
                     //updateSandboxData();
                     setInterval(updateSandboxData, 3000);
 
@@ -593,6 +612,7 @@ async function updateStatus(vscodeURI: vscode.Uri) {
 
     if (sandboxStatus && gitStatus) {
 
+        const sandbox = new Sandbox();
         const workspaceEffectiveStatus = await sandbox.workspaceStatus();
 
         switch (workspaceEffectiveStatus) {
@@ -608,6 +628,7 @@ async function updateStatus(vscodeURI: vscode.Uri) {
                 `;
                 break;
             case 1:
+                globalConfig.workspaceRepositories = await sandbox.respositories();
                 const workspaceReposHTML = await htmlRepos(globalConfig.workspaceRepositories);
                 workspaceStatus = { estado: 1, clase: 'offline', texto: 'Desconectado', warningMessage: 'No tienes un workspace asignado. Para iniciar uno nuevo, haz clic en el botón <b>Iniciar workspace</b> para comenzar.' };
                 actionButtonHTML = `
@@ -672,38 +693,53 @@ async function updateStatus(vscodeURI: vscode.Uri) {
 
 async function htmlRepos(repositoriesList: any): Promise<string> {
 
-    const sortedGroups = repositoriesList
-        .map((repo: { path: string }) => {
-            const match = repo.path.match(/clientes\/(.*?)\/tambo/);
-            return match ? match[1] : null;
-        })
-        .filter((grupo: string | null) => grupo !== null)
-        .sort((a: string, b: string) => a.toLowerCase().localeCompare(b.toLowerCase()));
+    if (!Array.isArray(repositoriesList) || repositoriesList.length === 0) {
+        return `
+            <div class="row" style="padding: 5px 0px 0px 10px;">
+                <b>No se encontraron grupos disponibles</b>
+            </div>
+        `;
+    }
 
-    let html = `
+    const sortedGroups = repositoriesList
+        .map((repo: { id: number; path: string }) => {
+            const match = repo.path.match(/clientes\/(.*?)\/tambo/);
+            return match
+                ? {
+                    grupo: match[1],
+                    path: repo.path,
+                    id: repo.id
+                }
+                : null;
+        })
+        .filter((item): item is { grupo: string; path: string; id: number } => item !== null)
+        .sort((a, b) => a.grupo.toLowerCase().localeCompare(b.grupo.toLowerCase()));
+
+    if (sortedGroups.length === 0) {
+        return `
+            <div class="row" style="padding: 5px 0px 0px 10px;">
+                <b>No se encontraron grupos válidos</b>
+            </div>
+        `;
+    }
+
+    const optionsHtml = sortedGroups
+        .map(({ grupo, path, id }) => `<option value="${path}" data-repoid="${id}">${grupo.toUpperCase()}</option>`)
+        .join("\n");
+
+    return `
         <div class="row" style="padding: 5px 0px 0px 10px;">
             <b>Grupos:</b>
         </div>
         <div class="row" style="padding: 5px 10px 5px 10px;">
             <div class="select-container">
-                <select class="custom-select">
-    `;
-
-    sortedGroups.forEach((grupo: string) => {
-        html += `
-            <option value="${grupo.toUpperCase()}">${grupo.toUpperCase()}</option>
-        `;
-    });
-
-    html += `
+                <select class="custom-select" onchange="sandboxChangeGroup(event);">
+                    ${optionsHtml}
                 </select>
                 <div class="custom-select-arrow"></div>
             </div>
         </div>
     `;
-
-    return html;
-
 }
 
 async function updateTools(): Promise<string> {

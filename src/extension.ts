@@ -19,11 +19,6 @@ export async function activate(context: vscode.ExtensionContext) {
 	const connection = new Connection();
 	connection.load(context);
 
-	// CARGAR REPOSITORIOS DE TRABAJO
-	const sandbox = new Sandbox();
-	globalConfig.workspaceRepositories = await sandbox.respositories();
-
-
 	// ESCUCHAR CAMBIOS EN LA CONFIGURACION
 	vscode.workspace.onDidChangeConfiguration(event => {
 		if (event.affectsConfiguration('tambo.sandbox.gitlab.username') ||

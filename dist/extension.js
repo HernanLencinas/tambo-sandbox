@@ -39,17 +39,12 @@ const vscode = __importStar(__webpack_require__(1));
 //import * as path from 'path';
 //import * as os from 'os';
 const connection_1 = __webpack_require__(2);
-const sandbox_1 = __webpack_require__(5);
-const globals_1 = __webpack_require__(46);
 // file deepcode ignore InsecureTLSConfig: <please specify a reason of ignoring this>
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
 async function activate(context) {
     // CARGAR CONFIGURACION DE CONExión A TAMBO SANDBOX
     const connection = new connection_1.Connection();
     connection.load(context);
-    // CARGAR REPOSITORIOS DE TRABAJO
-    const sandbox = new sandbox_1.Sandbox();
-    globals_1.globalConfig.workspaceRepositories = await sandbox.respositories();
     // ESCUCHAR CAMBIOS EN LA CONFIGURACION
     vscode.workspace.onDidChangeConfiguration(event => {
         if (event.affectsConfiguration('tambo.sandbox.gitlab.username') ||
@@ -369,6 +364,10 @@ class ConnectionsViewProvider {
                             vscode.window.showErrorMessage("TAMBO: Ha ocurrido un error intentando destruir el workspace en Sandbox");
                         }
                     }
+                    break;
+                case 'sandboxChangeGroup':
+                    globals_1.globalConfig.workspaceRepository = { path: message.data.path, repoid: message.data.repoid, commit: message.data.commit };
+                    console.log("CAMBIO DE GRUPO: ", globals_1.globalConfig.workspaceRepository);
                     break;
             }
         });
@@ -699,6 +698,18 @@ class ConnectionsViewProvider {
                         vscode.postMessage({ command: 'sandboxStatus' });
                     }
 
+                    function sandboxChangeGroup(event) {
+                        const selectedOption = event.target.options[event.target.selectedIndex];
+                        vscode.postMessage({ 
+                            command: 'sandboxChangeGroup', 
+                            data: { 
+                                path: selectedOption.value, 
+                                repoid: selectedOption.dataset.repoid,
+                                commit: false
+                            } 
+                        });
+                    }
+
                     //updateSandboxData();
                     setInterval(updateSandboxData, 3000);
 
@@ -716,6 +727,7 @@ async function updateStatus(vscodeURI) {
     let workspaceStatus = { estado: 1, clase: 'offline', texto: 'Desconectado' };
     let actionButtonHTML = '';
     if (sandboxStatus && gitStatus) {
+        const sandbox = new sandbox_1.Sandbox();
         const workspaceEffectiveStatus = await sandbox.workspaceStatus();
         switch (workspaceEffectiveStatus) {
             case 0:
@@ -730,6 +742,7 @@ async function updateStatus(vscodeURI) {
                 `;
                 break;
             case 1:
+                globals_1.globalConfig.workspaceRepositories = await sandbox.respositories();
                 const workspaceReposHTML = await htmlRepos(globals_1.globalConfig.workspaceRepositories);
                 workspaceStatus = { estado: 1, clase: 'offline', texto: 'Desconectado', warningMessage: 'No tienes un workspace asignado. Para iniciar uno nuevo, haz clic en el botón <b>Iniciar workspace</b> para comenzar.' };
                 actionButtonHTML = `
@@ -780,33 +793,49 @@ async function updateStatus(vscodeURI) {
     return html1;
 }
 async function htmlRepos(repositoriesList) {
+    if (!Array.isArray(repositoriesList) || repositoriesList.length === 0) {
+        return `
+            <div class="row" style="padding: 5px 0px 0px 10px;">
+                <b>No se encontraron grupos disponibles</b>
+            </div>
+        `;
+    }
     const sortedGroups = repositoriesList
         .map((repo) => {
         const match = repo.path.match(/clientes\/(.*?)\/tambo/);
-        return match ? match[1] : null;
+        return match
+            ? {
+                grupo: match[1],
+                path: repo.path,
+                id: repo.id
+            }
+            : null;
     })
-        .filter((grupo) => grupo !== null)
-        .sort((a, b) => a.toLowerCase().localeCompare(b.toLowerCase()));
-    let html = `
+        .filter((item) => item !== null)
+        .sort((a, b) => a.grupo.toLowerCase().localeCompare(b.grupo.toLowerCase()));
+    if (sortedGroups.length === 0) {
+        return `
+            <div class="row" style="padding: 5px 0px 0px 10px;">
+                <b>No se encontraron grupos válidos</b>
+            </div>
+        `;
+    }
+    const optionsHtml = sortedGroups
+        .map(({ grupo, path, id }) => `<option value="${path}" data-repoid="${id}">${grupo.toUpperCase()}</option>`)
+        .join("\n");
+    return `
         <div class="row" style="padding: 5px 0px 0px 10px;">
             <b>Grupos:</b>
         </div>
         <div class="row" style="padding: 5px 10px 5px 10px;">
             <div class="select-container">
-                <select class="custom-select">
-    `;
-    sortedGroups.forEach((grupo) => {
-        html += `
-            <option value="${grupo.toUpperCase()}">${grupo.toUpperCase()}</option>
-        `;
-    });
-    html += `
+                <select class="custom-select" onchange="sandboxChangeGroup(event);">
+                    ${optionsHtml}
                 </select>
                 <div class="custom-select-arrow"></div>
             </div>
         </div>
     `;
-    return html;
 }
 async function updateTools() {
     const vscodeURI = globals_1.globalConfig.vscodeUri;
@@ -9418,8 +9447,10 @@ exports.globalConfig = {
     gitlabAPIUser: '/api/v4/user',
     sandboxState: undefined,
     vscodeUri: undefined,
+    workspaceStatus: 1,
     workspaceStatusHash: undefined,
     workspaceRepositories: undefined,
+    workspaceRepository: undefined,
     axiosTimeout: 10000
 };
 
