@@ -366,8 +366,12 @@ class ConnectionsViewProvider {
                     }
                     break;
                 case 'sandboxChangeGroup':
-                    globals_1.globalConfig.workspaceRepository = { path: message.data.path, repoid: message.data.repoid, commit: message.data.commit };
-                    console.log("CAMBIO DE GRUPO: ", globals_1.globalConfig.workspaceRepository);
+                    globals_1.globalConfig.workspaceRepository = {
+                        name: message.data.name,
+                        path: message.data.path,
+                        repoid: message.data.repoid,
+                        commit: message.data.commit
+                    };
                     break;
             }
         });
@@ -703,6 +707,7 @@ class ConnectionsViewProvider {
                         vscode.postMessage({ 
                             command: 'sandboxChangeGroup', 
                             data: { 
+                                name: selectedOption.dataset.name,
                                 path: selectedOption.value, 
                                 repoid: selectedOption.dataset.repoid,
                                 commit: false
@@ -800,28 +805,27 @@ async function htmlRepos(repositoriesList) {
             </div>
         `;
     }
-    const sortedGroups = repositoriesList
+    const groups = repositoriesList
         .map((repo) => {
         const match = repo.path.match(/clientes\/(.*?)\/tambo/);
         return match
             ? {
-                grupo: match[1],
+                grupo: match[1].toUpperCase(),
                 path: repo.path,
                 id: repo.id
             }
             : null;
     })
-        .filter((item) => item !== null)
-        .sort((a, b) => a.grupo.toLowerCase().localeCompare(b.grupo.toLowerCase()));
-    if (sortedGroups.length === 0) {
+        .filter((item) => item !== null);
+    if (groups.length === 0) {
         return `
             <div class="row" style="padding: 5px 0px 0px 10px;">
                 <b>No se encontraron grupos válidos</b>
             </div>
         `;
     }
-    const optionsHtml = sortedGroups
-        .map(({ grupo, path, id }) => `<option value="${path}" data-repoid="${id}">${grupo.toUpperCase()}</option>`)
+    const optionsHtml = groups
+        .map(({ grupo, path, id }) => `<option value="${path}" data-name="${grupo}" data-repoid="${id}">${grupo}</option>`)
         .join("\n");
     return `
         <div class="row" style="padding: 5px 0px 0px 10px;">
@@ -837,6 +841,58 @@ async function htmlRepos(repositoriesList) {
         </div>
     `;
 }
+/* async function htmlRepos(repositoriesList: any): Promise<string> {
+
+    if (!Array.isArray(repositoriesList) || repositoriesList.length === 0) {
+        return `
+            <div class="row" style="padding: 5px 0px 0px 10px;">
+                <b>No se encontraron grupos disponibles</b>
+            </div>
+        `;
+    }
+
+
+    const sortedGroups = repositoriesList
+        .map((repo: { id: number; path: string }) => {
+            const match = repo.path.match(/clientes\/(.*?)\/tambo/);
+            return match
+                ? {
+                    grupo: match[1],
+                    path: repo.path,
+                    id: repo.id
+                }
+                : null;
+        })
+        .filter((item): item is { grupo: string; path: string; id: number } => item !== null)
+        .sort((a, b) => a.grupo.toLowerCase().localeCompare(b.grupo.toLowerCase()));
+
+    if (sortedGroups.length === 0) {
+        return `
+            <div class="row" style="padding: 5px 0px 0px 10px;">
+                <b>No se encontraron grupos válidos</b>
+            </div>
+        `;
+    }
+
+    const optionsHtml = sortedGroups
+        .map(({ grupo, path, id }) => `<option value="${path}" data-repoid="${id}">${grupo.toUpperCase()}</option>`)
+        .join("\n");
+
+    return `
+        <div class="row" style="padding: 5px 0px 0px 10px;">
+            <b>Grupos:</b>
+        </div>
+        <div class="row" style="padding: 5px 10px 5px 10px;">
+            <div class="select-container">
+                <select class="custom-select" onchange="sandboxChangeGroup(event);">
+                    ${optionsHtml}
+                </select>
+                <div class="custom-select-arrow"></div>
+            </div>
+        </div>
+    `;
+
+} */
 async function updateTools() {
     const vscodeURI = globals_1.globalConfig.vscodeUri;
     const configuration = vscode.workspace.getConfiguration('tambo.sandbox.gitlab');
@@ -1037,13 +1093,27 @@ class Sandbox {
                 headers: {
                     'Content-Type': 'application/json',
                     usuario: username,
-                    token: token
+                    token: token,
                 },
-                validateStatus: (status) => [200].includes(status)
+                validateStatus: (status) => [200].includes(status),
             };
-            return (await axios_1.default.get(sandboxUrl, axiosConfig)).data.repos_disponibles;
+            let response = (await axios_1.default.get(sandboxUrl, axiosConfig)).data.repos_disponibles;
+            if (Array.isArray(response)) {
+                response = response.sort((a, b) => a.path.localeCompare(b.path));
+            }
+            if (!globals_1.globalConfig.workspaceRepository) {
+                const defaultRepo = response?.[0] ?? { path: '', id: '' };
+                globals_1.globalConfig.workspaceRepository = {
+                    name: (defaultRepo.path.match(/clientes\/(.*?)\/tambo/) || [])[1] || '',
+                    path: defaultRepo.path,
+                    repoid: defaultRepo.id,
+                    commit: false,
+                };
+            }
+            return response;
         }
         catch (error) {
+            console.error("Error al obtener los repositorios:", error);
             return {};
         }
     }
@@ -1052,7 +1122,9 @@ class Sandbox {
             const sandboxUrl = `${globals_1.globalConfig.sandboxUrl}${globals_1.globalConfig.sandboxAPISandbox}`;
             const config = vscode.workspace.getConfiguration('tambo.sandbox.gitlab');
             const username = config.get('username');
-            if (!username) {
+            const encryptedToken = config.get('token');
+            const token = encryptedToken ? (0, utils_1.decrypt)(encryptedToken) : null;
+            if (!username || !token || !globals_1.globalConfig.workspaceRepository) {
                 return false;
             }
             const axiosConfig = {
@@ -1062,10 +1134,19 @@ class Sandbox {
                     'Content-Type': 'application/json',
                 },
             };
-            await axios_1.default.post(`${sandboxUrl}?usuario=${encodeURIComponent(username)}`, {}, axiosConfig);
+            const body = {
+                equipo: globals_1.globalConfig.workspaceRepository.name,
+                token: token,
+                repositorio: {
+                    id: globals_1.globalConfig.workspaceRepository.repoid,
+                    path: globals_1.globalConfig.workspaceRepository.path,
+                },
+            };
+            await axios_1.default.post(`${sandboxUrl}?usuario=${encodeURIComponent(username)}`, body, axiosConfig);
             return true;
         }
         catch (error) {
+            console.error("TAMBOSANDBOX.sandbox.createWorkspace:", error);
             return false;
         }
     }

@@ -204,7 +204,6 @@ class ConnectionsViewProvider implements vscode.WebviewViewProvider {
                         }
 
                     }
-
                     break;
 
                 case 'sandboxDestroy':
@@ -224,12 +223,15 @@ class ConnectionsViewProvider implements vscode.WebviewViewProvider {
                             vscode.window.showErrorMessage("TAMBO: Ha ocurrido un error intentando destruir el workspace en Sandbox");
                         }
                     }
-
                     break;
 
                 case 'sandboxChangeGroup':
-                    globalConfig.workspaceRepository = { path: message.data.path, repoid: message.data.repoid, commit: message.data.commit };
-                    console.log("CAMBIO DE GRUPO: ", globalConfig.workspaceRepository);
+                    globalConfig.workspaceRepository = {
+                        name: message.data.name,
+                        path: message.data.path,
+                        repoid: message.data.repoid,
+                        commit: message.data.commit
+                    };
                     break;
 
             }
@@ -582,6 +584,7 @@ class ConnectionsViewProvider implements vscode.WebviewViewProvider {
                         vscode.postMessage({ 
                             command: 'sandboxChangeGroup', 
                             data: { 
+                                name: selectedOption.dataset.name,
                                 path: selectedOption.value, 
                                 repoid: selectedOption.dataset.repoid,
                                 commit: false
@@ -692,6 +695,56 @@ async function updateStatus(vscodeURI: vscode.Uri) {
 }
 
 async function htmlRepos(repositoriesList: any): Promise<string> {
+    if (!Array.isArray(repositoriesList) || repositoriesList.length === 0) {
+        return `
+            <div class="row" style="padding: 5px 0px 0px 10px;">
+                <b>No se encontraron grupos disponibles</b>
+            </div>
+        `;
+    }
+
+    const groups = repositoriesList
+        .map((repo: { id: number; path: string }) => {
+            const match = repo.path.match(/clientes\/(.*?)\/tambo/);
+            return match
+                ? {
+                    grupo: match[1].toUpperCase(),
+                    path: repo.path,
+                    id: repo.id
+                }
+                : null;
+        })
+        .filter((item): item is { name: string; grupo: string; path: string; id: number } => item !== null);
+
+    if (groups.length === 0) {
+        return `
+            <div class="row" style="padding: 5px 0px 0px 10px;">
+                <b>No se encontraron grupos válidos</b>
+            </div>
+        `;
+    }
+
+    const optionsHtml = groups
+        .map(({ grupo, path, id }) => `<option value="${path}" data-name="${grupo}" data-repoid="${id}">${grupo}</option>`)
+        .join("\n");
+
+    return `
+        <div class="row" style="padding: 5px 0px 0px 10px;">
+            <b>Grupos:</b>
+        </div>
+        <div class="row" style="padding: 5px 10px 5px 10px;">
+            <div class="select-container">
+                <select class="custom-select" onchange="sandboxChangeGroup(event);">
+                    ${optionsHtml}
+                </select>
+                <div class="custom-select-arrow"></div>
+            </div>
+        </div>
+    `;
+}
+
+
+/* async function htmlRepos(repositoriesList: any): Promise<string> {
 
     if (!Array.isArray(repositoriesList) || repositoriesList.length === 0) {
         return `
@@ -700,6 +753,7 @@ async function htmlRepos(repositoriesList: any): Promise<string> {
             </div>
         `;
     }
+
 
     const sortedGroups = repositoriesList
         .map((repo: { id: number; path: string }) => {
@@ -740,7 +794,8 @@ async function htmlRepos(repositoriesList: any): Promise<string> {
             </div>
         </div>
     `;
-}
+
+} */
 
 async function updateTools(): Promise<string> {
 
