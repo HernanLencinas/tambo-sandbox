@@ -372,6 +372,7 @@ class ConnectionsViewProvider {
                         repoid: message.data.repoid,
                         commit: message.data.commit
                     };
+                    vscode.window.showInformationMessage(`TAMBO COMMIT: ${message.data.commit}`);
                     break;
             }
         });
@@ -702,7 +703,7 @@ class ConnectionsViewProvider {
                         vscode.postMessage({ command: 'sandboxStatus' });
                     }
 
-                    function sandboxChangeGroup(event) {
+                    function sandboxChangeGroup(event, commit) {
                         const selectedOption = event.target.options[event.target.selectedIndex];
                         vscode.postMessage({ 
                             command: 'sandboxChangeGroup', 
@@ -710,7 +711,7 @@ class ConnectionsViewProvider {
                                 name: selectedOption.dataset.name,
                                 path: selectedOption.value, 
                                 repoid: selectedOption.dataset.repoid,
-                                commit: false
+                                commit: commit
                             } 
                         });
                     }
@@ -737,22 +738,28 @@ async function updateStatus(vscodeURI) {
         switch (workspaceEffectiveStatus) {
             case 0:
                 workspaceStatus = { estado: 0, clase: 'online', texto: 'Conectado' };
+                globals_1.globalConfig.workspaceRepositories = await sandbox.respositories();
+                const workspaceToolsHTML = await htmlTools();
+                const workspaceChangeReposHTML = await htmlRepos(globals_1.globalConfig.workspaceRepositories, true);
                 actionButtonHTML = `
-                    <div class="row">
+                    ${workspaceChangeReposHTML}
+                    ${workspaceToolsHTML}
+                    <div class="row" style="padding-top: 10px;">
                         <button id="actionSandboxButton" onclick="destroySandbox();" class="sandbox-button">
                             <div class="spinner"></div>
                             <span id="actionSandboxButtonText">DESTRUIR WORKSPACE</span>
                         </button>
                     </div>
+                    </hr>
                 `;
                 break;
             case 1:
                 globals_1.globalConfig.workspaceRepositories = await sandbox.respositories();
-                const workspaceReposHTML = await htmlRepos(globals_1.globalConfig.workspaceRepositories);
+                const workspaceReposHTML = await htmlRepos(globals_1.globalConfig.workspaceRepositories, false);
                 workspaceStatus = { estado: 1, clase: 'offline', texto: 'Desconectado', warningMessage: 'No tienes un workspace asignado. Para iniciar uno nuevo, haz clic en el botón <b>Iniciar workspace</b> para comenzar.' };
                 actionButtonHTML = `
                     ${workspaceReposHTML}
-                    <div class="row">
+                    <div class="row" style="padding-top: 10px;">
                         <button id="actionSandboxButton" onclick="createSandbox();" class="sandbox-button">
                             <div class="spinner"></div>
                             <span id="actionSandboxButtonText">INICIAR WORKSPACE</span>
@@ -797,7 +804,7 @@ async function updateStatus(vscodeURI) {
     }
     return html1;
 }
-async function htmlRepos(repositoriesList) {
+async function htmlRepos(repositoriesList, commit) {
     if (!Array.isArray(repositoriesList) || repositoriesList.length === 0) {
         return `
             <div class="row" style="padding: 5px 0px 0px 10px;">
@@ -828,12 +835,12 @@ async function htmlRepos(repositoriesList) {
         .map(({ grupo, path, id }) => `<option value="${path}" data-name="${grupo}" data-repoid="${id}">${grupo}</option>`)
         .join("\n");
     return `
-        <div class="row" style="padding: 5px 0px 0px 10px;">
+        <div class="row" style="padding: 20px 0px 0px 10px;">
             <b>Grupos:</b>
         </div>
         <div class="row" style="padding: 5px 10px 5px 10px;">
             <div class="select-container">
-                <select class="custom-select" onchange="sandboxChangeGroup(event);">
+                <select class="custom-select" onchange="sandboxChangeGroup(event, ${commit});">
                     ${optionsHtml}
                 </select>
                 <div class="custom-select-arrow"></div>
@@ -841,59 +848,7 @@ async function htmlRepos(repositoriesList) {
         </div>
     `;
 }
-/* async function htmlRepos(repositoriesList: any): Promise<string> {
-
-    if (!Array.isArray(repositoriesList) || repositoriesList.length === 0) {
-        return `
-            <div class="row" style="padding: 5px 0px 0px 10px;">
-                <b>No se encontraron grupos disponibles</b>
-            </div>
-        `;
-    }
-
-
-    const sortedGroups = repositoriesList
-        .map((repo: { id: number; path: string }) => {
-            const match = repo.path.match(/clientes\/(.*?)\/tambo/);
-            return match
-                ? {
-                    grupo: match[1],
-                    path: repo.path,
-                    id: repo.id
-                }
-                : null;
-        })
-        .filter((item): item is { grupo: string; path: string; id: number } => item !== null)
-        .sort((a, b) => a.grupo.toLowerCase().localeCompare(b.grupo.toLowerCase()));
-
-    if (sortedGroups.length === 0) {
-        return `
-            <div class="row" style="padding: 5px 0px 0px 10px;">
-                <b>No se encontraron grupos válidos</b>
-            </div>
-        `;
-    }
-
-    const optionsHtml = sortedGroups
-        .map(({ grupo, path, id }) => `<option value="${path}" data-repoid="${id}">${grupo.toUpperCase()}</option>`)
-        .join("\n");
-
-    return `
-        <div class="row" style="padding: 5px 0px 0px 10px;">
-            <b>Grupos:</b>
-        </div>
-        <div class="row" style="padding: 5px 10px 5px 10px;">
-            <div class="select-container">
-                <select class="custom-select" onchange="sandboxChangeGroup(event);">
-                    ${optionsHtml}
-                </select>
-                <div class="custom-select-arrow"></div>
-            </div>
-        </div>
-    `;
-
-} */
-async function updateTools() {
+async function htmlTools() {
     const vscodeURI = globals_1.globalConfig.vscodeUri;
     const configuration = vscode.workspace.getConfiguration('tambo.sandbox.gitlab');
     const currentUsername = configuration.get('username');
@@ -9532,7 +9487,7 @@ exports.globalConfig = {
     workspaceStatusHash: undefined,
     workspaceRepositories: undefined,
     workspaceRepository: undefined,
-    axiosTimeout: 10000
+    axiosTimeout: 30000
 };
 
 
