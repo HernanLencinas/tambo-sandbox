@@ -66,6 +66,37 @@ export class Sandbox {
 
     }
 
+    async workspaceUpdateCurrentGroup() {
+
+        try {
+            const sandboxUrl = `${globalConfig.sandboxUrl}${globalConfig.sandboxAPISandbox}`;
+            const config = vscode.workspace.getConfiguration('tambo.sandbox.gitlab');
+            const username = config.get<string>('username');
+
+            const axiosConfig = {
+                httpsAgent: new https.Agent({ rejectUnauthorized: false }),
+                timeout: globalConfig.axiosTimeout,
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                validateStatus: (status: number) => [200].includes(status)
+            };
+
+            const response = await axios.get(`${sandboxUrl}?usuario=${encodeURIComponent(username ?? "")}`, axiosConfig);
+
+            globalConfig.workspaceRepository = {
+                name: response.data.equipo,
+                path: response.data.repositorio.path,
+                repoid: response.data.repositorio.id,
+                commit: false
+            };
+
+        } catch (error) {
+            console.error("TAMBOSANDBOX.sandbox.workspaceUpdateCurrentGroup:", error);
+        }
+
+    }
+
     async respositories(): Promise<any> {
 
         try {
@@ -137,11 +168,13 @@ export class Sandbox {
             };
 
             const body = {
-                equipo: globalConfig.workspaceRepository.name,
+                id: "airflow-sandbox-u519277",
+                equipo: globalConfig.workspaceRepository.name.toLowerCase(),
                 token: token,
                 repositorio: {
                     id: globalConfig.workspaceRepository.repoid,
                     path: globalConfig.workspaceRepository.path,
+                    //branch: globalConfig.workspaceRepository.branch,
                 },
             };
 

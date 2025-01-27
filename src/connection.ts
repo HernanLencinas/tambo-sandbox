@@ -620,6 +620,7 @@ async function updateStatus(vscodeURI: vscode.Uri) {
                 workspaceStatus = { estado: 0, clase: 'online', texto: 'Conectado' };
                 globalConfig.workspaceRepositories = await sandbox.respositories();
                 const workspaceToolsHTML = await htmlTools();
+                await sandbox.workspaceUpdateCurrentGroup();
                 const workspaceChangeReposHTML = await htmlRepos(globalConfig.workspaceRepositories, true);
                 actionButtonHTML = `
                     ${workspaceChangeReposHTML}
@@ -697,7 +698,7 @@ async function updateStatus(vscodeURI: vscode.Uri) {
 
 }
 
-async function htmlRepos(repositoriesList: any, commit: boolean): Promise<string> {
+async function htmlRepos(repositoriesList: any, commit: boolean, selectedGroup: string = ""): Promise<string> {
 
     if (!Array.isArray(repositoriesList) || repositoriesList.length === 0) {
         return `
@@ -729,7 +730,12 @@ async function htmlRepos(repositoriesList: any, commit: boolean): Promise<string
     }
 
     const optionsHtml = groups
-        .map(({ grupo, path, id }) => `<option value="${path}" data-name="${grupo}" data-repoid="${id}">${grupo}</option>`)
+        .map(({ grupo, path, id }) =>
+            `<option value="${path}" data-name="${grupo}" data-repoid="${id}" 
+        ${globalConfig.workspaceRepository?.name.toUpperCase() === grupo ? 'selected' : ''}>
+        ${grupo}
+        </option>`
+        )
         .join("\n");
 
     return `
@@ -745,7 +751,7 @@ async function htmlRepos(repositoriesList: any, commit: boolean): Promise<string
             </div>
         </div>
     `;
-    
+
 }
 
 async function htmlTools(): Promise<string> {
@@ -779,3 +785,17 @@ async function htmlTools(): Promise<string> {
 
 }
 
+async function htmlCloneRepository(): Promise<string> {
+
+    const html = `
+        <div class="row" style="padding-top: 10px;">
+            <button id="actionSandboxButton" onclick="cloneRepository();" class="sandbox-button">
+                <div class="spinner"></div>
+                <span id="actionSandboxButtonText">CLONAR REPOSITORIO</span>
+            </button>
+        </div>
+    `;
+
+    return html;
+
+}

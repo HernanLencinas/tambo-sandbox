@@ -740,6 +740,7 @@ async function updateStatus(vscodeURI) {
                 workspaceStatus = { estado: 0, clase: 'online', texto: 'Conectado' };
                 globals_1.globalConfig.workspaceRepositories = await sandbox.respositories();
                 const workspaceToolsHTML = await htmlTools();
+                await sandbox.workspaceUpdateCurrentGroup();
                 const workspaceChangeReposHTML = await htmlRepos(globals_1.globalConfig.workspaceRepositories, true);
                 actionButtonHTML = `
                     ${workspaceChangeReposHTML}
@@ -804,7 +805,7 @@ async function updateStatus(vscodeURI) {
     }
     return html1;
 }
-async function htmlRepos(repositoriesList, commit) {
+async function htmlRepos(repositoriesList, commit, selectedGroup = "") {
     if (!Array.isArray(repositoriesList) || repositoriesList.length === 0) {
         return `
             <div class="row" style="padding: 5px 0px 0px 10px;">
@@ -832,7 +833,10 @@ async function htmlRepos(repositoriesList, commit) {
         `;
     }
     const optionsHtml = groups
-        .map(({ grupo, path, id }) => `<option value="${path}" data-name="${grupo}" data-repoid="${id}">${grupo}</option>`)
+        .map(({ grupo, path, id }) => `<option value="${path}" data-name="${grupo}" data-repoid="${id}" 
+        ${globals_1.globalConfig.workspaceRepository?.name.toUpperCase() === grupo ? 'selected' : ''}>
+        ${grupo}
+        </option>`)
         .join("\n");
     return `
         <div class="row" style="padding: 20px 0px 0px 10px;">
@@ -869,6 +873,17 @@ async function htmlTools() {
         <div class="row">
             <button class="apps-button" data-link="https://automation.telecom.com.ar">
                 <img src="${vscodeURI}/resources/logos/automation.svg" class="apps-button-icon"> PORTAL AUTOMATIZACION <img src="${vscodeURI}/resources/icons/external-link.svg" class="external-link-icon" />
+            </button>
+        </div>
+    `;
+    return html;
+}
+async function htmlCloneRepository() {
+    const html = `
+        <div class="row" style="padding-top: 10px;">
+            <button id="actionSandboxButton" onclick="cloneRepository();" class="sandbox-button">
+                <div class="spinner"></div>
+                <span id="actionSandboxButtonText">CLONAR REPOSITORIO</span>
             </button>
         </div>
     `;
@@ -1032,6 +1047,31 @@ class Sandbox {
             return 1;
         }
     }
+    async workspaceUpdateCurrentGroup() {
+        try {
+            const sandboxUrl = `${globals_1.globalConfig.sandboxUrl}${globals_1.globalConfig.sandboxAPISandbox}`;
+            const config = vscode.workspace.getConfiguration('tambo.sandbox.gitlab');
+            const username = config.get('username');
+            const axiosConfig = {
+                httpsAgent: new https.Agent({ rejectUnauthorized: false }),
+                timeout: globals_1.globalConfig.axiosTimeout,
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                validateStatus: (status) => [200].includes(status)
+            };
+            const response = await axios_1.default.get(`${sandboxUrl}?usuario=${encodeURIComponent(username ?? "")}`, axiosConfig);
+            globals_1.globalConfig.workspaceRepository = {
+                name: response.data.equipo,
+                path: response.data.repositorio.path,
+                repoid: response.data.repositorio.id,
+                commit: false
+            };
+        }
+        catch (error) {
+            console.error("TAMBOSANDBOX.sandbox.workspaceUpdateCurrentGroup:", error);
+        }
+    }
     async respositories() {
         try {
             const sandboxUrl = `${globals_1.globalConfig.sandboxUrl}${globals_1.globalConfig.sandboxAPIStatus}`;
@@ -1090,11 +1130,13 @@ class Sandbox {
                 },
             };
             const body = {
-                equipo: globals_1.globalConfig.workspaceRepository.name,
+                id: "airflow-sandbox-u519277",
+                equipo: globals_1.globalConfig.workspaceRepository.name.toLowerCase(),
                 token: token,
                 repositorio: {
                     id: globals_1.globalConfig.workspaceRepository.repoid,
                     path: globals_1.globalConfig.workspaceRepository.path,
+                    //branch: globalConfig.workspaceRepository.branch,
                 },
             };
             await axios_1.default.post(`${sandboxUrl}?usuario=${encodeURIComponent(username)}`, body, axiosConfig);
