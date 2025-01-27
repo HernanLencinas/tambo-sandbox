@@ -231,6 +231,10 @@ class ConnectionsViewProvider implements vscode.WebviewViewProvider {
                     vscode.window.showInformationMessage(`TAMBO COMMIT: ${message.data.commit}`);
                     break;
 
+                case 'cloneRepository':
+                    vscode.window.showInformationMessage("TAMBO: Clonando Repositorio");
+                    break;
+
             }
 
         });
@@ -576,6 +580,10 @@ class ConnectionsViewProvider implements vscode.WebviewViewProvider {
                         vscode.postMessage({ command: 'sandboxStatus' });
                     }
 
+                    function cloneRepository() {
+                        vscode.postMessage({ command: 'cloneRepository' });
+                    }
+
                     function sandboxChangeGroup(event, commit) {
                         const selectedOption = event.target.options[event.target.selectedIndex];
                         vscode.postMessage({ 
@@ -609,6 +617,12 @@ async function updateStatus(vscodeURI: vscode.Uri) {
 
     let workspaceStatus: { estado: number; clase: string; texto: string; warningMessage?: string } = { estado: 1, clase: 'offline', texto: 'Desconectado' };
     let actionButtonHTML = '';
+
+    // PRUEBA TEMPORARIA DEL BOTON DE CLONAR
+    const workspaceCloneRepoHTML = await htmlCloneRepository();
+    actionButtonHTML = `
+        ${workspaceCloneRepoHTML}
+    `;
 
     if (sandboxStatus && gitStatus) {
 

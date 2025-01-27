@@ -34,10 +34,6 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.activate = activate;
 exports.deactivate = deactivate;
 const vscode = __importStar(__webpack_require__(1));
-//import simpleGit, { SimpleGit, SimpleGitOptions } from 'simple-git';
-//import * as fs from 'fs';
-//import * as path from 'path';
-//import * as os from 'os';
 const connection_1 = __webpack_require__(2);
 // file deepcode ignore InsecureTLSConfig: <please specify a reason of ignoring this>
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
@@ -93,86 +89,6 @@ async function activate(context) {
     context.subscriptions.push(cmdCloneRepository); */
 }
 function deactivate() { }
-/* function cloneRepository() {
-
-    const git: SimpleGit = simpleGit();
-    const repoUrl = 'https://git.cloudvalley.telecom.com.ar/automatizacion/ansible-test.git';
-    const tempDir = path.join(os.tmpdir(), 'vscode-tambosandbox');
-
-    // Verificar si la carpeta existe y eliminarla si es necesario
-    if (fs.existsSync(tempDir)) {
-        fs.rmSync(tempDir, { recursive: true, force: true });
-    }
-
-    // Clonar el repositorio
-    git.clone(repoUrl, tempDir)
-        .then(() => {
-
-            // Abrir el nuevo espacio de trabajo
-            vscode.workspace.updateWorkspaceFolders(0, null, { uri: vscode.Uri.file(tempDir), name: 'TAMBOSANDBOX' });
-
-            // Establecer el rootPath en el explorador de archivos
-            const newWorkspace = vscode.workspace.workspaceFolders?.find(folder => folder.uri.fsPath === tempDir);
-            if (newWorkspace) {
-                vscode.workspace.updateWorkspaceFolders(0, null, { uri: newWorkspace.uri, name: 'TAMBOSANDBOX' });
-            }
-
-            vscode.window.showInformationMessage('Repositorio Clonado.');
-
-        })
-        .catch((error) => {
-            vscode.window.showErrorMessage(`Error al Clonar: ${error}`);
-        });
-
-} */
-/* function pushRepository() {
-
-    // Configuración de simple-git
-    const options: Partial<SimpleGitOptions> = {
-        baseDir: vscode.workspace.rootPath,
-        binary: 'git',
-        config: ['core.autocrlf=false'],
-    };
-    const git: SimpleGit = simpleGit(options);
-
-    try {
-        // Realiza git add para todos los cambios
-        git.add('.');
-        // Crea el commit automáticamente
-        git.commit('Auto-commit desde VSCode');
-        // Realiza el push de los cambios
-        git.push();
-
-        vscode.window.showInformationMessage('TAMBO: Repositorio Actualizado');
-    } catch (error) {
-        vscode.window.showErrorMessage(`TAMBO: Error al Actualizar - ${error}`);
-    }
-
-} */
-/* 	// Configuración de simple-git
-    const options: Partial<SimpleGitOptions> = {
-        baseDir: vscode.workspace.rootPath,
-        binary: 'git',
-        config: ['core.autocrlf=false'],
-    };
-    const git: SimpleGit = simpleGit(options);
-    
-    // Capturar el evento de guardado
-    let saveListener = vscode.workspace.onDidSaveTextDocument(async (document: vscode.TextDocument) => {
-        try {
-            // Realiza git add para todos los cambios
-            await git.add('.');
-            // Crea el commit automáticamente
-            await git.commit('Auto-commit desde VSCode');
-            // Realiza el push de los cambios
-            await git.push();
-    
-            vscode.window.showInformationMessage('TAMBO: Repositorio Actualizado');
-        } catch (error) {
-            vscode.window.showErrorMessage(`TAMBO: Error al Actualizar - ${error}`);
-        }
-    });
-    context.subscriptions.push(saveListener); */
 
 
 /***/ }),
@@ -373,6 +289,9 @@ class ConnectionsViewProvider {
                         commit: message.data.commit
                     };
                     vscode.window.showInformationMessage(`TAMBO COMMIT: ${message.data.commit}`);
+                    break;
+                case 'cloneRepository':
+                    vscode.window.showInformationMessage("TAMBO: Clonando Repositorio");
                     break;
             }
         });
@@ -703,6 +622,10 @@ class ConnectionsViewProvider {
                         vscode.postMessage({ command: 'sandboxStatus' });
                     }
 
+                    function cloneRepository() {
+                        vscode.postMessage({ command: 'cloneRepository' });
+                    }
+
                     function sandboxChangeGroup(event, commit) {
                         const selectedOption = event.target.options[event.target.selectedIndex];
                         vscode.postMessage({ 
@@ -732,6 +655,11 @@ async function updateStatus(vscodeURI) {
     const [sandboxStatus, gitStatus] = await Promise.all([sandbox.status(), gitlab.status()]);
     let workspaceStatus = { estado: 1, clase: 'offline', texto: 'Desconectado' };
     let actionButtonHTML = '';
+    // PRUEBA TEMPORARIA DEL BOTON DE CLONAR
+    const workspaceCloneRepoHTML = await htmlCloneRepository();
+    actionButtonHTML = `
+        ${workspaceCloneRepoHTML}
+    `;
     if (sandboxStatus && gitStatus) {
         const sandbox = new sandbox_1.Sandbox();
         const workspaceEffectiveStatus = await sandbox.workspaceStatus();
@@ -1139,6 +1067,7 @@ class Sandbox {
                     //branch: globalConfig.workspaceRepository.branch,
                 },
             };
+            console.log("TAMBO-CREAR_SANDBOX: ", body);
             await axios_1.default.post(`${sandboxUrl}?usuario=${encodeURIComponent(username)}`, body, axiosConfig);
             return true;
         }
@@ -9573,6 +9502,10 @@ const utils_1 = __webpack_require__(3);
 const https = __importStar(__webpack_require__(6));
 const axios_1 = __importDefault(__webpack_require__(7));
 const globals_1 = __webpack_require__(46);
+//import simpleGit, { SimpleGit, SimpleGitOptions } from 'simple-git';
+//import * as fs from 'fs';
+//import * as path from 'path';
+//import * as os from 'os';
 class Gitlab {
     async status() {
         try {
@@ -9600,6 +9533,86 @@ class Gitlab {
     }
 }
 exports.Gitlab = Gitlab;
+/* function cloneRepository() {
+
+    const git: SimpleGit = simpleGit();
+    const repoUrl = 'https://git.cloudvalley.telecom.com.ar/automatizacion/ansible-test.git';
+    const tempDir = path.join(os.tmpdir(), 'vscode-tambosandbox');
+
+    // Verificar si la carpeta existe y eliminarla si es necesario
+    if (fs.existsSync(tempDir)) {
+        fs.rmSync(tempDir, { recursive: true, force: true });
+    }
+
+    // Clonar el repositorio
+    git.clone(repoUrl, tempDir)
+        .then(() => {
+
+            // Abrir el nuevo espacio de trabajo
+            vscode.workspace.updateWorkspaceFolders(0, null, { uri: vscode.Uri.file(tempDir), name: 'TAMBOSANDBOX' });
+
+            // Establecer el rootPath en el explorador de archivos
+            const newWorkspace = vscode.workspace.workspaceFolders?.find(folder => folder.uri.fsPath === tempDir);
+            if (newWorkspace) {
+                vscode.workspace.updateWorkspaceFolders(0, null, { uri: newWorkspace.uri, name: 'TAMBOSANDBOX' });
+            }
+
+            vscode.window.showInformationMessage('Repositorio Clonado.');
+
+        })
+        .catch((error) => {
+            vscode.window.showErrorMessage(`Error al Clonar: ${error}`);
+        });
+
+} */
+/* function pushRepository() {
+
+    // Configuración de simple-git
+    const options: Partial<SimpleGitOptions> = {
+        baseDir: vscode.workspace.rootPath,
+        binary: 'git',
+        config: ['core.autocrlf=false'],
+    };
+    const git: SimpleGit = simpleGit(options);
+
+    try {
+        // Realiza git add para todos los cambios
+        git.add('.');
+        // Crea el commit automáticamente
+        git.commit('Auto-commit desde VSCode');
+        // Realiza el push de los cambios
+        git.push();
+
+        vscode.window.showInformationMessage('TAMBO: Repositorio Actualizado');
+    } catch (error) {
+        vscode.window.showErrorMessage(`TAMBO: Error al Actualizar - ${error}`);
+    }
+
+} */
+/* 	// Configuración de simple-git
+    const options: Partial<SimpleGitOptions> = {
+        baseDir: vscode.workspace.rootPath,
+        binary: 'git',
+        config: ['core.autocrlf=false'],
+    };
+    const git: SimpleGit = simpleGit(options);
+    
+    // Capturar el evento de guardado
+    let saveListener = vscode.workspace.onDidSaveTextDocument(async (document: vscode.TextDocument) => {
+        try {
+            // Realiza git add para todos los cambios
+            await git.add('.');
+            // Crea el commit automáticamente
+            await git.commit('Auto-commit desde VSCode');
+            // Realiza el push de los cambios
+            await git.push();
+    
+            vscode.window.showInformationMessage('TAMBO: Repositorio Actualizado');
+        } catch (error) {
+            vscode.window.showErrorMessage(`TAMBO: Error al Actualizar - ${error}`);
+        }
+    });
+    context.subscriptions.push(saveListener); */
 
 
 /***/ }),

@@ -178,6 +178,8 @@ export class Sandbox {
                 },
             };
 
+            console.log("TAMBO-CREAR_SANDBOX: ", body);
+            
             await axios.post(`${sandboxUrl}?usuario=${encodeURIComponent(username)}`, body, axiosConfig);
 
             return true;
