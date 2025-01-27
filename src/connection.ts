@@ -157,7 +157,7 @@ class ConnectionsViewProvider implements vscode.WebviewViewProvider {
             switch (message.command) {
 
                 case 'sandboxStatus':
-                    
+
                     const htmlStatusSandbox = await updateStatus(this.context.extensionUri);
                     const hash = (await md5(htmlStatusSandbox)).slice(-5);
 
@@ -224,7 +224,7 @@ class ConnectionsViewProvider implements vscode.WebviewViewProvider {
                 case 'sandboxChangeGroup':
 
                     const changeWorkspaceGroupRes = await vscode.window.showInformationMessage(
-                        `¿Cambiar el grupo activo a ${message.data.name}?`,
+                        `¿Desea confirmar el cambio al grupo activo ${message.data.name}?`,
                         { modal: true }, // Modal para la confirmación
                         'Sí'
                     );

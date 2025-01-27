@@ -276,7 +276,7 @@ class ConnectionsViewProvider {
                     }
                     break;
                 case 'sandboxChangeGroup':
-                    const changeWorkspaceGroupRes = await vscode.window.showInformationMessage(`¿Cambiar el grupo activo a ${message.data.name}?`, { modal: true }, // Modal para la confirmación
+                    const changeWorkspaceGroupRes = await vscode.window.showInformationMessage(`¿Desea confirmar el cambio al grupo activo ${message.data.name}?`, { modal: true }, // Modal para la confirmación
                     'Sí');
                     if (changeWorkspaceGroupRes === 'Sí') {
                         globals_1.globalConfig.workspaceRepository = {
@@ -1119,8 +1119,7 @@ class Sandbox {
                     path: globals_1.globalConfig.workspaceRepository?.path,
                 },
             };
-            console.log("GLOBAL-ACTUALIZADO: ", requestData);
-            await axios_1.default.patch(`${sandboxUrl}?usuario=${encodeURIComponent(username ?? "")}`, requestData, axiosConfig);
+            const res = await axios_1.default.patch(`${sandboxUrl}?usuario=${encodeURIComponent(username ?? "")}`, requestData, axiosConfig);
             return true;
         }
         catch (error) {

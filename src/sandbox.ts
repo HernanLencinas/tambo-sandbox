@@ -249,9 +249,7 @@ export class Sandbox {
                 },
             };
 
-            console.log("GLOBAL-ACTUALIZADO: ", requestData);
-
-            await axios.patch(
+            const res = await axios.patch(
                 `${sandboxUrl}?usuario=${encodeURIComponent(username ?? "")}`,
                 requestData,
                 axiosConfig
@@ -263,6 +261,7 @@ export class Sandbox {
             console.error("TAMBOSANDBOX.sandbox.workspaceChangeGroup:", error);
             return false;
         }
+        
     }
 
 }
