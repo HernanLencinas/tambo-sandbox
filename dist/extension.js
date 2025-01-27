@@ -259,39 +259,38 @@ class ConnectionsViewProvider {
                     if (createWorkspaceRes === 'Sí') {
                         const sandbox = new sandbox_1.Sandbox();
                         const response = await sandbox.createWorkspace();
-                        if (response) {
-                            vscode.window.showInformationMessage("TAMBO: Se inicio la creacion del workspace en Sandbox");
-                        }
-                        else {
+                        if (!response) {
                             vscode.window.showErrorMessage("TAMBO: Ha ocurrido un error al intentar iniciar el workspace en Sandbox");
                         }
                     }
                     break;
                 case 'sandboxDestroy':
-                    const destroyWorkspaceRes = await vscode.window.showInformationMessage('¿Destruir el workspace actualmente en ejecuccion?', { modal: true }, // Modal para enfatizar la confirmación
+                    const destroyWorkspaceRes = await vscode.window.showInformationMessage('¿Destruir el workspace actualmente en ejecuccion?', { modal: true }, // Modal para la confirmación
                     'Sí');
                     if (destroyWorkspaceRes === 'Sí') {
                         const sandbox = new sandbox_1.Sandbox();
                         const response = await sandbox.destroyWorkspace();
-                        if (response) {
-                            vscode.window.showInformationMessage("TAMBO: Destruyendo workspace en Sandbox");
-                        }
-                        else {
+                        if (!response) {
                             vscode.window.showErrorMessage("TAMBO: Ha ocurrido un error intentando destruir el workspace en Sandbox");
                         }
                     }
                     break;
                 case 'sandboxChangeGroup':
-                    globals_1.globalConfig.workspaceRepository = {
-                        name: message.data.name,
-                        path: message.data.path,
-                        repoid: message.data.repoid,
-                        commit: message.data.commit
-                    };
-                    vscode.window.showInformationMessage(`TAMBO COMMIT: ${message.data.commit}`);
-                    break;
-                case 'cloneRepository':
-                    vscode.window.showInformationMessage("TAMBO: Clonando Repositorio");
+                    const changeWorkspaceGroupRes = await vscode.window.showInformationMessage(`¿Cambiar el grupo activo a ${message.data.name}?`, { modal: true }, // Modal para la confirmación
+                    'Sí');
+                    if (changeWorkspaceGroupRes === 'Sí') {
+                        globals_1.globalConfig.workspaceRepository = {
+                            name: message.data.name,
+                            path: message.data.path,
+                            repoid: message.data.repoid,
+                            commit: message.data.commit
+                        };
+                        const sandbox = new sandbox_1.Sandbox();
+                        const response = await sandbox.workspaceChangeGroup();
+                        if (!response) {
+                            vscode.window.showErrorMessage("TAMBO: Ha ocurrido un error intentando cambiar de grupo en Sandbox");
+                        }
+                    }
                     break;
             }
         });
@@ -1092,6 +1091,40 @@ class Sandbox {
             return true;
         }
         catch (error) {
+            return false;
+        }
+    }
+    async workspaceChangeGroup() {
+        try {
+            const sandboxUrl = `${globals_1.globalConfig.sandboxUrl}${globals_1.globalConfig.sandboxAPISandbox}`;
+            const config = vscode.workspace.getConfiguration('tambo.sandbox.gitlab');
+            const username = config.get('username');
+            const encryptedToken = config.get('token');
+            const token = encryptedToken ? (0, utils_1.decrypt)(encryptedToken) : null;
+            const axiosConfig = {
+                httpsAgent: new https.Agent({ rejectUnauthorized: false }),
+                timeout: globals_1.globalConfig.axiosTimeout,
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                validateStatus: (status) => [200, 204].includes(status),
+            };
+            const requestData = {
+                id: `airflow-sandbox-${username}`,
+                equipo: globals_1.globalConfig.workspaceRepository?.name.toLowerCase(),
+                token: token,
+                estado: 0,
+                repositorio: {
+                    id: globals_1.globalConfig.workspaceRepository?.repoid,
+                    path: globals_1.globalConfig.workspaceRepository?.path,
+                },
+            };
+            console.log("GLOBAL-ACTUALIZADO: ", requestData);
+            await axios_1.default.patch(`${sandboxUrl}?usuario=${encodeURIComponent(username ?? "")}`, requestData, axiosConfig);
+            return true;
+        }
+        catch (error) {
+            console.error("TAMBOSANDBOX.sandbox.workspaceChangeGroup:", error);
             return false;
         }
     }

@@ -179,8 +179,12 @@ export class Sandbox {
             };
 
             console.log("TAMBO-CREAR_SANDBOX: ", body);
-            
-            await axios.post(`${sandboxUrl}?usuario=${encodeURIComponent(username)}`, body, axiosConfig);
+
+            await axios.post(
+                `${sandboxUrl}?usuario=${encodeURIComponent(username)}`,
+                body,
+                axiosConfig
+            );
 
             return true;
 
@@ -214,6 +218,51 @@ export class Sandbox {
             return false;
         }
 
+    }
+
+    async workspaceChangeGroup(): Promise<boolean> {
+
+        try {
+            const sandboxUrl = `${globalConfig.sandboxUrl}${globalConfig.sandboxAPISandbox}`;
+            const config = vscode.workspace.getConfiguration('tambo.sandbox.gitlab');
+            const username = config.get<string>('username');
+            const encryptedToken = config.get<string>('token');
+            const token = encryptedToken ? decrypt(encryptedToken) : null;
+
+            const axiosConfig = {
+                httpsAgent: new https.Agent({ rejectUnauthorized: false }),
+                timeout: globalConfig.axiosTimeout,
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                validateStatus: (status: number) => [200, 204].includes(status),
+            };
+
+            const requestData = {
+                id: `airflow-sandbox-${username}`,
+                equipo: globalConfig.workspaceRepository?.name.toLowerCase(),
+                token: token,
+                estado: 0,
+                repositorio: {
+                    id: globalConfig.workspaceRepository?.repoid,
+                    path: globalConfig.workspaceRepository?.path,
+                },
+            };
+
+            console.log("GLOBAL-ACTUALIZADO: ", requestData);
+
+            await axios.patch(
+                `${sandboxUrl}?usuario=${encodeURIComponent(username ?? "")}`,
+                requestData,
+                axiosConfig
+            );
+
+            return true;
+
+        } catch (error) {
+            console.error("TAMBOSANDBOX.sandbox.workspaceChangeGroup:", error);
+            return false;
+        }
     }
 
 }

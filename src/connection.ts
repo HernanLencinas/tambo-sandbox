@@ -157,6 +157,7 @@ class ConnectionsViewProvider implements vscode.WebviewViewProvider {
             switch (message.command) {
 
                 case 'sandboxStatus':
+                    
                     const htmlStatusSandbox = await updateStatus(this.context.extensionUri);
                     const hash = (await md5(htmlStatusSandbox)).slice(-5);
 
@@ -172,6 +173,7 @@ class ConnectionsViewProvider implements vscode.WebviewViewProvider {
                     break;
 
                 case 'openLink':
+
                     if (message.link) {
                         vscode.window.showInformationMessage("Abriendo Link");
                         vscode.env.openExternal(vscode.Uri.parse(message.link));
@@ -179,10 +181,12 @@ class ConnectionsViewProvider implements vscode.WebviewViewProvider {
                     break;
 
                 case 'showMessage':
+
                     vscode.window.showInformationMessage(message.message);
                     break;
 
                 case 'sandboxCreate':
+
                     const createWorkspaceRes = await vscode.window.showInformationMessage(
                         '¿Desplegar un nuevo Workspace en Tambo Sandbox?',
                         { modal: true },
@@ -193,9 +197,7 @@ class ConnectionsViewProvider implements vscode.WebviewViewProvider {
 
                         const sandbox = new Sandbox();
                         const response = await sandbox.createWorkspace();
-                        if (response) {
-                            vscode.window.showInformationMessage("TAMBO: Se inicio la creacion del workspace en Sandbox");
-                        } else {
+                        if (!response) {
                             vscode.window.showErrorMessage("TAMBO: Ha ocurrido un error al intentar iniciar el workspace en Sandbox");
                         }
 
@@ -206,33 +208,42 @@ class ConnectionsViewProvider implements vscode.WebviewViewProvider {
 
                     const destroyWorkspaceRes = await vscode.window.showInformationMessage(
                         '¿Destruir el workspace actualmente en ejecuccion?',
-                        { modal: true }, // Modal para enfatizar la confirmación
+                        { modal: true }, // Modal para la confirmación
                         'Sí'
                     );
 
                     if (destroyWorkspaceRes === 'Sí') {
                         const sandbox = new Sandbox();
                         const response = await sandbox.destroyWorkspace();
-                        if (response) {
-                            vscode.window.showInformationMessage("TAMBO: Destruyendo workspace en Sandbox");
-                        } else {
+                        if (!response) {
                             vscode.window.showErrorMessage("TAMBO: Ha ocurrido un error intentando destruir el workspace en Sandbox");
                         }
                     }
                     break;
 
                 case 'sandboxChangeGroup':
-                    globalConfig.workspaceRepository = {
-                        name: message.data.name,
-                        path: message.data.path,
-                        repoid: message.data.repoid,
-                        commit: message.data.commit
-                    };
-                    vscode.window.showInformationMessage(`TAMBO COMMIT: ${message.data.commit}`);
-                    break;
 
-                case 'cloneRepository':
-                    vscode.window.showInformationMessage("TAMBO: Clonando Repositorio");
+                    const changeWorkspaceGroupRes = await vscode.window.showInformationMessage(
+                        `¿Cambiar el grupo activo a ${message.data.name}?`,
+                        { modal: true }, // Modal para la confirmación
+                        'Sí'
+                    );
+
+                    if (changeWorkspaceGroupRes === 'Sí') {
+
+                        globalConfig.workspaceRepository = {
+                            name: message.data.name,
+                            path: message.data.path,
+                            repoid: message.data.repoid,
+                            commit: message.data.commit
+                        };
+
+                        const sandbox = new Sandbox();
+                        const response = await sandbox.workspaceChangeGroup();
+                        if (!response){
+                            vscode.window.showErrorMessage("TAMBO: Ha ocurrido un error intentando cambiar de grupo en Sandbox");
+                        }
+                    }
                     break;
 
             }
