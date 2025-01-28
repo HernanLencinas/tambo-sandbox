@@ -145,7 +145,7 @@ class ConnectionsViewProvider implements vscode.WebviewViewProvider {
         this.webviewView = webviewView;
 
         webviewView.webview.options = {
-           enableScripts: true,
+            enableScripts: true,
             localResourceRoots: [vscode.Uri.joinPath(this.context.extensionUri, 'resources')]
         };
 
@@ -179,6 +179,11 @@ class ConnectionsViewProvider implements vscode.WebviewViewProvider {
                         vscode.window.showInformationMessage("Abriendo Link");
                         vscode.env.openExternal(vscode.Uri.parse(message.link));
                     }
+                    break;
+
+                case 'sandboxWizard':
+
+                    vscode.commands.executeCommand('tambosandbox.connectionWizard');
                     break;
 
                 case 'showMessage':
@@ -241,7 +246,7 @@ class ConnectionsViewProvider implements vscode.WebviewViewProvider {
 
                         const sandbox = new Sandbox();
                         const response = await sandbox.workspaceChangeGroup();
-                        if (!response){
+                        if (!response) {
                             await updateStatus(this.context.extensionUri);
                             vscode.window.showErrorMessage("TAMBO: Ha ocurrido un error intentando cambiar de grupo en Sandbox");
                         } else {
@@ -648,6 +653,7 @@ async function updateStatus(vscodeURI: vscode.Uri) {
                 const workspaceToolsHTML = await htmlTools();
                 await sandbox.workspaceUpdateCurrentGroup();
                 const workspaceChangeReposHTML = await htmlRepos(globalConfig.workspaceRepositories, true);
+
                 actionButtonHTML = `
                     ${workspaceChangeReposHTML}
                     ${workspaceToolsHTML}
@@ -776,7 +782,7 @@ async function htmlRepos(repositoriesList: any, commit: boolean, selectedGroup: 
                 <div class="custom-select-arrow"></div>
             </div>
         </div>
-    `;
+        `;
 
 }
 
@@ -805,7 +811,7 @@ async function htmlTools(): Promise<string> {
                 <img src="${vscodeURI}/resources/logos/automation.svg" class="apps-button-icon"> PORTAL AUTOMATIZACION <img src="${vscodeURI}/resources/icons/external-link.svg" class="external-link-icon" />
             </button>
         </div>
-    `;
+        `;
 
     return html;
 

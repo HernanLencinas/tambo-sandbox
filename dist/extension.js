@@ -252,6 +252,9 @@ class ConnectionsViewProvider {
                         vscode.env.openExternal(vscode.Uri.parse(message.link));
                     }
                     break;
+                case 'sandboxWizard':
+                    vscode.commands.executeCommand('tambosandbox.connectionWizard');
+                    break;
                 case 'showMessage':
                     vscode.window.showInformationMessage(message.message);
                     break;
@@ -778,7 +781,7 @@ async function htmlRepos(repositoriesList, commit, selectedGroup = "") {
                 <div class="custom-select-arrow"></div>
             </div>
         </div>
-    `;
+        `;
 }
 async function htmlTools() {
     const vscodeURI = globals_1.globalConfig.vscodeUri;
@@ -803,7 +806,7 @@ async function htmlTools() {
                 <img src="${vscodeURI}/resources/logos/automation.svg" class="apps-button-icon"> PORTAL AUTOMATIZACION <img src="${vscodeURI}/resources/icons/external-link.svg" class="external-link-icon" />
             </button>
         </div>
-    `;
+        `;
     return html;
 }
 async function htmlCloneRepository() {
