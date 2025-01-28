@@ -242,7 +242,7 @@ class ConnectionsViewProvider {
                         globals_1.globalConfig.workspaceStatusHash = hash;
                         webviewView.webview.postMessage({
                             command: 'sandboxConnectionStatus',
-                            data: htmlStatusSandbox,
+                            data: htmlStatusSandbox
                         });
                     }
                     break;

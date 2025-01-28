@@ -167,7 +167,7 @@ class ConnectionsViewProvider implements vscode.WebviewViewProvider {
                         globalConfig.workspaceStatusHash = hash;
                         webviewView.webview.postMessage({
                             command: 'sandboxConnectionStatus',
-                            data: htmlStatusSandbox,
+                            data: htmlStatusSandbox
                         });
 
                     }
@@ -247,8 +247,10 @@ class ConnectionsViewProvider implements vscode.WebviewViewProvider {
                         const sandbox = new Sandbox();
                         const response = await sandbox.workspaceChangeGroup();
                         if (!response) {
+
                             await updateStatus(this.context.extensionUri);
                             vscode.window.showErrorMessage("TAMBO: Ha ocurrido un error intentando cambiar de grupo en Sandbox");
+                        
                         } else {
 
                             const gitlab = new Gitlab();
