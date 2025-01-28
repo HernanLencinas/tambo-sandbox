@@ -30,7 +30,7 @@
       "tambo-sandbox": [
         {
           "id": "tambo_viewport_connection",
-          "name": "Conexión",
+          "name": "Panel",
           "type": "webview"
         },
         {

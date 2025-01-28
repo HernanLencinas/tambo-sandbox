@@ -362,10 +362,10 @@ class ConnectionsViewProvider {
                 </style>
             </head>
             <body>
-                <b>¡BIENVENIDO A TAMBO SANDBOX!</b>
+                <h2>¡BIENVENIDO A TAMBO SANDBOX!</h2>
                 <p>Parece que aún no has configurado tu conexión al Sandbox.
                 <p>Para comenzar deberás primero registrar una nueva conexión. Puedes hacerlo utilizando nuestro asistente de configuración.
-                <p><button onclick="invokeWizard()" class="wizard-button">Asistente de Conexión</button>
+                <p><button onclick="invokeWizard()" class="wizard-button"><b>ASISTENTE DE CONEXION</b></button>
                 <p>El asistente te guiará paso a paso en el proceso de registro.
                 <p>Si tienes alguna pregunta o necesitas ayuda, no dudes en contactarnos a través de nuestro correo <a href="mailto:frameautomation@teco.com.ar">frameautomation@teco.com.ar</a>
             </body>
