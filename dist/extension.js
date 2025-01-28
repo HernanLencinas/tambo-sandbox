@@ -358,7 +358,7 @@ class ConnectionsViewProvider {
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
             <link href="${styleUri}" rel="stylesheet">
             <body>
-                <div id="sandboxPanelStatus"></div>
+                <div id="sandboxPanelStatus"><h4>Iniciando...</h4> Un momento por favor...</div>
             </body>
             <script src="${scriptUri}"></script>
             </html>

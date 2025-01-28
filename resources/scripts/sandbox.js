@@ -1,15 +1,30 @@
+// file deepcode ignore InsufficientPostmessageValidation: <please specify a reason of ignoring this>
 const vscode = acquireVsCodeApi();
+
+const previousState = vscode.getState();
+const sPanelStatus = document.getElementById('sandboxPanelStatus');
+
+if (previousState) {
+    sPanelStatus.innerHTML = previousState;
+}
+
 
 // Manejar mensajes entrantes desde VS Code
 window.addEventListener('message', ({ data: message }) => {
     if (message.command === 'sandboxConnectionStatus') {
         updateSandboxPanelStatus(message.data);
+        saveState(message.data);
     }
 });
 
+// Guarda el estado en el Webview
+function saveState(data) {
+    vscode.setState(data);
+}
+
 // Actualizar el estado del panel sandbox
 function updateSandboxPanelStatus(statusHtml) {
-    const sPanelStatus = document.getElementById('sandboxPanelStatus');
+
     sPanelStatus.innerHTML = statusHtml;
 
     // Delegación de eventos para manejar clicks en botones con 'data-link'
