@@ -233,3 +233,36 @@ body {
     border-right: 6px solid transparent;
     border-top: 6px solid #FFFFFF;
 }
+
+.container {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: center;
+    height: 100vh;
+    width: 100%;
+    padding-top: 50px;
+    text-align: center;
+    font-family: Arial, sans-serif;
+}
+
+p {
+    margin-top: 5px;
+    font-size: 14px;
+}
+
+
+.spinner1 {
+    width: 40px;
+    height: 40px;
+    border: 5px solid rgba(0, 0, 0, 0.1);
+    border-left-color: #007bff;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin-bottom: 10px;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}

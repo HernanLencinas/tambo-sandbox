@@ -176,7 +176,12 @@ class ConnectionsViewProvider implements vscode.WebviewViewProvider {
                 case 'openLink':
 
                     if (message.link) {
-                        vscode.env.openExternal(vscode.Uri.parse(message.link));
+                        
+                        const res = vscode.env.openExternal(vscode.Uri.parse(message.link));
+                        if (!res) {
+                            vscode.window.showErrorMessage("TAMBO-SANDBOX: No se pudo abrir el enlace.");
+                        }
+
                     }
                     break;
 
@@ -249,7 +254,7 @@ class ConnectionsViewProvider implements vscode.WebviewViewProvider {
 
                             await updateStatus(this.context.extensionUri);
                             vscode.window.showErrorMessage("TAMBO: Ha ocurrido un error intentando cambiar de grupo en Sandbox");
-                        
+
                         } else {
 
                             const gitlab = new Gitlab();
@@ -344,12 +349,18 @@ class ConnectionsViewProvider implements vscode.WebviewViewProvider {
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
             <link href="${styleUri}" rel="stylesheet">
             <body>
-                <div id="sandboxPanelStatus"><h4>Iniciando...</h4> Un momento por favor...</div>
+                <div id="sandboxPanelStatus">
+                    <div class="container">
+                        <div class="spinner1"></div>
+                        <h2>Iniciando...</h2>
+                        <p>Un momento por favor...</p>
+                    </div>
+                </div>
             </body>
             <script src="${scriptUri}"></script>
             </html>
         `;
-      
+
     }
 }
 

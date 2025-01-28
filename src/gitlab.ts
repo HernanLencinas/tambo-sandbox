@@ -72,7 +72,7 @@ export class Gitlab {
 					vscode.workspace.updateWorkspaceFolders(0, null, { uri: newWorkspace.uri, name: 'TAMBOSANDBOX' });
 				}
 	
-				vscode.window.showInformationMessage('Repositorio Clonado.');
+				vscode.window.showInformationMessage('TAMBO-SANDBOX: Repositorio Clonado.');
 	
 			})
 			.catch((error: any) => {
