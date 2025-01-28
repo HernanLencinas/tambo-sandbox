@@ -241,7 +241,13 @@ class ConnectionsViewProvider implements vscode.WebviewViewProvider {
                         const sandbox = new Sandbox();
                         const response = await sandbox.workspaceChangeGroup();
                         if (!response){
+                            await updateStatus(this.context.extensionUri);
                             vscode.window.showErrorMessage("TAMBO: Ha ocurrido un error intentando cambiar de grupo en Sandbox");
+                        } else {
+
+                            const gitlab = new Gitlab();
+                            await gitlab.cloneRepository();
+
                         }
                     }
                     break;
@@ -628,12 +634,6 @@ async function updateStatus(vscodeURI: vscode.Uri) {
 
     let workspaceStatus: { estado: number; clase: string; texto: string; warningMessage?: string } = { estado: 1, clase: 'offline', texto: 'Desconectado' };
     let actionButtonHTML = '';
-
-    // PRUEBA TEMPORARIA DEL BOTON DE CLONAR
-    const workspaceCloneRepoHTML = await htmlCloneRepository();
-    actionButtonHTML = `
-        ${workspaceCloneRepoHTML}
-    `;
 
     if (sandboxStatus && gitStatus) {
 
