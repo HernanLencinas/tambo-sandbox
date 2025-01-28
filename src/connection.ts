@@ -328,15 +328,14 @@ class ConnectionsViewProvider implements vscode.WebviewViewProvider {
 
     private getConnectionContent(vscodeURI: vscode.Uri): string {
 
-
-        // BUG: al reingresar al viewport Panel
-
         const styleUri = this.webviewView?.webview.asWebviewUri(
             vscode.Uri.joinPath(this.context.extensionUri, 'resources', 'styles', 'sandbox.css')
         );
         const scriptUri = this.webviewView?.webview.asWebviewUri(
             vscode.Uri.joinPath(this.context.extensionUri, 'resources', 'scripts', 'sandbox.js')
         );
+
+        // BUG: al reingresar al viewport Panel
 
         return `
             <!DOCTYPE html>
@@ -350,7 +349,7 @@ class ConnectionsViewProvider implements vscode.WebviewViewProvider {
             <script src="${scriptUri}"></script>
             </html>
         `;
-        
+      
     }
 }
 

@@ -348,9 +348,9 @@ class ConnectionsViewProvider {
         `;
     }
     getConnectionContent(vscodeURI) {
-        // BUG: al reingresar al viewport Panel
         const styleUri = this.webviewView?.webview.asWebviewUri(vscode.Uri.joinPath(this.context.extensionUri, 'resources', 'styles', 'sandbox.css'));
         const scriptUri = this.webviewView?.webview.asWebviewUri(vscode.Uri.joinPath(this.context.extensionUri, 'resources', 'scripts', 'sandbox.js'));
+        // BUG: al reingresar al viewport Panel
         return `
             <!DOCTYPE html>
             <html lang="en">
