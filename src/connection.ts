@@ -145,7 +145,8 @@ class ConnectionsViewProvider implements vscode.WebviewViewProvider {
         this.webviewView = webviewView;
 
         webviewView.webview.options = {
-            enableScripts: true,
+           enableScripts: true,
+            localResourceRoots: [vscode.Uri.joinPath(this.context.extensionUri, 'resources')]
         };
 
         this.updateWebviewContent();

@@ -229,6 +229,7 @@ class ConnectionsViewProvider {
         this.webviewView = webviewView;
         webviewView.webview.options = {
             enableScripts: true,
+            localResourceRoots: [vscode.Uri.joinPath(this.context.extensionUri, 'resources')]
         };
         this.updateWebviewContent();
         vscode.commands.executeCommand('setContext', 'tambo.configDefined', new Connection().isConfigured());
