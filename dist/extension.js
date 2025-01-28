@@ -707,12 +707,12 @@ async function updateStatus(vscodeURI) {
                 break;
         }
     }
-    let html1 = '';
-    html1 += createStatusHTML1("Sandbox", sandboxStatus ? "Conectado" : "Desconectado", sandboxStatus ? 'online' : 'offline', sandboxStatus ? "" : "No se pudo establecer conexión con el servicio de Sandbox. Verifique sus credenciales o conexión a la red asegúrandose de estar conectado a la VPN Corporativa.");
-    html1 += createStatusHTML1("Git", gitStatus ? "Conectado" : "Desconectado", gitStatus ? 'online' : 'offline', gitStatus ? "" : "Autenticación fallida. Por favor, verifique que su usuario y token sean correctos.");
-    html1 += createStatusHTML1("Workspace", workspaceStatus.texto, workspaceStatus.clase, workspaceStatus.warningMessage);
-    html1 += actionButtonHTML;
-    function createStatusHTML1(title, status, clase, warningMessage) {
+    let html = '';
+    html += createStatusHTML("Sandbox", sandboxStatus ? "Conectado" : "Desconectado", sandboxStatus ? 'online' : 'offline', sandboxStatus ? "" : "No se pudo establecer conexión con el servicio de Sandbox. Verifique sus credenciales o conexión a la red asegúrandose de estar conectado a la VPN Corporativa.");
+    html += createStatusHTML("Git", gitStatus ? "Conectado" : "Desconectado", gitStatus ? 'online' : 'offline', gitStatus ? "" : "Autenticación fallida. Por favor, verifique que su usuario y token sean correctos.");
+    html += createStatusHTML("Workspace", workspaceStatus.texto, workspaceStatus.clase, workspaceStatus.warningMessage);
+    html += actionButtonHTML;
+    function createStatusHTML(title, status, clase, warningMessage) {
         let additionalMessage = "";
         if (warningMessage) {
             additionalMessage = `<div class="row">
@@ -734,7 +734,7 @@ async function updateStatus(vscodeURI) {
             ${additionalMessage}
         `;
     }
-    return html1;
+    return html;
 }
 async function htmlRepos(repositoriesList, commit, selectedGroup = "") {
     if (!Array.isArray(repositoriesList) || repositoriesList.length === 0) {
