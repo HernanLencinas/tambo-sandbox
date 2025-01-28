@@ -326,43 +326,15 @@ class ConnectionsViewProvider {
         }
     }
     getConnectionWizardContent(vscodeURI) {
+        const styleUri = this.webviewView?.webview.asWebviewUri(vscode.Uri.joinPath(this.context.extensionUri, 'resources', 'styles', 'wizard.css'));
+        const scriptUri = this.webviewView?.webview.asWebviewUri(vscode.Uri.joinPath(this.context.extensionUri, 'resources', 'scripts', 'wizard.js'));
         return `
             <!DOCTYPE html>
             <html lang="en">
             <head>
                 <meta charset="UTF-8">
                 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                <title>Bienvenido a Tambo Sandbox</title>
-                <style>
-                    body {
-                        line-height: 1.6;
-                    }
-                    a {
-                        color: #FFFFFFCC;
-                        text-decoration: none;
-                        
-                    }
-                    a:hover {
-                        text-decoration: underline;
-                    }
-                    .wizard-button {
-                        width: 100%;
-                        padding: 15px 0;
-                        border-radius: 5px;
-                        font-size: 14px;
-                       
-                        color: orange;
-                        background-color: transparent;
-                        border: 1px solid orange;
-                        text-align: center;
-                        cursor: pointer;
-                        transition: background-color 0.3s, color 0.3s;
-                    }
-                    .wizard-button:hover {
-                        background-color: orange;
-                        color: black;
-                    }
-                </style>
+                <link href="${styleUri}" rel="stylesheet">
             </head>
             <body>
                 <h2>¡BIENVENIDO A TAMBO SANDBOX!</h2>
@@ -372,286 +344,24 @@ class ConnectionsViewProvider {
                 <p>El asistente te guiará paso a paso en el proceso de registro.
                 <p>Si tienes alguna pregunta o necesitas ayuda, no dudes en contactarnos a través de nuestro correo <a href="mailto:frameautomation@teco.com.ar">frameautomation@teco.com.ar</a>
             </body>
-                <script>
-                    const vscode = acquireVsCodeApi();
-                    function invokeWizard() {
-                        vscode.postMessage({ command: "sandboxWizard" });
-                    }
-                </script>
+            <script src="${scriptUri}"></script>
             </html>
         `;
     }
     getConnectionContent(vscodeURI) {
+        // BUG: al reingresar al viewport Panel
+        const styleUri = this.webviewView?.webview.asWebviewUri(vscode.Uri.joinPath(this.context.extensionUri, 'resources', 'styles', 'sandbox.css'));
+        const scriptUri = this.webviewView?.webview.asWebviewUri(vscode.Uri.joinPath(this.context.extensionUri, 'resources', 'scripts', 'sandbox.js'));
         return `
             <!DOCTYPE html>
             <html lang="en">
-            <head>
-                <meta charset="UTF-8">
-                <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                <title>Connections View</title>
-                <style>
-                    body {
-                        font-family: Arial, sans-serif;
-                        padding: 10px;
-                    }
-                    .row {
-                        display: flex;
-                        align-items: center;
-                        justify-content: space-between;
-                        margin-bottom: 10px;
-                    }
-                    .status {
-                        display: flex;
-                        align-items: center;
-                    }
-                    .status span {
-                        display: inline-block;
-                        width: 10px;
-                        height: 10px;
-                        border-radius: 50%;
-                        margin-right: 8px;
-                        margin-top: -5px;
-                        margin-left: 5px;
-                    }
-                    .status .online {
-                        background-color: green;
-                    }
-                    .status .offline {
-                        background-color: red;
-                    }
-                    .status .deploying {
-                        background-color: orange;
-                    }
-                    .status .destroying {
-                        background-color: yellow;
-                    }
-                    .status .unknown {
-                        background-color: blue;
-                    }
-                    .status-msg {
-                        display: flex;
-                        align-items: flex-start;"
-                    }
-                    .arrow {
-                        align-self: flex-start;
-                        font-size: 16px;
-                        margin-right: 5px;
-                        padding-left: 7px;
-                    }
-                    .icon {
-                        height: 100%;
-                        padding-right: 7px;
-                    }
-                    .msg {
-                        width: 100%;
-                        height: 100%;
-                        padding-top: 2px;
-                        color: #FFD740;
-                    }
-                    .sandbox-button {
-                        position: relative;
-                        display: inline-flex;
-                        align-items: center;
-                        justify-content: center;
-                        padding: 10px 20px;
-                        font-size: 12px;
-                        font-wight: 900;
-                        color: white;
-                        background-color: transparent;
-                        border: 2px solid orange;
-                        border-radius: 5px;
-                        cursor: pointer;
-                        transition: background-color 0.3s;
-                        width: 100%;
-                        color: orange;
-                        margin-top: 10px;
-                        margin-left: 10px;
-                        margin-right: 10px;
-                    }
-                    .sandbox-button:hover {
-                        background-color: orange;
-                        color: black;
-                    }
-                    .sandbox-button:disabled {
-                        background-color: transparent;
-                        cursor: not-allowed;
-                    }
-                    .spinner {
-                        position: absolute;
-                        width: 16px;
-                        height: 16px;
-                        border: 2px solid orange;
-                        border-top-color: transparent;
-                        border-radius: 50%;
-                        animation: spin 0.6s linear infinite;
-                        display: none;
-                    }
-                    .sandbox-button.loading .spinner {
-                        display: block; /* Mostrar spinner cuando esta cargando */
-                    }
-
-                    .sandbox-button.loading span {
-                        visibility: hidden; /* Ocultar Texto cuando el spinner esta visible */
-                    }
-
-                    @keyframes spin {
-                        from {
-                            transform: rotate(0deg);
-                        }
-                        to {
-                            transform: rotate(360deg);
-                        }
-                    }
-                    .apps-button {
-                        display: flex; /* Flexbox para alinear contenido horizontalmente */
-                        align-items: center; /* Centrar verticalmente */
-                        width: 100%;
-                        padding: 10px 0px 10px 0px;
-                        margin: -7px 10px 0px 10px;
-                        border-radius: 5px;
-                        font-size: 12px;
-                        color: #eee;
-                        background-color: rgba(0, 0, 0, 0.1);
-                        border: 1px solid rgba(0, 0, 0, 0.1);
-                        text-align: center;
-                        cursor: pointer;
-                        transition: background-color 0.3s, color 0.3s;
-                    }
-                    .apps-button:hover {
-                        background-color: orange;
-                        color: #eee;
-                        font-weight: bold;
-                    }
-                    .apps-button-icon {
-                        width: 16px; /* Ajusta el tamaño del ícono */
-                        height: 16px;
-                        margin-right: 8px; /* Espacio entre el ícono y el texto */
-                        margin-left: 10px;
-                    }
-                    .app-button-selected {
-                        border: 1px solid white;
-                    }
-                    .external-link-icon {
-                        width: 10px; 
-                        height: 10px;
-                        padding-left: 8px;
-                    }
-                    .hidden {
-                        display: none;
-                    }
-                    .tools-buttons {
-                        display: flex;
-                        flex-wrap: wrap;
-                        justify-content: flex-start;
-                        gap: 10px;
-                    }
-                    .select-container {
-                        position: relative;
-                        width: 100%;
-                        max-width: 600px;
-                    }
-                    .custom-select {
-                        width: 100%;
-                        background-color: #202233;
-                        border: 1px solid #444; 
-                        border-radius: 5px; 
-                        padding: 10px 15px;
-                        font-size: 13px;
-                        color: #FFFFFF;
-                        cursor: pointer;
-                        appearance: none;
-                        -webkit-appearance: none; 
-                        -moz-appearance: none;
-                    }
-                    .custom-select:focus {
-                        outline: none;
-                        border-color: white; 
-                    }
-                    .custom-select option {
-                        background-color: #1E1E2F; 
-                        color: #FFFFFF;
-                        padding: 10px;
-                    }
-                    .custom-select option:hover {
-                        background-color: #4CAF50;
-                        color: #FFFFFF;
-                    }
-                    .custom-select-arrow {
-                        position: absolute;
-                        right: 15px;
-                        top: 50%;
-                        transform: translateY(-50%);
-                        pointer-events: none;
-                        width: 0;
-                        height: 0;
-                        border-left: 6px solid transparent;
-                        border-right: 6px solid transparent;
-                        border-top: 6px solid #FFFFFF;
-                    }               
-
-                    </style>
-            </head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <link href="${styleUri}" rel="stylesheet">
             <body>
-
                 <div id="sandboxPanelStatus"></div>
-
-                <script>
-                    const vscode = acquireVsCodeApi();
-
-                    window.addEventListener('message', (event) => {
-                        const message = event.data;
-                        if (message.command === 'sandboxConnectionStatus') {
-
-                            const sPanelStatus = document.getElementById('sandboxPanelStatus');
-                            sPanelStatus.innerHTML = message.data;
-
-                            const buttons = sPanelStatus.querySelectorAll('.apps-button[data-link]');
-                            buttons.forEach(button => {
-                                button.addEventListener('click', (event) => {
-                                    const link = button.getAttribute('data-link');
-                                    if (link) {
-                                        vscode.postMessage({ command: 'openLink', link });
-                                    }
-                                });
-                            });
-
-                        }
-                    });
-
-                    function createSandbox() {
-                        vscode.postMessage({ command: 'sandboxCreate' });
-                    }
-
-                    function destroySandbox() {
-                        vscode.postMessage({ command: 'sandboxDestroy' });
-                    }
-
-                    function updateSandboxData() {
-                        vscode.postMessage({ command: 'sandboxStatus' });
-                    }
-
-                    function cloneRepository() {
-                        vscode.postMessage({ command: 'cloneRepository' });
-                    }
-
-                    function sandboxChangeGroup(event, commit) {
-                        const selectedOption = event.target.options[event.target.selectedIndex];
-                        vscode.postMessage({ 
-                            command: 'sandboxChangeGroup', 
-                            data: { 
-                                name: selectedOption.dataset.name,
-                                path: selectedOption.value, 
-                                repoid: selectedOption.dataset.repoid,
-                                commit: commit
-                            } 
-                        });
-                    }
-
-                    //updateSandboxData();
-                    setInterval(updateSandboxData, 3000);
-
-                </script>
             </body>
+            <script src="${scriptUri}"></script>
             </html>
         `;
     }
