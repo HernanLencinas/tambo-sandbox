@@ -176,7 +176,7 @@ class ConnectionsViewProvider implements vscode.WebviewViewProvider {
                 case 'openLink':
 
                     if (message.link) {
-                        
+
                         const res = vscode.env.openExternal(vscode.Uri.parse(message.link));
                         if (!res) {
                             vscode.window.showErrorMessage("TAMBO-SANDBOX: No se pudo abrir el enlace.");
@@ -232,6 +232,16 @@ class ConnectionsViewProvider implements vscode.WebviewViewProvider {
                     break;
 
                 case 'sandboxChangeGroup':
+
+                    if (!message.data.commit) {
+                        globalConfig.workspaceRepository = {
+                            name: message.data.name,
+                            path: message.data.path,
+                            repoid: message.data.repoid,
+                            commit: message.data.commit
+                        };
+                        break;
+                    }
 
                     const changeWorkspaceGroupRes = await vscode.window.showInformationMessage(
                         `¿Desea confirmar el cambio al grupo activo ${message.data.name}?`,

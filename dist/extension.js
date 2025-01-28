@@ -282,6 +282,15 @@ class ConnectionsViewProvider {
                     }
                     break;
                 case 'sandboxChangeGroup':
+                    if (!message.data.commit) {
+                        globals_1.globalConfig.workspaceRepository = {
+                            name: message.data.name,
+                            path: message.data.path,
+                            repoid: message.data.repoid,
+                            commit: message.data.commit
+                        };
+                        break;
+                    }
                     const changeWorkspaceGroupRes = await vscode.window.showInformationMessage(`¿Desea confirmar el cambio al grupo activo ${message.data.name}?`, { modal: true }, // Modal para la confirmación
                     'Sí');
                     if (changeWorkspaceGroupRes === 'Sí') {
