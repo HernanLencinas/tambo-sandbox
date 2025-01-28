@@ -100,7 +100,7 @@ body {
     cursor: not-allowed;
 }
 
-.spinner {
+/* .spinner {
     position: absolute;
     width: 16px;
     height: 16px;
@@ -109,16 +109,32 @@ body {
     border-radius: 50%;
     animation: spin 0.6s linear infinite;
     display: none;
+    margin: 10px 0px 10px 0px;
 }
 
 .sandbox-button.loading .spinner {
     display: block;
-    /* Mostrar spinner cuando esta cargando */
+} */
+
+
+.spinner {
+    width: 12px;
+    height: 12px;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-top-color: orange;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin-right: 10px;
+    display: none;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
 }
 
 .sandbox-button.loading span {
     visibility: hidden;
-    /* Ocultar Texto cuando el spinner esta visible */
 }
 
 @keyframes spin {
@@ -157,10 +173,8 @@ body {
 
 .apps-button-icon {
     width: 16px;
-    /* Ajusta el tamaño del ícono */
     height: 16px;
     margin-right: 8px;
-    /* Espacio entre el ícono y el texto */
     margin-left: 10px;
 }
 

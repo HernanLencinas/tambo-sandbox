@@ -514,7 +514,9 @@ async function htmlTools() {
     const vscodeURI = globals_1.globalConfig.vscodeUri;
     const configuration = vscode.workspace.getConfiguration('tambo.sandbox.gitlab');
     const currentUsername = configuration.get('username');
+    const test = await htmlCloneRepository();
     const html = `
+        ${test}
         <div class="row" style="padding: 10px 0px 10px 10px;">
             <b>Herramientas:</b>
         </div>
@@ -540,7 +542,7 @@ async function htmlCloneRepository() {
     const html = `
         <div class="row" style="padding-top: 10px;">
             <button id="actionSandboxButton" onclick="cloneRepository();" class="sandbox-button">
-                <div class="spinner"></div>
+                <div id="actionSandboxSpinner" class="spinner"></div>
                 <span id="actionSandboxButtonText">CLONAR REPOSITORIO</span>
             </button>
         </div>

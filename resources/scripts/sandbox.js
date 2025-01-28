@@ -59,6 +59,15 @@ function updateSandboxData() {
 
 function cloneRepository() {
     sendMessage('cloneRepository');
+
+    const button = document.getElementById('actionSandboxButton');
+    const spinner = document.getElementById('actionSandboxSpinner');
+    const buttonText = document.getElementById('actionSandboxButtonText');
+
+    button.disabled = true;
+    spinner.style.display = 'block';
+    buttonText.textContent = 'CLONANDO...';
+
 }
 
 function sandboxChangeGroup(event, commit) {
