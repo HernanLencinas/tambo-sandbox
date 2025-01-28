@@ -176,7 +176,6 @@ class ConnectionsViewProvider implements vscode.WebviewViewProvider {
                 case 'openLink':
 
                     if (message.link) {
-                        vscode.window.showInformationMessage("Abriendo Link");
                         vscode.env.openExternal(vscode.Uri.parse(message.link));
                     }
                     break;

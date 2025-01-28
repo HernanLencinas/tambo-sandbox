@@ -248,7 +248,6 @@ class ConnectionsViewProvider {
                     break;
                 case 'openLink':
                     if (message.link) {
-                        vscode.window.showInformationMessage("Abriendo Link");
                         vscode.env.openExternal(vscode.Uri.parse(message.link));
                     }
                     break;
