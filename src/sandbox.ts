@@ -220,6 +220,8 @@ export class Sandbox {
 
     }
 
+    // BUG: CAMBIAR NOMBRE DE LA FUNCION
+    
     async workspaceChangeGroup(): Promise<boolean> {
 
         try {
@@ -228,7 +230,6 @@ export class Sandbox {
             const username = config.get<string>('username');
             const encryptedToken = config.get<string>('token');
             const token = encryptedToken ? decrypt(encryptedToken) : null;
-
             const axiosConfig = {
                 httpsAgent: new https.Agent({ rejectUnauthorized: false }),
                 timeout: globalConfig.axiosTimeout,
@@ -237,7 +238,6 @@ export class Sandbox {
                 },
                 validateStatus: (status: number) => [200, 204].includes(status),
             };
-
             const requestData = {
                 id: `airflow-sandbox-${username}`,
                 equipo: globalConfig.workspaceRepository?.name.toLowerCase(),
@@ -249,7 +249,7 @@ export class Sandbox {
                 },
             };
 
-            const res = await axios.patch(
+            await axios.patch(
                 `${sandboxUrl}?usuario=${encodeURIComponent(username ?? "")}`,
                 requestData,
                 axiosConfig

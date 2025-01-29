@@ -4,7 +4,7 @@
 import * as vscode from 'vscode';
 import { Connection } from './connection';
 import { Sandbox } from './sandbox';
-import { globalConfig } from './globals';
+/* import { globalConfig } from './globals'; */
 import { Gitlab } from './gitlab';
 
 // file deepcode ignore InsecureTLSConfig: <please specify a reason of ignoring this>
@@ -14,6 +14,7 @@ export async function activate(context: vscode.ExtensionContext) {
 
 	// CARGAR CONFIGURACION DE CONExión A TAMBO SANDBOX
 	const gitlab = new Gitlab();
+	const sandbox = new Sandbox();
 	const connection = new Connection();
 	connection.load(context);
 
@@ -49,10 +50,16 @@ export async function activate(context: vscode.ExtensionContext) {
 
 	/// CAPTURAR EL EVENTO DE GUARDADO ///	
 	let saveListener = vscode.workspace.onDidSaveTextDocument(async (document: vscode.TextDocument) => {
-		gitlab.commitRepository();
+
+
+		const commitRes = await gitlab.commitRepository();
+		if (commitRes) {
+			sandbox.workspaceChangeGroup();
+		}
+
 	});
 	context.subscriptions.push(saveListener);
-	
+
 }
 
 export function deactivate() { }

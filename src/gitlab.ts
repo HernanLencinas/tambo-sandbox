@@ -5,7 +5,7 @@ import * as https from 'https';
 import axios from 'axios';
 import { globalConfig } from './globals';
 
-import simpleGit, { SimpleGit, SimpleGitOptions } from 'simple-git';
+import simpleGit, { RemoteWithRefs, SimpleGit, SimpleGitOptions } from 'simple-git';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
@@ -85,34 +85,73 @@ export class Gitlab {
 
 	}
 
-	async commitRepository() {
+	async commitRepository(): Promise<boolean> {
 
 		const configuration = vscode.workspace.getConfiguration('tambo.sandbox');
-		const autoCommit = configuration.get('autoCommit');
+		const originURL = await this.gitOrigin();
+		const regex = new RegExp('^' + globalConfig.gitlabUrl.replace(/([.*+?^=!:${}()|\[\]\/\\])/g, '\\$1') + '/', '');
+		const repoPath = originURL.replace(regex, '').replace(/\.git$/, '');
 
-		vscode.window.showInformationMessage(`TAMBO-SANDBOX-COMMIT: ${autoCommit}`);
+		if (globalConfig.workspaceRepository?.path.toLocaleLowerCase() !== repoPath.toLowerCase()) {
 
-/* 		// Configuración de simple-git
-		const options: Partial<SimpleGitOptions> = {
-			baseDir: vscode.workspace.rootPath,
-			binary: 'git',
-			config: ['core.autocrlf=false'],
-		};
-		const git: SimpleGit = simpleGit(options);
+			vscode.window.setStatusBarMessage('$(x) TAMBO-SANDBOX: El workspace no esta sincronizado', 10000);
+			return false;
+
+		}
+		
+		if (configuration.get('autoCommit')) {
+
+			try {
+				// Configuración de simple-git
+				const options: Partial<SimpleGitOptions> = {
+					baseDir: vscode.workspace.rootPath,
+					binary: 'git',
+					config: ['core.autocrlf=false'],
+				};
+				const git: SimpleGit = simpleGit(options);
+				const status = await git.status();
+				if (status.files.length > 0) {
+					await git.add('.');
+					await git.commit('SANDBOX Autocommit');
+					await git.push();
+					vscode.window.setStatusBarMessage('$(check) TAMBO-SANDBOX: Cambios guardados', 10000);
+
+					return true;
+
+				} else {
+					vscode.window.setStatusBarMessage('$(warning) TAMBO-SANDBOX: No hay cambios para guardar', 10000);
+					return false;
+				}
+			} catch (error) {
+
+				vscode.window.setStatusBarMessage('$(x) TAMBO-SANDBOX: Error al guardar los cambios', 10000);
+				return false;
+			}
+
+		}
+
+		return true;
+
+	}
+
+	async gitOrigin(): Promise<string> {
 
 		try {
-			// Realiza git add para todos los cambios
-			git.add('.');
-			// Crea el commit automáticamente
-			git.commit('Autocommit desde VSCode');
-			// Realiza el push de los cambios
-			git.push();
+			// Obtener la URL del repositorio remoto "origin"
+			const git: SimpleGit = simpleGit(vscode.workspace.rootPath);
+			const remotes = await git.getRemotes(true); // Devuelve un array de remotos
+			const origin = remotes.find(remote => remote.name === 'origin');
 
-			vscode.window.showInformationMessage('TAMBO-SANDBOX: Se guardaron los cambios correctamente');
-
+			if (origin) {
+				console.log('Origin URL:', origin.refs.fetch); // URL del repositorio remoto
+				return origin.refs.fetch; // Devuelve la URL del repositorio remoto "origin"
+			} else {
+				return '';
+			}
 		} catch (error) {
-			vscode.window.showErrorMessage('TAMBO-SANDBOX: Error intentando guardar el cambio');
-		} */
+			console.error(error);
+			return '';
+		}
 
 	}
 

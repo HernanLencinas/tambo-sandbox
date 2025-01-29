@@ -45,12 +45,15 @@ exports.activate = activate;
 exports.deactivate = deactivate;
 const vscode = __importStar(__webpack_require__(1));
 const connection_1 = __webpack_require__(2);
+const sandbox_1 = __webpack_require__(5);
+/* import { globalConfig } from './globals'; */
 const gitlab_1 = __webpack_require__(47);
 // file deepcode ignore InsecureTLSConfig: <please specify a reason of ignoring this>
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
 async function activate(context) {
     // CARGAR CONFIGURACION DE CONExión A TAMBO SANDBOX
     const gitlab = new gitlab_1.Gitlab();
+    const sandbox = new sandbox_1.Sandbox();
     const connection = new connection_1.Connection();
     connection.load(context);
     // ESCUCHAR CAMBIOS EN LA CONFIGURACION
@@ -80,7 +83,10 @@ async function activate(context) {
     context.subscriptions.push(cmdConnectionRefresh);
     /// CAPTURAR EL EVENTO DE GUARDADO ///	
     let saveListener = vscode.workspace.onDidSaveTextDocument(async (document) => {
-        gitlab.commitRepository();
+        const commitRes = await gitlab.commitRepository();
+        if (commitRes) {
+            sandbox.workspaceChangeGroup();
+        }
     });
     context.subscriptions.push(saveListener);
 }
@@ -878,6 +884,7 @@ class Sandbox {
             return false;
         }
     }
+    // BUG: CAMBIAR NOMBRE DE LA FUNCION
     async workspaceChangeGroup() {
         try {
             const sandboxUrl = `${globals_1.globalConfig.sandboxUrl}${globals_1.globalConfig.sandboxAPISandbox}`;
@@ -903,7 +910,7 @@ class Sandbox {
                     path: globals_1.globalConfig.workspaceRepository?.path,
                 },
             };
-            const res = await axios_1.default.patch(`${sandboxUrl}?usuario=${encodeURIComponent(username ?? "")}`, requestData, axiosConfig);
+            await axios_1.default.patch(`${sandboxUrl}?usuario=${encodeURIComponent(username ?? "")}`, requestData, axiosConfig);
             return true;
         }
         catch (error) {
@@ -9405,29 +9412,60 @@ class Gitlab {
     }
     async commitRepository() {
         const configuration = vscode.workspace.getConfiguration('tambo.sandbox');
-        const autoCommit = configuration.get('autoCommit');
-        vscode.window.showInformationMessage(`TAMBO-SANDBOX-COMMIT: ${autoCommit}`);
-        /* 		// Configuración de simple-git
-                const options: Partial<SimpleGitOptions> = {
+        const originURL = await this.gitOrigin();
+        const regex = new RegExp('^' + globals_1.globalConfig.gitlabUrl.replace(/([.*+?^=!:${}()|\[\]\/\\])/g, '\\$1') + '/', '');
+        const repoPath = originURL.replace(regex, '').replace(/\.git$/, '');
+        if (globals_1.globalConfig.workspaceRepository?.path.toLocaleLowerCase() !== repoPath.toLowerCase()) {
+            vscode.window.setStatusBarMessage('$(x) TAMBO-SANDBOX: El workspace no esta sincronizado', 10000);
+            return false;
+        }
+        if (configuration.get('autoCommit')) {
+            try {
+                // Configuración de simple-git
+                const options = {
                     baseDir: vscode.workspace.rootPath,
                     binary: 'git',
                     config: ['core.autocrlf=false'],
                 };
-                const git: SimpleGit = simpleGit(options);
-        
-                try {
-                    // Realiza git add para todos los cambios
-                    git.add('.');
-                    // Crea el commit automáticamente
-                    git.commit('Autocommit desde VSCode');
-                    // Realiza el push de los cambios
-                    git.push();
-        
-                    vscode.window.showInformationMessage('TAMBO-SANDBOX: Se guardaron los cambios correctamente');
-        
-                } catch (error) {
-                    vscode.window.showErrorMessage('TAMBO-SANDBOX: Error intentando guardar el cambio');
-                } */
+                const git = (0, simple_git_1.default)(options);
+                const status = await git.status();
+                if (status.files.length > 0) {
+                    await git.add('.');
+                    await git.commit('SANDBOX Autocommit');
+                    await git.push();
+                    vscode.window.setStatusBarMessage('$(check) TAMBO-SANDBOX: Cambios guardados', 10000);
+                    return true;
+                }
+                else {
+                    vscode.window.setStatusBarMessage('$(warning) TAMBO-SANDBOX: No hay cambios para guardar', 10000);
+                    return false;
+                }
+            }
+            catch (error) {
+                vscode.window.setStatusBarMessage('$(x) TAMBO-SANDBOX: Error al guardar los cambios', 10000);
+                return false;
+            }
+        }
+        return true;
+    }
+    async gitOrigin() {
+        try {
+            // Obtener la URL del repositorio remoto "origin"
+            const git = (0, simple_git_1.default)(vscode.workspace.rootPath);
+            const remotes = await git.getRemotes(true); // Devuelve un array de remotos
+            const origin = remotes.find(remote => remote.name === 'origin');
+            if (origin) {
+                console.log('Origin URL:', origin.refs.fetch); // URL del repositorio remoto
+                return origin.refs.fetch; // Devuelve la URL del repositorio remoto "origin"
+            }
+            else {
+                return '';
+            }
+        }
+        catch (error) {
+            console.error(error);
+            return '';
+        }
     }
 }
 exports.Gitlab = Gitlab;
