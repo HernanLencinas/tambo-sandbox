@@ -15,6 +15,22 @@ window.addEventListener('message', ({ data: message }) => {
         updateSandboxPanelStatus(message.data);
         saveState(message.data);
     }
+    if (message.command === 'destroyingStatus') {
+        const button = document.getElementById('destroySandboxButton');
+        const spinner = document.getElementById('destroySandboxSpinner');
+        const buttonText = document.getElementById('destroySandboxButtonText');
+        button.disabled = true;
+        spinner.style.display = 'block';
+        buttonText.textContent = 'DESTRUYENDO WORKSPACE...';
+    }
+    if (message.command === 'deployingStatus') {
+        const button = document.getElementById('deploySandboxButton');
+        const spinner = document.getElementById('deploySandboxSpinner');
+        const buttonText = document.getElementById('deploySandboxButtonText');
+        button.disabled = true;
+        spinner.style.display = 'block';
+        buttonText.textContent = 'DEPLOYANDO WORKSPACE...';
+    }
 });
 
 // Guarda el estado en el Webview
@@ -59,15 +75,15 @@ function updateSandboxData() {
 
 function cloneRepository() {
     sendMessage('cloneRepository');
+    /* 
+        const button = document.getElementById('actionSandboxButton');
+        const spinner = document.getElementById('actionSandboxSpinner');
+        const buttonText = document.getElementById('actionSandboxButtonText');
 
-    const button = document.getElementById('actionSandboxButton');
-    const spinner = document.getElementById('actionSandboxSpinner');
-    const buttonText = document.getElementById('actionSandboxButtonText');
-
-    button.disabled = true;
-    spinner.style.display = 'block';
-    buttonText.textContent = 'CLONANDO...';
-
+        button.disabled = true;
+        spinner.style.display = 'block';
+        buttonText.textContent = 'CLONANDO...';
+    */
 }
 
 function sandboxChangeGroup(event, commit) {

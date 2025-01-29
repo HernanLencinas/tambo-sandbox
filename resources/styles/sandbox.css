@@ -147,6 +147,12 @@ body {
     }
 }
 
+.sandbox-button:disabled:hover {
+    /* background-color: #a0a0a0; */
+    color: orange;
+    cursor: not-allowed;
+}
+
 .apps-button {
     display: flex;
     /* Flexbox para alinear contenido horizontalmente */

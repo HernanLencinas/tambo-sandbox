@@ -209,6 +209,10 @@ class ConnectionsViewProvider implements vscode.WebviewViewProvider {
                         const response = await sandbox.createWorkspace();
                         if (!response) {
                             vscode.window.showErrorMessage("TAMBO: Ha ocurrido un error al intentar iniciar el workspace en Sandbox");
+                        } else {
+                            webviewView.webview.postMessage({
+                                command: 'deployingStatus'
+                            });
                         }
 
                     }
@@ -227,6 +231,10 @@ class ConnectionsViewProvider implements vscode.WebviewViewProvider {
                         const response = await sandbox.destroyWorkspace();
                         if (!response) {
                             vscode.window.showErrorMessage("TAMBO: Ha ocurrido un error intentando destruir el workspace en Sandbox");
+                        } else {
+                            webviewView.webview.postMessage({
+                                command: 'destroyingStatus'
+                            });
                         }
                     }
                     break;
@@ -400,9 +408,9 @@ async function updateStatus(vscodeURI: vscode.Uri) {
                     ${workspaceChangeReposHTML}
                     ${workspaceToolsHTML}
                     <div class="row" style="padding-top: 10px;">
-                        <button id="actionSandboxButton" onclick="destroySandbox();" class="sandbox-button">
-                            <div class="spinner"></div>
-                            <span id="actionSandboxButtonText">DESTRUIR WORKSPACE</span>
+                        <button id="destroySandboxButton" onclick="destroySandbox();" class="sandbox-button">
+                            <div id="destroySandboxSpinner" class="spinner"></div>
+                            <span id="destroySandboxButtonText">DESTRUIR WORKSPACE</span>
                         </button>
                     </div>
                     </hr>
@@ -415,9 +423,9 @@ async function updateStatus(vscodeURI: vscode.Uri) {
                 actionButtonHTML = `
                     ${workspaceReposHTML}
                     <div class="row" style="padding-top: 10px;">
-                        <button id="actionSandboxButton" onclick="createSandbox();" class="sandbox-button">
-                            <div class="spinner"></div>
-                            <span id="actionSandboxButtonText">INICIAR WORKSPACE</span>
+                        <button id="deploySandboxButton" onclick="createSandbox();" class="sandbox-button">
+                            <div id="deploySandboxSpinner" class="spinner"></div>
+                            <span id="deploySandboxButtonText">INICIAR WORKSPACE</span>
                         </button>
                     </div>
                 `;
@@ -534,12 +542,7 @@ async function htmlTools(): Promise<string> {
     const configuration = vscode.workspace.getConfiguration('tambo.sandbox.gitlab');
     const currentUsername = configuration.get('username');
 
-
-    const test = await htmlCloneRepository();
-
-
     const html = `
-        ${test}
         <div class="row" style="padding: 10px 0px 10px 10px;">
             <b>Herramientas:</b>
         </div>
@@ -566,9 +569,11 @@ async function htmlTools(): Promise<string> {
 
 async function htmlCloneRepository(): Promise<string> {
 
+    // const test = await htmlCloneRepository();
+
     const html = `
         <div class="row" style="padding-top: 10px;">
-            <button id="actionSandboxButton" onclick="cloneRepository();" class="sandbox-button">
+            <button id="actionSandboxButton" onclick="cloneRepository();" class="sandbox-button" >
                 <div id="actionSandboxSpinner" class="spinner"></div>
                 <span id="actionSandboxButtonText">CLONAR REPOSITORIO</span>
             </button>
