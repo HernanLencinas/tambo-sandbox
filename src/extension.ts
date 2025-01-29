@@ -5,6 +5,7 @@ import * as vscode from 'vscode';
 import { Connection } from './connection';
 import { Sandbox } from './sandbox';
 import { globalConfig } from './globals';
+import { Gitlab } from './gitlab';
 
 // file deepcode ignore InsecureTLSConfig: <please specify a reason of ignoring this>
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
@@ -12,6 +13,7 @@ process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
 export async function activate(context: vscode.ExtensionContext) {
 
 	// CARGAR CONFIGURACION DE CONExión A TAMBO SANDBOX
+	const gitlab = new Gitlab();
 	const connection = new Connection();
 	connection.load(context);
 
@@ -45,33 +47,12 @@ export async function activate(context: vscode.ExtensionContext) {
 	});
 	context.subscriptions.push(cmdConnectionRefresh);
 
-
-
-	// Registrar el comando para seleccionar un grupo
-	/*     context.subscriptions.push(
-			vscode.commands.registerCommand('tambo.grupos.select', (item) => {
-				vscode.window.showInformationMessage(`Repositorio seleccionado: ${item.repositorio}`);
-			})
-		); */
-
-	// Registrar un comando para refrescar el árbol (opcional)
-	/*     context.subscriptions.push(
-			vscode.commands.registerCommand('tambo.grupos.refresh', () => gruposTreeProvider.refresh())
-		); */
-
 	/// CAPTURAR EL EVENTO DE GUARDADO ///	
-	/* let saveListener = vscode.workspace.onDidSaveTextDocument(async (document: vscode.TextDocument) => {
-		vscode.window.showInformationMessage('Capturando eventos');
-		pushRepository();
+	let saveListener = vscode.workspace.onDidSaveTextDocument(async (document: vscode.TextDocument) => {
+		gitlab.commitRepository();
 	});
-	context.subscriptions.push(saveListener); */
-
-	/// CLONAR REPOSITORIO ///
-	/* const cmdCloneRepository = vscode.commands.registerCommand('tambosandbox.cloneRepository', async () => {
-		cloneRepository();
-	});
-	context.subscriptions.push(cmdCloneRepository); */
-
+	context.subscriptions.push(saveListener);
+	
 }
 
 export function deactivate() { }

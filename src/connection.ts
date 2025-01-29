@@ -176,12 +176,10 @@ class ConnectionsViewProvider implements vscode.WebviewViewProvider {
                 case 'openLink':
 
                     if (message.link) {
-
                         const res = vscode.env.openExternal(vscode.Uri.parse(message.link));
                         if (!res) {
                             vscode.window.showErrorMessage("TAMBO-SANDBOX: No se pudo abrir el enlace.");
                         }
-
                     }
                     break;
 
@@ -232,6 +230,8 @@ class ConnectionsViewProvider implements vscode.WebviewViewProvider {
                         if (!response) {
                             vscode.window.showErrorMessage("TAMBO: Ha ocurrido un error intentando destruir el workspace en Sandbox");
                         } else {
+                            const gitlab = new Gitlab();
+                            gitlab.closeRepository();
                             webviewView.webview.postMessage({
                                 command: 'destroyingStatus'
                             });
@@ -281,6 +281,21 @@ class ConnectionsViewProvider implements vscode.WebviewViewProvider {
                         }
                     }
                     break;
+
+/*                 case 'cloneRepository':
+
+                    const cloneRepositoryRes = await vscode.window.showInformationMessage(
+                        `¿Desea confirmar el clonar localmente el repositorio del grupo activo?`,
+                        { modal: true }, // Modal para la confirmación
+                        'Sí'
+                    );
+
+                    if (cloneRepositoryRes === 'Sí') {
+                        const gitlab = new Gitlab();
+                        await gitlab.cloneRepository();
+                    }
+
+                    break; */
 
             }
 
@@ -403,6 +418,7 @@ async function updateStatus(vscodeURI: vscode.Uri) {
                 const workspaceToolsHTML = await htmlTools();
                 await sandbox.workspaceUpdateCurrentGroup();
                 const workspaceChangeReposHTML = await htmlRepos(globalConfig.workspaceRepositories, true);
+               /*  const cloneHTML = await htmlCloneRepository(); */
 
                 actionButtonHTML = `
                     ${workspaceChangeReposHTML}
@@ -410,7 +426,7 @@ async function updateStatus(vscodeURI: vscode.Uri) {
                     <div class="row" style="padding-top: 10px;">
                         <button id="destroySandboxButton" onclick="destroySandbox();" class="sandbox-button">
                             <div id="destroySandboxSpinner" class="spinner"></div>
-                            <span id="destroySandboxButtonText">DESTRUIR WORKSPACE</span>
+                            <span id="destroySandboxButtonText">💀&nbsp;&nbsp;DESTRUIR WORKSPACE</span>
                         </button>
                     </div>
                     </hr>
@@ -425,7 +441,7 @@ async function updateStatus(vscodeURI: vscode.Uri) {
                     <div class="row" style="padding-top: 10px;">
                         <button id="deploySandboxButton" onclick="createSandbox();" class="sandbox-button">
                             <div id="deploySandboxSpinner" class="spinner"></div>
-                            <span id="deploySandboxButtonText">INICIAR WORKSPACE</span>
+                            <span id="deploySandboxButtonText">🚀&nbsp;&nbsp;INICIAR WORKSPACE</span>
                         </button>
                     </div>
                 `;
@@ -569,13 +585,11 @@ async function htmlTools(): Promise<string> {
 
 async function htmlCloneRepository(): Promise<string> {
 
-    // const test = await htmlCloneRepository();
-
     const html = `
-        <div class="row" style="padding-top: 10px;">
+        <div class="row" style="padding-top1: 10px;">
             <button id="actionSandboxButton" onclick="cloneRepository();" class="sandbox-button" >
                 <div id="actionSandboxSpinner" class="spinner"></div>
-                <span id="actionSandboxButtonText">CLONAR REPOSITORIO</span>
+                <span id="actionSandboxButtonText" style="font-weight:normal">CLONAR REPOSITORIO</span>
             </button>
         </div>
     `;

@@ -110,12 +110,17 @@
         "tambo.sandbox.gitlab.username": {
           "type": "string",
           "default": "",
-          "description": "Gitlab Username"
+          "description": "Usuario de Gitlab"
         },
         "tambo.sandbox.gitlab.token": {
           "type": "string",
           "default": "",
-          "description": "Gitlab Token"
+          "description": "Token de Gitlab"
+        },
+        "tambo.sandbox.autoCommit": {
+          "type": "boolean",
+          "default": true,
+          "description": "Realizar commit automatico en Gitlab"
         }
       }
     }

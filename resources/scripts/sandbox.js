@@ -8,7 +8,6 @@ if (previousState) {
     sPanelStatus.innerHTML = previousState;
 }
 
-
 // Manejar mensajes entrantes desde VS Code
 window.addEventListener('message', ({ data: message }) => {
     if (message.command === 'sandboxConnectionStatus') {
@@ -75,15 +74,6 @@ function updateSandboxData() {
 
 function cloneRepository() {
     sendMessage('cloneRepository');
-    /* 
-        const button = document.getElementById('actionSandboxButton');
-        const spinner = document.getElementById('actionSandboxSpinner');
-        const buttonText = document.getElementById('actionSandboxButtonText');
-
-        button.disabled = true;
-        spinner.style.display = 'block';
-        buttonText.textContent = 'CLONANDO...';
-    */
 }
 
 function sandboxChangeGroup(event, commit) {
@@ -99,4 +89,4 @@ function sandboxChangeGroup(event, commit) {
 }
 
 // Actualizar datos del sandbox periódicamente
-setInterval(updateSandboxData, 3000);
+setInterval(updateSandboxData, 5000);
