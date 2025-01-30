@@ -1,4 +1,4 @@
-# Visual Studio Code extension para Cloudvalley
+# Visual Studio Code extension para TAMBO Sandbox
 
 
 ## Descripción
@@ -22,7 +22,42 @@ Sigue estos sencillos pasos para instalar la extensión:
 2. Navega a la sección de Extensiones.
 3. Busca "Tambo" e instálala la extension.
 
+![vsce](https://i.postimg.cc/x1pTZztQ/temp-Image-RXt6tw.avif)
+
+¡Listo! Ahora estás preparado para aprovechar al máximo esta extensión en tu proceso de desarrollo de automatizaciones.
+
+## Configuración
+
+### Configurar acceso a un ambiente
+
+1. Dentro de la barra lateral hacemos clic en el acceso a TAMBO. 
+
+![vsce](https://i.postimg.cc/v80jftBG/temp-Image-XH8-Fe-V.avif)
+
+Luego en la vista de detalle de panel hacemos clic en el boton **ASISTENTE DE CONEXION** 
+
+2. En el siguiente paso, se nos pedirá seleccionar el usuario de acceso a GitLab en un desplegable.
+
+![vsce](https://i.postimg.cc/R0CpW3BW/temp-Imager-KLj-Kh.avif)
+
+3. A continuación, se nos solicitará ingresar el token de acceso.
+
+![vsce](https://i.postimg.cc/NM5NxWLY/temp-Imagep7-Gg-II.avif)
+
+4. Una vez configurada la conexión, se validará el acceso al servicio TAMBO SANDBOX.
+
+![vsce](https://i.postimg.cc/ZKkfrsmt/temp-Imagehp-Dsbp.avif)
+
+Si todos los parámetros son correctos, se mostrará el panel de estado, donde estarán disponibles las opciones para gestionar el workspace del usuario.
+
+![vsce](https://i.postimg.cc/KjTJ6BnH/temp-Imageqxwf-Gk.avif)
+
 
 ## Contacto
 
 Si deseas contribuir para mejorar la experiencia en TAMBO con Visual Studio Code, te invitamos a ponerte en contacto con nosotros directamente a traves de nuestro correo frameautomation@teco.com.ar. Tu participación es valiosa para perfeccionar esta integración y enriquecer la comunidad de usuarios. ¡Esperamos con interés tu colaboración y aportes!
+
+
+
+
+
