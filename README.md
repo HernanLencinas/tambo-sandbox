@@ -3,11 +3,11 @@
 
 ## Descripción
 
-La extensión Cloudvalley para Visual Studio Code es una herramienta robusta diseñada para simplificar la creación y gestión de automatizaciones desarrolladas específicamente para Ansible Tower o AWX. Con un enfoque centrado en la colaboración y la eficiencia, esta extensión permite a los builders crear sus automatizaciones de manera intuitiva y acceder a los orquestadores directamente desde su entorno de desarrollo.
+La extensión TAMBO para Visual Studio Code es una herramienta diseñada para optimizar la creación y gestión de automatizaciones dentro de TAMBO SANDBOX. Con un enfoque en la colaboración y la productividad, esta extensión permite a los desarrolladores y automatizadores diseñar, probar y gestionar sus automatizaciones de manera intuitiva, directamente desde su entorno de desarrollo.  Además, proporciona acceso integrado a herramientas clave como Airflow, facilitando la orquestación de flujos de trabajo sin necesidad de cambiar de plataforma. Con una interfaz amigable y funcionalidades específicas para TAMBO, esta extensión agiliza el desarrollo y la implementación de automatizaciones, mejorando la eficiencia en cada etapa del proceso.
 
 ## Características Destacadas
 
-- **Interfaz Intuitiva:** Una interfaz de usuario amigable que simplifica el desarrollo de automatizaciones, incluso para aquellos nuevos en Ansible Tower o AWX.
+- **Interfaz Intuitiva:** Una interfaz de usuario amigable que simplifica el desarrollo de automatizaciones, incluso para aquellos nuevos en Airflow.
 
 ## Instalación Rápida
 
@@ -20,7 +20,7 @@ Sigue estos sencillos pasos para instalar la extensión:
 
 1. Abre Visual Studio Code.
 2. Navega a la sección de Extensiones.
-3. Busca "Tambo Sandbox" e instálala.
+3. Busca "Tambo" e instálala la extension.
 
 
 ## Contacto
