@@ -2,8 +2,12 @@
   "name": "tambo-sandbox",
   "displayName": "TAMBO",
   "description": "TAMBO Sandbox",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "publisher": "HernanLencinas",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/HernanLencinas/tambo-sandbox.git"
+  },
   "icon": "resources/logos/tambo.png",
   "engines": {
     "vscode": "^1.94.0"
