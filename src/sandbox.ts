@@ -168,7 +168,7 @@ export class Sandbox {
             };
 
             const body = {
-                id: "airflow-sandbox-u519277",
+                id: `airflow-sandbox-${username}`,
                 equipo: globalConfig.workspaceRepository.name.toLowerCase(),
                 token: token,
                 repositorio: {
