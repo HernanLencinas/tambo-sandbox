@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/naming-convention */
 import * as vscode from 'vscode';
-import { decrypt } from './utils';
+import { decrypt, showStatusMessage } from './utils';
 import * as https from 'https';
 import axios from 'axios';
 import { globalConfig } from './globals';
@@ -87,6 +87,7 @@ export class Sandbox {
             globalConfig.workspaceRepository = {
                 name: response.data.equipo,
                 path: response.data.repositorio.path,
+                branch: response.data.repositorio.branch,
                 repoid: response.data.repositorio.id,
                 commit: false
             };
@@ -130,10 +131,11 @@ export class Sandbox {
             }
 
             if (!globalConfig.workspaceRepository) {
-                const defaultRepo = response?.[0] ?? { path: '', id: '' };
+                const defaultRepo = response?.[0] ?? { path: '', id: '', branch: '' };
                 globalConfig.workspaceRepository = {
                     name: (defaultRepo.path.match(/clientes\/(.*?)\/tambo/) || [])[1] || '',
                     path: defaultRepo.path,
+                    branch: defaultRepo.branch,
                     repoid: defaultRepo.id,
                     commit: false,
                 };
@@ -246,9 +248,11 @@ export class Sandbox {
                 repositorio: {
                     id: globalConfig.workspaceRepository?.repoid,
                     path: globalConfig.workspaceRepository?.path,
+                    branch: globalConfig.workspaceRepository?.branch
                 },
             };
 
+            showStatusMessage("Cambiando de grupo de trabajo...");
             await axios.patch(
                 `${sandboxUrl}?usuario=${encodeURIComponent(username ?? "")}`,
                 requestData,
@@ -258,6 +262,7 @@ export class Sandbox {
             return true;
 
         } catch (error) {
+            showStatusMessage("Error intentando cambiar el grupo activo.");
             console.error("TAMBOSANDBOX.sandbox.workspaceChangeGroup:", error);
             return false;
         }

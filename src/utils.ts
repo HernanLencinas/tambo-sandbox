@@ -6,6 +6,7 @@ import * as url from 'url';
 
 // file deepcode ignore HardcodedSecret: <please specify a reason of ignoring this>, file deepcode ignore HardcodedNonCryptoSecret: <please specify a reason of ignoring this>
 const secretKey = 'MY1SUPER2KEY3ENCRYPTED4PUBLIC376';
+let statusBarItem: vscode.StatusBarItem | undefined;
 
 export function encrypt(text: string | undefined) {
 
@@ -43,5 +44,16 @@ export function decrypt(text: string | undefined): string {
     decrypted += decipher.final('utf8');
 
     return decrypted;
+
+}
+
+export function showStatusMessage(message: string) {
+
+    if (!statusBarItem) {
+        statusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 100);
+    }
+
+    statusBarItem.text = `🚀 TAMBO-SANDBOX: ${message}`;
+    statusBarItem.show();
 
 }

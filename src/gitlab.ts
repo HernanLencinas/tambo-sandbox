@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/naming-convention */
 import * as vscode from 'vscode';
-import { decrypt } from './utils';
+import { decrypt, showStatusMessage } from './utils';
 import * as https from 'https';
 import axios from 'axios';
 import { globalConfig } from './globals';
@@ -48,8 +48,10 @@ export class Gitlab {
 
 	async cloneRepository() {
 
+		const configuration = vscode.workspace.getConfiguration('tambo.sandbox.gitlab');
+		const currentUsername = configuration.get('username');
 		const git: SimpleGit = simpleGit();
-		const repoBranch = "produccion";
+		const repoBranch = `${globalConfig.workspaceRepository?.branch ?? `airflow-sandbox-${currentUsername}`}`;
 		const repoUrl = `${globalConfig.gitlabUrl}/${globalConfig.workspaceRepository?.path}.git`;
 		const tempDir = path.join(os.tmpdir(), 'vscode-tambosandbox');
 
@@ -57,20 +59,23 @@ export class Gitlab {
 			fs.rmSync(tempDir, { recursive: true, force: true });
 		}
 
+		showStatusMessage('Clonando repositorio...');
+
+
 		// Clonar el repositorio
 		git.clone(repoUrl, tempDir, ['--branch', repoBranch])
 			.then(() => {
 
 				// Abrir el nuevo espacio de trabajo
-				vscode.workspace.updateWorkspaceFolders(0, null, { uri: vscode.Uri.file(tempDir), name: 'TAMBOSANDBOX' });
+				vscode.workspace.updateWorkspaceFolders(0, null, { uri: vscode.Uri.file(tempDir), name: "TAMBOSANDBOX" });
 
 				// Establecer el rootPath en el explorador de archivos
 				const newWorkspace = vscode.workspace.workspaceFolders?.find(folder => folder.uri.fsPath === tempDir);
 				if (newWorkspace) {
-					vscode.workspace.updateWorkspaceFolders(0, null, { uri: newWorkspace.uri, name: 'TAMBOSANDBOX' });
+					vscode.workspace.updateWorkspaceFolders(0, null, { uri: newWorkspace.uri, name: "TAMBOSANDBOX" });
 				}
 
-				vscode.window.showInformationMessage('TAMBO-SANDBOX: Repositorio Clonado.');
+				showStatusMessage('Repositorio Clonado');
 
 			})
 			.catch((error: any) => {
@@ -98,7 +103,7 @@ export class Gitlab {
 			return false;
 
 		}
-		
+
 		if (configuration.get('autoCommit')) {
 
 			try {

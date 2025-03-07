@@ -4,7 +4,7 @@
 import * as vscode from 'vscode';
 import { Connection } from './connection';
 import { Sandbox } from './sandbox';
-/* import { globalConfig } from './globals'; */
+import { showStatusMessage } from './utils';
 import { Gitlab } from './gitlab';
 
 // file deepcode ignore InsecureTLSConfig: <please specify a reason of ignoring this>
@@ -16,6 +16,7 @@ export async function activate(context: vscode.ExtensionContext) {
 	const gitlab = new Gitlab();
 	const sandbox = new Sandbox();
 	const connection = new Connection();
+
 	connection.load(context);
 
 	// ESCUCHAR CAMBIOS EN LA CONFIGURACION

@@ -7,6 +7,7 @@ import { Sandbox } from './sandbox';
 import { Gitlab } from './gitlab';
 import { globalConfig } from './globals';
 import { md5 } from "hash-wasm";
+import { showStatusMessage } from './utils';
 
 export class Connection {
 
@@ -92,6 +93,7 @@ export class Connection {
 
         try {
             // Crear una única instancia del proveedor
+            showStatusMessage("Activando extension...");
             this.provider = new ConnectionsViewProvider(context);
 
             context.subscriptions.push(
@@ -101,6 +103,7 @@ export class Connection {
                 )
             );
         } catch (error) {
+            showStatusMessage("Error activando la extension.");
             console.error("TAMBOSANDBOX.connection.load: ", error);
         }
 
@@ -241,27 +244,35 @@ class ConnectionsViewProvider implements vscode.WebviewViewProvider {
 
                 case 'sandboxChangeGroup':
 
+                    const configuration = vscode.workspace.getConfiguration('tambo.sandbox.gitlab');
+                    const currentUsername = configuration.get('username');
+
                     if (!message.data.commit) {
                         globalConfig.workspaceRepository = {
                             name: message.data.name,
                             path: message.data.path,
+                            branch: `airflow-sandbox-${currentUsername}`,
                             repoid: message.data.repoid,
                             commit: message.data.commit
                         };
                         break;
                     }
 
-                    const changeWorkspaceGroupRes = await vscode.window.showInformationMessage(
-                        `¿Desea confirmar el cambio al grupo activo ${message.data.name}?`,
-                        { modal: true }, // Modal para la confirmación
+                    const changeWorkspaceGroupRes = await vscode.window.showWarningMessage(
+                        `Está a punto de cambiar al grupo ${message.data.name}.\n\n` +
+                        `🔸 Este cambio afectará su configuración de trabajo actual.\n` +
+                        `🔸 Se clonara el repositorio de este grupo en el workspace activo.\n\n` +
+                        `¿Desea continuar?`,
+                        { modal: true }, 
                         'Sí'
                     );
-
+                    
                     if (changeWorkspaceGroupRes === 'Sí') {
 
                         globalConfig.workspaceRepository = {
                             name: message.data.name,
                             path: message.data.path,
+                            branch: `airflow-sandbox-${currentUsername}`,
                             repoid: message.data.repoid,
                             commit: message.data.commit
                         };
@@ -279,23 +290,23 @@ class ConnectionsViewProvider implements vscode.WebviewViewProvider {
                             await gitlab.cloneRepository();
 
                         }
-                    }
+                    } // TODO: Agregar aqui que al cancelar se mantenga el grupo actual
                     break;
 
-/*                 case 'cloneRepository':
-
-                    const cloneRepositoryRes = await vscode.window.showInformationMessage(
-                        `¿Desea confirmar el clonar localmente el repositorio del grupo activo?`,
-                        { modal: true }, // Modal para la confirmación
-                        'Sí'
-                    );
-
-                    if (cloneRepositoryRes === 'Sí') {
-                        const gitlab = new Gitlab();
-                        await gitlab.cloneRepository();
-                    }
-
-                    break; */
+                /*                 case 'cloneRepository':
+                
+                                    const cloneRepositoryRes = await vscode.window.showInformationMessage(
+                                        `¿Desea confirmar el clonar localmente el repositorio del grupo activo?`,
+                                        { modal: true }, // Modal para la confirmación
+                                        'Sí'
+                                    );
+                
+                                    if (cloneRepositoryRes === 'Sí') {
+                                        const gitlab = new Gitlab();
+                                        await gitlab.cloneRepository();
+                                    }
+                
+                                    break; */
 
             }
 
@@ -418,7 +429,7 @@ async function updateStatus(vscodeURI: vscode.Uri) {
                 const workspaceToolsHTML = await htmlTools();
                 await sandbox.workspaceUpdateCurrentGroup();
                 const workspaceChangeReposHTML = await htmlRepos(globalConfig.workspaceRepositories, true);
-               /*  const cloneHTML = await htmlCloneRepository(); */
+                /*  const cloneHTML = await htmlCloneRepository(); */
 
                 actionButtonHTML = `
                     ${workspaceChangeReposHTML}
@@ -426,10 +437,9 @@ async function updateStatus(vscodeURI: vscode.Uri) {
                     <div class="row" style="padding-top: 10px;">
                         <button id="destroySandboxButton" onclick="destroySandbox();" class="sandbox-button">
                             <div id="destroySandboxSpinner" class="spinner"></div>
-                            <span id="destroySandboxButtonText">💀&nbsp;&nbsp;DESTRUIR WORKSPACE</span>
+                            <span id="destroySandboxButtonText">DESTRUIR WORKSPACE</span>
                         </button>
                     </div>
-                    </hr>
                 `;
                 break;
             case 1:
@@ -451,6 +461,9 @@ async function updateStatus(vscodeURI: vscode.Uri) {
                 break;
             case 3:
                 workspaceStatus = { estado: 3, clase: 'deploying', texto: 'Deployando', warningMessage: 'Se está deployando su espacio de trabajo, esto puede demorar aproximadamente 3 minutos.' };
+                break;
+            case 666:
+                workspaceStatus = { estado: 666, clase: 'destroying', texto: 'Destruyendo', warningMessage: 'Se está destruyendo su espacio de trabajo, este proceso puede demorar unos minutos.' };
                 break;
         }
     }

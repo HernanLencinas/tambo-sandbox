@@ -3,6 +3,7 @@ import * as vscode from 'vscode';
 export type Repository = {
     name: string;
     path: string;
+    branch: string;
     repoid: string;
     commit: boolean;
 };
