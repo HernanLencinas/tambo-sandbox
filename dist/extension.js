@@ -350,20 +350,16 @@ class ConnectionsViewProvider {
                         });
                     }
                     break;
-                /*                 case 'cloneRepository':
-                
-                                    const cloneRepositoryRes = await vscode.window.showInformationMessage(
-                                        `¿Desea confirmar el clonar localmente el repositorio del grupo activo?`,
-                                        { modal: true }, // Modal para la confirmación
-                                        'Sí'
-                                    );
-                
-                                    if (cloneRepositoryRes === 'Sí') {
-                                        const gitlab = new Gitlab();
-                                        await gitlab.cloneRepository();
-                                    }
-                
-                                    break; */
+                case 'cloneRepository':
+                    const cloneRepositoryRes = await vscode.window.showInformationMessage(`¿Desea confirmar la clonación del repositorio localmente y abrirlo en el explorer de Visual Studio Code?"`, { modal: true }, 'Sí');
+                    if (cloneRepositoryRes === 'Sí') {
+                        const gitlab = new gitlab_1.Gitlab();
+                        await gitlab.cloneRepository();
+                    }
+                    break;
+                case 'vsceAutoPush':
+                    console.log("SWITCH: ", message);
+                    break;
             }
         });
     }
@@ -452,30 +448,24 @@ async function updateStatus(vscodeURI) {
                 const workspaceToolsHTML = await htmlTools();
                 await sandbox.workspaceUpdateCurrentGroup();
                 const workspaceChangeReposHTML = await htmlRepos(globals_1.globalConfig.workspaceRepositories, true);
-                /*  const cloneHTML = await htmlCloneRepository(); */
+                const cloneButtonHTML = await htmlCloneRepository();
+                const destroyButtonHTML = await htmlDestroyWorkspace();
                 actionButtonHTML = `
                     ${workspaceChangeReposHTML}
                     ${workspaceToolsHTML}
-                    <div class="row" style="padding-top: 10px;">
-                        <button id="destroySandboxButton" onclick="destroySandbox();" class="sandbox-button">
-                            <div id="destroySandboxSpinner" class="spinner"></div>
-                            <span id="destroySandboxButtonText">DESTRUIR WORKSPACE</span>
-                        </button>
-                    </div>
-                `;
+                    ${cloneButtonHTML}
+                    ${destroyButtonHTML}
+                    `;
                 break;
             case 1:
                 globals_1.globalConfig.workspaceRepositories = await sandbox.respositories();
                 const workspaceReposHTML = await htmlRepos(globals_1.globalConfig.workspaceRepositories, false);
+                const startButtonHTML = await htmlStartWorkspace();
                 workspaceStatus = { estado: 1, clase: 'offline', texto: 'Desconectado', warningMessage: 'No tienes un workspace asignado. Para iniciar uno nuevo, haz clic en el botón <b>Iniciar workspace</b> para comenzar.' };
                 actionButtonHTML = `
                     ${workspaceReposHTML}
-                    <div class="row" style="padding-top: 10px;">
-                        <button id="deploySandboxButton" onclick="createSandbox();" class="sandbox-button">
-                            <div id="deploySandboxSpinner" class="spinner"></div>
-                            <span id="deploySandboxButtonText">🚀&nbsp;&nbsp;INICIAR WORKSPACE</span>
-                        </button>
-                    </div>
+                    ${htmlStartWorkspace}
+                    ${startButtonHTML}
                 `;
                 break;
             case 2:
@@ -621,13 +611,44 @@ async function htmlTools() {
 // TODO: Boton de clonar repositorio
 async function htmlCloneRepository() {
     const html = `
-        <div class="row" style="padding-top1: 10px;">
-            <button id="actionSandboxButton" onclick="cloneRepository();" class="sandbox-button" >
-                <div id="actionSandboxSpinner" class="spinner"></div>
-                <span id="actionSandboxButtonText" style="font-weight:normal">CLONAR REPOSITORIO</span>
+        <div class="row">
+            <label class="switch-container" >
+                <span class="switch">
+                    <input type="checkbox" id="toggleSwitch">
+                    <span class="slider"></span>
+                </span>
+                <span class="switch-text" id="switchText">Activar push automático</span>
+            </label>
+        </div>
+        <div class="row">
+            <button id="cloneSandboxButton" onclick="cloneRepository();" class="sandbox-button" >
+                <div id="cloneSandboxSpinner" class="spinner"></div>
+                <span id="cloneSandboxButtonText" style="font-weight:normal">CLONAR REPOSITORIO</span>
             </button>
         </div>
     `;
+    return html;
+}
+async function htmlDestroyWorkspace() {
+    const html = `
+        <div class="row">
+            <button id="destroySandboxButton" onclick="destroySandbox();" class="sandbox-button">
+                <div id="destroySandboxSpinner" class="spinner"></div>
+                <span id="destroySandboxButtonText">DESTRUIR WORKSPACE</span>
+            </button>
+        </div>
+        `;
+    return html;
+}
+async function htmlStartWorkspace() {
+    const html = `
+        <div class="row">
+            <button id="deploySandboxButton" onclick="createSandbox();" class="sandbox-button">
+                <div id="deploySandboxSpinner" class="spinner"></div>
+                <span id="deploySandboxButtonText">🚀&nbsp;&nbsp;INICIAR WORKSPACE</span>
+            </button>
+        </div>
+        `;
     return html;
 }
 
@@ -9481,7 +9502,7 @@ class Gitlab {
             vscode.window.setStatusBarMessage('$(x) TAMBO-SANDBOX: El workspace no esta sincronizado', 10000);
             return false;
         }
-        if (configuration.get('autoCommit')) {
+        if (configuration.get('push')) {
             try {
                 // Configuración de simple-git
                 const options = {
@@ -9493,7 +9514,7 @@ class Gitlab {
                 const status = await git.status();
                 if (status.files.length > 0) {
                     await git.add('.');
-                    await git.commit('SANDBOX Autocommit');
+                    await git.commit('TAMBO Sandbox Commit automatico');
                     await git.push();
                     vscode.window.setStatusBarMessage('$(check) TAMBO-SANDBOX: Cambios guardados', 10000);
                     return true;

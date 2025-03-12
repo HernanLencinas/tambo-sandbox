@@ -121,10 +121,10 @@
           "default": "",
           "description": "Token de Gitlab"
         },
-        "tambo.sandbox.autoCommit": {
+        "tambo.sandbox.push": {
           "type": "boolean",
           "default": true,
-          "description": "Realizar commit automatico en Gitlab"
+          "description": "Realizar push automatico de los cambios a Gitlab"
         }
       }
     }

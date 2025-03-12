@@ -299,20 +299,26 @@ class ConnectionsViewProvider implements vscode.WebviewViewProvider {
 
                     break;
 
-                /*                 case 'cloneRepository':
-                
-                                    const cloneRepositoryRes = await vscode.window.showInformationMessage(
-                                        `¿Desea confirmar el clonar localmente el repositorio del grupo activo?`,
-                                        { modal: true }, // Modal para la confirmación
-                                        'Sí'
-                                    );
-                
-                                    if (cloneRepositoryRes === 'Sí') {
-                                        const gitlab = new Gitlab();
-                                        await gitlab.cloneRepository();
-                                    }
-                
-                                    break; */
+                case 'cloneRepository':
+
+                    const cloneRepositoryRes = await vscode.window.showInformationMessage(
+                        `¿Desea confirmar la clonación del repositorio localmente y abrirlo en el explorer de Visual Studio Code?"`,
+                        { modal: true },
+                        'Sí'
+                    );
+
+                    if (cloneRepositoryRes === 'Sí') {
+                        const gitlab = new Gitlab();
+                        await gitlab.cloneRepository();
+                    }
+
+                    break;
+
+                    case 'vsceAutoPush':
+
+                        console.log("SWITCH: ", message);
+
+                    break;
 
             }
 
@@ -435,31 +441,25 @@ async function updateStatus(vscodeURI: vscode.Uri) {
                 const workspaceToolsHTML = await htmlTools();
                 await sandbox.workspaceUpdateCurrentGroup();
                 const workspaceChangeReposHTML = await htmlRepos(globalConfig.workspaceRepositories, true);
-                /*  const cloneHTML = await htmlCloneRepository(); */
+                const cloneButtonHTML = await htmlCloneRepository();
+                const destroyButtonHTML = await htmlDestroyWorkspace();
 
                 actionButtonHTML = `
                     ${workspaceChangeReposHTML}
                     ${workspaceToolsHTML}
-                    <div class="row" style="padding-top: 10px;">
-                        <button id="destroySandboxButton" onclick="destroySandbox();" class="sandbox-button">
-                            <div id="destroySandboxSpinner" class="spinner"></div>
-                            <span id="destroySandboxButtonText">DESTRUIR WORKSPACE</span>
-                        </button>
-                    </div>
-                `;
+                    ${cloneButtonHTML}
+                    ${destroyButtonHTML}
+                    `;
                 break;
             case 1:
                 globalConfig.workspaceRepositories = await sandbox.respositories();
                 const workspaceReposHTML = await htmlRepos(globalConfig.workspaceRepositories, false);
+                const startButtonHTML = await htmlStartWorkspace();
                 workspaceStatus = { estado: 1, clase: 'offline', texto: 'Desconectado', warningMessage: 'No tienes un workspace asignado. Para iniciar uno nuevo, haz clic en el botón <b>Iniciar workspace</b> para comenzar.' };
                 actionButtonHTML = `
                     ${workspaceReposHTML}
-                    <div class="row" style="padding-top: 10px;">
-                        <button id="deploySandboxButton" onclick="createSandbox();" class="sandbox-button">
-                            <div id="deploySandboxSpinner" class="spinner"></div>
-                            <span id="deploySandboxButtonText">🚀&nbsp;&nbsp;INICIAR WORKSPACE</span>
-                        </button>
-                    </div>
+                    ${htmlStartWorkspace}
+                    ${startButtonHTML}
                 `;
                 break;
             case 2:
@@ -495,13 +495,13 @@ async function updateStatus(vscodeURI: vscode.Uri) {
         }
     }
 
-/*     let html = `
-        <div class="container9">
-            <div class="spinner_orange"></div>
-            <h2>Testing...</h2>
-            <p>Un momento por favor...</p>
-        </div>
-    `; */
+    /*     let html = `
+            <div class="container9">
+                <div class="spinner_orange"></div>
+                <h2>Testing...</h2>
+                <p>Un momento por favor...</p>
+            </div>
+        `; */
 
     let html = ``;
 
@@ -635,13 +635,52 @@ async function htmlTools(): Promise<string> {
 async function htmlCloneRepository(): Promise<string> {
 
     const html = `
-        <div class="row" style="padding-top1: 10px;">
-            <button id="actionSandboxButton" onclick="cloneRepository();" class="sandbox-button" >
-                <div id="actionSandboxSpinner" class="spinner"></div>
-                <span id="actionSandboxButtonText" style="font-weight:normal">CLONAR REPOSITORIO</span>
+        <div class="row">
+            <label class="switch-container" >
+                <span class="switch">
+                    <input type="checkbox" id="toggleSwitch">
+                    <span class="slider"></span>
+                </span>
+                <span class="switch-text" id="switchText">Activar push automático</span>
+            </label>
+        </div>
+        <div class="row">
+            <button id="cloneSandboxButton" onclick="cloneRepository();" class="sandbox-button" >
+                <div id="cloneSandboxSpinner" class="spinner"></div>
+                <span id="cloneSandboxButtonText" style="font-weight:normal">CLONAR REPOSITORIO</span>
             </button>
         </div>
     `;
+
+    return html;
+
+}
+
+async function htmlDestroyWorkspace(): Promise<string> {
+
+    const html = `
+        <div class="row">
+            <button id="destroySandboxButton" onclick="destroySandbox();" class="sandbox-button">
+                <div id="destroySandboxSpinner" class="spinner"></div>
+                <span id="destroySandboxButtonText">DESTRUIR WORKSPACE</span>
+            </button>
+        </div>
+        `;
+
+    return html;
+
+}
+
+async function htmlStartWorkspace(): Promise<string> {
+
+    const html = `
+        <div class="row">
+            <button id="deploySandboxButton" onclick="createSandbox();" class="sandbox-button">
+                <div id="deploySandboxSpinner" class="spinner"></div>
+                <span id="deploySandboxButtonText">🚀&nbsp;&nbsp;INICIAR WORKSPACE</span>
+            </button>
+        </div>
+        `;
 
     return html;
 

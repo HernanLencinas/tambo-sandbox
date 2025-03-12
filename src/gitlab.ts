@@ -104,7 +104,7 @@ export class Gitlab {
 
 		}
 
-		if (configuration.get('autoCommit')) {
+		if (configuration.get('push')) {
 
 			try {
 				// Configuración de simple-git
@@ -117,7 +117,7 @@ export class Gitlab {
 				const status = await git.status();
 				if (status.files.length > 0) {
 					await git.add('.');
-					await git.commit('SANDBOX Autocommit');
+					await git.commit('TAMBO Sandbox Commit automatico');
 					await git.push();
 					vscode.window.setStatusBarMessage('$(check) TAMBO-SANDBOX: Cambios guardados', 10000);
 
