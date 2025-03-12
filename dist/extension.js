@@ -46,6 +46,7 @@ exports.deactivate = deactivate;
 const vscode = __importStar(__webpack_require__(1));
 const connection_1 = __webpack_require__(2);
 const sandbox_1 = __webpack_require__(5);
+const utils_1 = __webpack_require__(3);
 const gitlab_1 = __webpack_require__(47);
 // file deepcode ignore InsecureTLSConfig: <please specify a reason of ignoring this>
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
@@ -88,6 +89,7 @@ async function activate(context) {
         }
     });
     context.subscriptions.push(saveListener);
+    (0, utils_1.showStatusMessage)("Listo");
 }
 function deactivate() { }
 
@@ -321,8 +323,7 @@ class ConnectionsViewProvider {
                         break;
                     }
                     const changeWorkspaceGroupRes = await vscode.window.showWarningMessage(`Está a punto de cambiar al grupo ${message.data.name}.\n\n` +
-                        `🔸 Este cambio afectará su configuración de trabajo actual.\n` +
-                        `🔸 Se clonara el repositorio de este grupo en el workspace activo.\n\n` +
+                        `⚠️ Este cambio afectará su configuración de trabajo actual. Se clonara el repositorio de este grupo en el workspace activo.\n\n` +
                         `¿Desea continuar?`, { modal: true }, 'Sí');
                     if (changeWorkspaceGroupRes === 'Sí') {
                         globals_1.globalConfig.workspaceRepository = {
@@ -342,7 +343,12 @@ class ConnectionsViewProvider {
                             const gitlab = new gitlab_1.Gitlab();
                             await gitlab.cloneRepository();
                         }
-                    } // TODO: Agregar aqui que al cancelar se mantenga el grupo actual
+                    }
+                    else { // TODO: Agregar aqui que al cancelar se mantenga el grupo actual
+                        webviewView.webview.postMessage({
+                            command: 'revertStatus'
+                        });
+                    }
                     break;
                 /*                 case 'cloneRepository':
                 
@@ -474,16 +480,44 @@ async function updateStatus(vscodeURI) {
                 break;
             case 2:
                 workspaceStatus = { estado: 2, clase: 'deploying', texto: 'Deployando', warningMessage: 'Se está deployando su espacio de trabajo, esto puede demorar aproximadamente 3 minutos.' };
+                actionButtonHTML = `
+                    <div class="container9">
+                        <div class="spinner_orange"></div>
+                        <h2>Deployando...</h2>
+                        <p style="margin-top: -5px;">Un momento por favor...</p>
+                    </div>
+                `;
                 break;
             case 3:
                 workspaceStatus = { estado: 3, clase: 'deploying', texto: 'Deployando', warningMessage: 'Se está deployando su espacio de trabajo, esto puede demorar aproximadamente 3 minutos.' };
+                actionButtonHTML = `
+                    <div class="container9">
+                        <div class="spinner_orange"></div>
+                        <h2>Deployando...</h2>
+                        <p style="margin-top: -5px;">Un momento por favor...</p>
+                    </div>
+                `;
                 break;
             case 666:
                 workspaceStatus = { estado: 666, clase: 'destroying', texto: 'Destruyendo', warningMessage: 'Se está destruyendo su espacio de trabajo, este proceso puede demorar unos minutos.' };
+                actionButtonHTML = `
+                    <div class="container9">
+                        <div class="spinner_orange"></div>
+                        <h2>Destruyendo...</h2>
+                        <p>Un momento por favor...</p>
+                    </div>
+                `;
                 break;
         }
     }
-    let html = '';
+    /*     let html = `
+            <div class="container9">
+                <div class="spinner_orange"></div>
+                <h2>Testing...</h2>
+                <p>Un momento por favor...</p>
+            </div>
+        `; */
+    let html = ``;
     html += createStatusHTML("Sandbox", sandboxStatus ? "Conectado" : "Desconectado", sandboxStatus ? 'online' : 'offline', sandboxStatus ? "" : "No se pudo establecer conexión con el servicio de Sandbox. Verifique sus credenciales o conexión a la red asegúrandose de estar conectado a la VPN Corporativa.");
     html += createStatusHTML("Git", gitStatus ? "Conectado" : "Desconectado", gitStatus ? 'online' : 'offline', gitStatus ? "" : "Autenticación fallida. Por favor, verifique que su usuario y token sean correctos.");
     html += createStatusHTML("Workspace", workspaceStatus.texto, workspaceStatus.clase, workspaceStatus.warningMessage);
@@ -492,23 +526,22 @@ async function updateStatus(vscodeURI) {
         let additionalMessage = "";
         if (warningMessage) {
             additionalMessage = `<div class="row">
-                                <div class="status-msg">
-                                    <span class="arrow">&#x21B3;</span>
-                                    <span class="icon">⚠️</span>
-                                    <span class="msg">${warningMessage}</span>
-                                </div>
-                            </div>`;
+                                    <div class="status-msg">
+                                        <span class="arrow">&#x21B3;</span>
+                                        <span class="icon">⚠️</span>
+                                        <span class="msg">${warningMessage}</span>
+                                    </div>
+                                </div>`;
         }
-        return `
-            <div class="row">
-                <div class="status">
-                    <span class="${clase}"></span>
-                    <b>${title}: </b>
-                    <span>${status}</span>
+        return `<div class="row">
+                    <div class="status">
+                        <span class="${clase}"></span>
+                        <b>${title}: </b>
+                        <span>${status}</span>
+                    </div>
                 </div>
-            </div>
-            ${additionalMessage}
-        `;
+                ${additionalMessage}
+                `;
     }
     return html;
 }
@@ -585,6 +618,7 @@ async function htmlTools() {
         `;
     return html;
 }
+// TODO: Boton de clonar repositorio
 async function htmlCloneRepository() {
     const html = `
         <div class="row" style="padding-top1: 10px;">

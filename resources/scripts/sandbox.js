@@ -30,6 +30,9 @@ window.addEventListener('message', ({ data: message }) => {
         spinner.style.display = 'block';
         buttonText.textContent = 'DEPLOYANDO WORKSPACE...';
     }
+    if (message.command === 'revertStatus') {
+        revertSandboxPanelStatus();
+    }
 });
 
 // Guarda el estado en el Webview
@@ -52,6 +55,10 @@ function updateSandboxPanelStatus(statusHtml) {
             }
         }
     });
+}
+
+function revertSandboxPanelStatus() {
+    sPanelStatus.innerHTML = previousState;
 }
 
 // Enviar mensajes a VS Code

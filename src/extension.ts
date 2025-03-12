@@ -61,6 +61,8 @@ export async function activate(context: vscode.ExtensionContext) {
 	});
 	context.subscriptions.push(saveListener);
 
+	showStatusMessage("Listo");
+
 }
 
 export function deactivate() { }
