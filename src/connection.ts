@@ -277,7 +277,7 @@ class ConnectionsViewProvider implements vscode.WebviewViewProvider {
                         };
 
                         const sandbox = new Sandbox();
-                        const response = await sandbox.workspaceChangeGroup();
+                        const response = await sandbox.workspaceCommitChange();
                         if (!response) {
 
                             await updateStatus(this.context.extensionUri);
@@ -439,7 +439,7 @@ async function updateStatus(vscodeURI: vscode.Uri) {
                 workspaceStatus = { estado: 0, clase: 'online', texto: 'Conectado' };
                 globalConfig.workspaceRepositories = await sandbox.respositories();
                 const workspaceToolsHTML = await htmlTools();
-                await sandbox.workspaceUpdateCurrentGroup();
+                await sandbox.workspaceCurrentGroup();
                 const workspaceChangeReposHTML = await htmlRepos(globalConfig.workspaceRepositories, true);
                 const cloneButtonHTML = await htmlCloneRepository();
                 const destroyButtonHTML = await htmlDestroyWorkspace();

@@ -51,13 +51,13 @@ export async function activate(context: vscode.ExtensionContext) {
 
 	/// CAPTURAR EL EVENTO DE GUARDADO ///	
 	let saveListener = vscode.workspace.onDidSaveTextDocument(async (document: vscode.TextDocument) => {
-
-
 		const commitRes = await gitlab.commitRepository();
 		if (commitRes) {
-			sandbox.workspaceChangeGroup();
+			showStatusMessage("Cambios guardados");
+			sandbox.workspaceCommitChange();
+		} else {
+			showStatusMessage("No hay cambios para guardar");
 		}
-
 	});
 	context.subscriptions.push(saveListener);
 

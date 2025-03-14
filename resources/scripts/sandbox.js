@@ -36,13 +36,13 @@ window.addEventListener('message', ({ data: message }) => {
 });
 
 // COMPONENTE SWITCH
-const toggleSwitch = document.getElementById("toggleSwitch");
+/* const toggleSwitch = document.getElementById("toggleSwitch");
 toggleSwitch.addEventListener("change", function () {
     console.log("SWITCH: ", this.checked);
-/*     sendMessage('vsceAutoPush', {
+    sendMessage('vsceAutoPush', {
         enable: this.checked,
-    }); */
-});
+    });
+}); */
 
 // Guarda el estado en el Webview
 function saveState(data) {

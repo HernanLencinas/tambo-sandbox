@@ -85,7 +85,11 @@ async function activate(context) {
     let saveListener = vscode.workspace.onDidSaveTextDocument(async (document) => {
         const commitRes = await gitlab.commitRepository();
         if (commitRes) {
-            sandbox.workspaceChangeGroup();
+            (0, utils_1.showStatusMessage)("Cambios guardados");
+            sandbox.workspaceCommitChange();
+        }
+        else {
+            (0, utils_1.showStatusMessage)("No hay cambios para guardar");
         }
     });
     context.subscriptions.push(saveListener);
@@ -334,7 +338,7 @@ class ConnectionsViewProvider {
                             commit: message.data.commit
                         };
                         const sandbox = new sandbox_1.Sandbox();
-                        const response = await sandbox.workspaceChangeGroup();
+                        const response = await sandbox.workspaceCommitChange();
                         if (!response) {
                             await updateStatus(this.context.extensionUri);
                             vscode.window.showErrorMessage("TAMBO: Ha ocurrido un error intentando cambiar de grupo en Sandbox");
@@ -446,7 +450,7 @@ async function updateStatus(vscodeURI) {
                 workspaceStatus = { estado: 0, clase: 'online', texto: 'Conectado' };
                 globals_1.globalConfig.workspaceRepositories = await sandbox.respositories();
                 const workspaceToolsHTML = await htmlTools();
-                await sandbox.workspaceUpdateCurrentGroup();
+                await sandbox.workspaceCurrentGroup();
                 const workspaceChangeReposHTML = await htmlRepos(globals_1.globalConfig.workspaceRepositories, true);
                 const cloneButtonHTML = await htmlCloneRepository();
                 const destroyButtonHTML = await htmlDestroyWorkspace();
@@ -813,7 +817,7 @@ class Sandbox {
             return [200, 404].includes(response.status);
         }
         catch (error) {
-            console.error("TAMBOSANDBOX.sandbox.create:", error);
+            console.error("TAMBOSANDBOX.sandbox.status:", error);
             return false;
         }
     }
@@ -839,7 +843,7 @@ class Sandbox {
             return 1;
         }
     }
-    async workspaceUpdateCurrentGroup() {
+    async workspaceCurrentGroup() {
         try {
             const sandboxUrl = `${globals_1.globalConfig.sandboxUrl}${globals_1.globalConfig.sandboxAPISandbox}`;
             const config = vscode.workspace.getConfiguration('tambo.sandbox.gitlab');
@@ -862,7 +866,7 @@ class Sandbox {
             };
         }
         catch (error) {
-            console.error("TAMBOSANDBOX.sandbox.workspaceUpdateCurrentGroup:", error);
+            console.error("TAMBOSANDBOX.sandbox.workspaceCurrentGroup:", error);
         }
     }
     async respositories() {
@@ -933,7 +937,6 @@ class Sandbox {
                     //branch: globalConfig.workspaceRepository.branch,
                 },
             };
-            console.log("TAMBO-CREAR_SANDBOX: ", body);
             await axios_1.default.post(`${sandboxUrl}?usuario=${encodeURIComponent(username)}`, body, axiosConfig);
             return true;
         }
@@ -962,7 +965,7 @@ class Sandbox {
         }
     }
     // BUG: CAMBIAR NOMBRE DE LA FUNCION
-    async workspaceChangeGroup() {
+    async workspaceCommitChange() {
         try {
             const sandboxUrl = `${globals_1.globalConfig.sandboxUrl}${globals_1.globalConfig.sandboxAPISandbox}`;
             const config = vscode.workspace.getConfiguration('tambo.sandbox.gitlab');
@@ -988,13 +991,13 @@ class Sandbox {
                     branch: globals_1.globalConfig.workspaceRepository?.branch
                 },
             };
-            (0, utils_1.showStatusMessage)("Cambiando de grupo de trabajo...");
             await axios_1.default.patch(`${sandboxUrl}?usuario=${encodeURIComponent(username ?? "")}`, requestData, axiosConfig);
+            (0, utils_1.showStatusMessage)("Cambios informados");
             return true;
         }
         catch (error) {
             (0, utils_1.showStatusMessage)("Error intentando cambiar el grupo activo.");
-            console.error("TAMBOSANDBOX.sandbox.workspaceChangeGroup:", error);
+            console.error("TAMBOSANDBOX.sandbox.workspaceCommitChange:", error);
             return false;
         }
     }
@@ -1014,10 +1017,11 @@ module.exports = require("https");
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
-// Axios v1.7.9 Copyright (c) 2024 Matt Zabriskie and contributors
+/*! Axios v1.8.3 Copyright (c) 2025 Matt Zabriskie and contributors */
 
 
 const FormData$1 = __webpack_require__(8);
+const crypto = __webpack_require__(4);
 const url = __webpack_require__(15);
 const proxyFromEnv = __webpack_require__(31);
 const http = __webpack_require__(14);
@@ -1031,6 +1035,7 @@ const events = __webpack_require__(45);
 function _interopDefaultLegacy (e) { return e && typeof e === 'object' && 'default' in e ? e : { 'default': e }; }
 
 const FormData__default = /*#__PURE__*/_interopDefaultLegacy(FormData$1);
+const crypto__default = /*#__PURE__*/_interopDefaultLegacy(crypto);
 const url__default = /*#__PURE__*/_interopDefaultLegacy(url);
 const proxyFromEnv__default = /*#__PURE__*/_interopDefaultLegacy(proxyFromEnv);
 const http__default = /*#__PURE__*/_interopDefaultLegacy(http);
@@ -1646,26 +1651,6 @@ const toFiniteNumber = (value, defaultValue) => {
   return value != null && Number.isFinite(value = +value) ? value : defaultValue;
 };
 
-const ALPHA = 'abcdefghijklmnopqrstuvwxyz';
-
-const DIGIT = '0123456789';
-
-const ALPHABET = {
-  DIGIT,
-  ALPHA,
-  ALPHA_DIGIT: ALPHA + ALPHA.toUpperCase() + DIGIT
-};
-
-const generateString = (size = 16, alphabet = ALPHABET.ALPHA_DIGIT) => {
-  let str = '';
-  const {length} = alphabet;
-  while (size--) {
-    str += alphabet[Math.random() * length|0];
-  }
-
-  return str;
-};
-
 /**
  * If the thing is a FormData object, return true, otherwise return false.
  *
@@ -1793,8 +1778,6 @@ const utils$1 = {
   findKey,
   global: _global,
   isContextDefined,
-  ALPHABET,
-  generateString,
   isSpecCompliantForm,
   toJSONObject,
   isAsyncFn,
@@ -2306,6 +2289,29 @@ const transitionalDefaults = {
 
 const URLSearchParams = url__default["default"].URLSearchParams;
 
+const ALPHA = 'abcdefghijklmnopqrstuvwxyz';
+
+const DIGIT = '0123456789';
+
+const ALPHABET = {
+  DIGIT,
+  ALPHA,
+  ALPHA_DIGIT: ALPHA + ALPHA.toUpperCase() + DIGIT
+};
+
+const generateString = (size = 16, alphabet = ALPHABET.ALPHA_DIGIT) => {
+  let str = '';
+  const {length} = alphabet;
+  const randomValues = new Uint32Array(size);
+  crypto__default["default"].randomFillSync(randomValues);
+  for (let i = 0; i < size; i++) {
+    str += alphabet[randomValues[i] % length];
+  }
+
+  return str;
+};
+
+
 const platform$1 = {
   isNode: true,
   classes: {
@@ -2313,6 +2319,8 @@ const platform$1 = {
     FormData: FormData__default["default"],
     Blob: typeof Blob !== 'undefined' && Blob || null
   },
+  ALPHABET,
+  generateString,
   protocols: [ 'http', 'https', 'file', 'data' ]
 };
 
@@ -3087,14 +3095,15 @@ function combineURLs(baseURL, relativeURL) {
  *
  * @returns {string} The combined full path
  */
-function buildFullPath(baseURL, requestedURL) {
-  if (baseURL && !isAbsoluteURL(requestedURL)) {
+function buildFullPath(baseURL, requestedURL, allowAbsoluteUrls) {
+  let isRelativeUrl = !isAbsoluteURL(requestedURL);
+  if (baseURL && isRelativeUrl || allowAbsoluteUrls == false) {
     return combineURLs(baseURL, requestedURL);
   }
   return requestedURL;
 }
 
-const VERSION = "1.7.9";
+const VERSION = "1.8.3";
 
 function parseProtocol(url) {
   const match = /^([-+\w]{1,25})(:?\/\/|:)/.exec(url);
@@ -3304,7 +3313,7 @@ const readBlob = async function* (blob) {
 
 const readBlob$1 = readBlob;
 
-const BOUNDARY_ALPHABET = utils$1.ALPHABET.ALPHA_DIGIT + '-_';
+const BOUNDARY_ALPHABET = platform.ALPHABET.ALPHA_DIGIT + '-_';
 
 const textEncoder = typeof TextEncoder === 'function' ? new TextEncoder() : new util__default["default"].TextEncoder();
 
@@ -3364,7 +3373,7 @@ const formDataToStream = (form, headersHandler, options) => {
   const {
     tag = 'form-data-boundary',
     size = 25,
-    boundary = tag + '-' + utils$1.generateString(size, BOUNDARY_ALPHABET)
+    boundary = tag + '-' + platform.generateString(size, BOUNDARY_ALPHABET)
   } = options || {};
 
   if(!utils$1.isFormData(form)) {
@@ -3789,7 +3798,7 @@ const httpAdapter = isHttpAdapterSupported && function httpAdapter(config) {
     }
 
     // Parse url
-    const fullPath = buildFullPath(config.baseURL, config.url);
+    const fullPath = buildFullPath(config.baseURL, config.url, config.allowAbsoluteUrls);
     const parsed = new URL(fullPath, platform.hasBrowserEnv ? platform.origin : undefined);
     const protocol = parsed.protocol || supportedProtocols[0];
 
@@ -4412,7 +4421,7 @@ const resolveConfig = (config) => {
 
   newConfig.headers = headers = AxiosHeaders$1.from(headers);
 
-  newConfig.url = buildURL(buildFullPath(newConfig.baseURL, newConfig.url), config.params, config.paramsSerializer);
+  newConfig.url = buildURL(buildFullPath(newConfig.baseURL, newConfig.url, newConfig.allowAbsoluteUrls), config.params, config.paramsSerializer);
 
   // HTTP basic authentication
   if (auth) {
@@ -5320,6 +5329,13 @@ class Axios {
       }
     }
 
+    // Set config.allowAbsoluteUrls
+    if (config.allowAbsoluteUrls !== undefined) ; else if (this.defaults.allowAbsoluteUrls !== undefined) {
+      config.allowAbsoluteUrls = this.defaults.allowAbsoluteUrls;
+    } else {
+      config.allowAbsoluteUrls = true;
+    }
+
     validator.assertOptions(config, {
       baseUrl: validators.spelling('baseURL'),
       withXsrfToken: validators.spelling('withXSRFToken')
@@ -5415,7 +5431,7 @@ class Axios {
 
   getUri(config) {
     config = mergeConfig(this.defaults, config);
-    const fullPath = buildFullPath(config.baseURL, config.url);
+    const fullPath = buildFullPath(config.baseURL, config.url, config.allowAbsoluteUrls);
     return buildURL(fullPath, config.params, config.paramsSerializer);
   }
 }
@@ -9431,6 +9447,7 @@ exports.Gitlab = void 0;
 /* eslint-disable @typescript-eslint/naming-convention */
 const vscode = __importStar(__webpack_require__(1));
 const utils_1 = __webpack_require__(3);
+const sandbox_1 = __webpack_require__(5);
 const https = __importStar(__webpack_require__(6));
 const axios_1 = __importDefault(__webpack_require__(7));
 const globals_1 = __webpack_require__(46);
@@ -9485,6 +9502,8 @@ class Gitlab {
                 vscode.workspace.updateWorkspaceFolders(0, null, { uri: newWorkspace.uri, name: "TAMBOSANDBOX" });
             }
             (0, utils_1.showStatusMessage)('Repositorio Clonado');
+            // Cambiar a la vista de explorador
+            vscode.commands.executeCommand('workbench.view.explorer');
         })
             .catch((error) => {
             vscode.window.showErrorMessage(`Error al Clonar: ${error}`);
@@ -9494,12 +9513,14 @@ class Gitlab {
         vscode.workspace.updateWorkspaceFolders(0, 1);
     }
     async commitRepository() {
+        const sandbox = new sandbox_1.Sandbox();
+        await sandbox.workspaceCurrentGroup();
         const configuration = vscode.workspace.getConfiguration('tambo.sandbox');
         const originURL = await this.gitOrigin();
         const regex = new RegExp('^' + globals_1.globalConfig.gitlabUrl.replace(/([.*+?^=!:${}()|\[\]\/\\])/g, '\\$1') + '/', '');
         const repoPath = originURL.replace(regex, '').replace(/\.git$/, '');
         if (globals_1.globalConfig.workspaceRepository?.path.toLocaleLowerCase() !== repoPath.toLowerCase()) {
-            vscode.window.setStatusBarMessage('$(x) TAMBO-SANDBOX: El workspace no esta sincronizado', 10000);
+            (0, utils_1.showStatusMessage)("‼️ El workspace no esta sincronizado");
             return false;
         }
         if (configuration.get('push')) {
@@ -9514,18 +9535,16 @@ class Gitlab {
                 const status = await git.status();
                 if (status.files.length > 0) {
                     await git.add('.');
-                    await git.commit('TAMBO Sandbox Commit automatico');
+                    await git.commit('TAMBOSANDBOX Commit automatico');
                     await git.push();
-                    vscode.window.setStatusBarMessage('$(check) TAMBO-SANDBOX: Cambios guardados', 10000);
                     return true;
                 }
                 else {
-                    vscode.window.setStatusBarMessage('$(warning) TAMBO-SANDBOX: No hay cambios para guardar', 10000);
                     return false;
                 }
             }
             catch (error) {
-                vscode.window.setStatusBarMessage('$(x) TAMBO-SANDBOX: Error al guardar los cambios', 10000);
+                (0, utils_1.showStatusMessage)("Error al guardar los cambios");
                 return false;
             }
         }
@@ -9538,7 +9557,6 @@ class Gitlab {
             const remotes = await git.getRemotes(true); // Devuelve un array de remotos
             const origin = remotes.find(remote => remote.name === 'origin');
             if (origin) {
-                console.log('Origin URL:', origin.refs.fetch); // URL del repositorio remoto
                 return origin.refs.fetch; // Devuelve la URL del repositorio remoto "origin"
             }
             else {

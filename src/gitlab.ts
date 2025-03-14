@@ -1,15 +1,14 @@
 /* eslint-disable @typescript-eslint/naming-convention */
 import * as vscode from 'vscode';
 import { decrypt, showStatusMessage } from './utils';
+import { Sandbox } from './sandbox';
 import * as https from 'https';
 import axios from 'axios';
 import { globalConfig } from './globals';
-
 import simpleGit, { RemoteWithRefs, SimpleGit, SimpleGitOptions } from 'simple-git';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
-
 
 export class Gitlab {
 
@@ -77,6 +76,9 @@ export class Gitlab {
 
 				showStatusMessage('Repositorio Clonado');
 
+				// Cambiar a la vista de explorador
+				vscode.commands.executeCommand('workbench.view.explorer');
+
 			})
 			.catch((error: any) => {
 				vscode.window.showErrorMessage(`Error al Clonar: ${error}`);
@@ -92,20 +94,19 @@ export class Gitlab {
 
 	async commitRepository(): Promise<boolean> {
 
+		const sandbox = new Sandbox();
+		await sandbox.workspaceCurrentGroup();
 		const configuration = vscode.workspace.getConfiguration('tambo.sandbox');
 		const originURL = await this.gitOrigin();
 		const regex = new RegExp('^' + globalConfig.gitlabUrl.replace(/([.*+?^=!:${}()|\[\]\/\\])/g, '\\$1') + '/', '');
 		const repoPath = originURL.replace(regex, '').replace(/\.git$/, '');
 
 		if (globalConfig.workspaceRepository?.path.toLocaleLowerCase() !== repoPath.toLowerCase()) {
-
-			vscode.window.setStatusBarMessage('$(x) TAMBO-SANDBOX: El workspace no esta sincronizado', 10000);
+			showStatusMessage("‼️ El workspace no esta sincronizado");
 			return false;
-
 		}
 
 		if (configuration.get('push')) {
-
 			try {
 				// Configuración de simple-git
 				const options: Partial<SimpleGitOptions> = {
@@ -117,22 +118,16 @@ export class Gitlab {
 				const status = await git.status();
 				if (status.files.length > 0) {
 					await git.add('.');
-					await git.commit('TAMBO Sandbox Commit automatico');
+					await git.commit('TAMBOSANDBOX Commit automatico');
 					await git.push();
-					vscode.window.setStatusBarMessage('$(check) TAMBO-SANDBOX: Cambios guardados', 10000);
-
 					return true;
-
 				} else {
-					vscode.window.setStatusBarMessage('$(warning) TAMBO-SANDBOX: No hay cambios para guardar', 10000);
 					return false;
 				}
 			} catch (error) {
-
-				vscode.window.setStatusBarMessage('$(x) TAMBO-SANDBOX: Error al guardar los cambios', 10000);
+				showStatusMessage("Error al guardar los cambios");
 				return false;
 			}
-
 		}
 
 		return true;
@@ -148,7 +143,6 @@ export class Gitlab {
 			const origin = remotes.find(remote => remote.name === 'origin');
 
 			if (origin) {
-				console.log('Origin URL:', origin.refs.fetch); // URL del repositorio remoto
 				return origin.refs.fetch; // Devuelve la URL del repositorio remoto "origin"
 			} else {
 				return '';

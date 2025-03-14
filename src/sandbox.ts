@@ -32,7 +32,7 @@ export class Sandbox {
             return [200, 404].includes(response.status);
 
         } catch (error) {
-            console.error("TAMBOSANDBOX.sandbox.create:", error);
+            console.error("TAMBOSANDBOX.sandbox.status:", error);
             return false;
         }
 
@@ -66,7 +66,7 @@ export class Sandbox {
 
     }
 
-    async workspaceUpdateCurrentGroup() {
+    async workspaceCurrentGroup() {
 
         try {
             const sandboxUrl = `${globalConfig.sandboxUrl}${globalConfig.sandboxAPISandbox}`;
@@ -93,7 +93,7 @@ export class Sandbox {
             };
 
         } catch (error) {
-            console.error("TAMBOSANDBOX.sandbox.workspaceUpdateCurrentGroup:", error);
+            console.error("TAMBOSANDBOX.sandbox.workspaceCurrentGroup:", error);
         }
 
     }
@@ -180,8 +180,6 @@ export class Sandbox {
                 },
             };
 
-            console.log("TAMBO-CREAR_SANDBOX: ", body);
-
             await axios.post(
                 `${sandboxUrl}?usuario=${encodeURIComponent(username)}`,
                 body,
@@ -224,7 +222,7 @@ export class Sandbox {
 
     // BUG: CAMBIAR NOMBRE DE LA FUNCION
     
-    async workspaceChangeGroup(): Promise<boolean> {
+    async workspaceCommitChange(): Promise<boolean> {
 
         try {
             const sandboxUrl = `${globalConfig.sandboxUrl}${globalConfig.sandboxAPISandbox}`;
@@ -252,18 +250,18 @@ export class Sandbox {
                 },
             };
 
-            showStatusMessage("Cambiando de grupo de trabajo...");
             await axios.patch(
                 `${sandboxUrl}?usuario=${encodeURIComponent(username ?? "")}`,
                 requestData,
                 axiosConfig
             );
 
+            showStatusMessage("Cambios informados");
             return true;
 
         } catch (error) {
             showStatusMessage("Error intentando cambiar el grupo activo.");
-            console.error("TAMBOSANDBOX.sandbox.workspaceChangeGroup:", error);
+            console.error("TAMBOSANDBOX.sandbox.workspaceCommitChange:", error);
             return false;
         }
         
