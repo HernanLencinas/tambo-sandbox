@@ -314,11 +314,11 @@ class ConnectionsViewProvider implements vscode.WebviewViewProvider {
 
                     break;
 
-                    case 'vsceAutoPush':
+/*                     case 'vsceAutoPush':
 
                         console.log("SWITCH: ", message);
 
-                    break;
+                    break; */
 
             }
 
@@ -458,7 +458,6 @@ async function updateStatus(vscodeURI: vscode.Uri) {
                 workspaceStatus = { estado: 1, clase: 'offline', texto: 'Desconectado', warningMessage: 'No tienes un workspace asignado. Para iniciar uno nuevo, haz clic en el botón <b>Iniciar workspace</b> para comenzar.' };
                 actionButtonHTML = `
                     ${workspaceReposHTML}
-                    ${htmlStartWorkspace}
                     ${startButtonHTML}
                 `;
                 break;
@@ -674,7 +673,7 @@ async function htmlDestroyWorkspace(): Promise<string> {
 async function htmlStartWorkspace(): Promise<string> {
 
     const html = `
-        <div class="row">
+        <div class="row" style="padding-top: 10px;">
             <button id="deploySandboxButton" onclick="createSandbox();" class="sandbox-button">
                 <div id="deploySandboxSpinner" class="spinner"></div>
                 <span id="deploySandboxButtonText">🚀&nbsp;&nbsp;INICIAR WORKSPACE</span>

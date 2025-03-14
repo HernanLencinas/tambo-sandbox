@@ -35,6 +35,16 @@ window.addEventListener('message', ({ data: message }) => {
     }
 });
 
+window.addEventListener('click', (event) => {
+    const button = event.target.closest('.apps-button[data-link]');
+    if (button) {
+        vscode.postMessage({
+            command: 'openLink',
+            link: button.dataset.link
+        });
+    }
+});
+
 // COMPONENTE SWITCH
 /* const toggleSwitch = document.getElementById("toggleSwitch");
 toggleSwitch.addEventListener("change", function () {
@@ -51,19 +61,7 @@ function saveState(data) {
 
 // Actualizar el estado del panel sandbox
 function updateSandboxPanelStatus(statusHtml) {
-
     sPanelStatus.innerHTML = statusHtml;
-
-    // Delegación de eventos para manejar clicks en botones con 'data-link'
-    sPanelStatus.addEventListener('click', (event) => {
-        const button = event.target.closest('.apps-button[data-link]');
-        if (button) {
-            const link = button.getAttribute('data-link');
-            if (link) {
-                vscode.postMessage({ command: 'openLink', link });
-            }
-        }
-    });
 }
 
 function revertSandboxPanelStatus() {
@@ -105,4 +103,4 @@ function sandboxChangeGroup(event, commit) {
 }
 
 // Actualizar datos del sandbox periódicamente
-setInterval(updateSandboxData, 5000);
+setInterval(updateSandboxData, 4000);

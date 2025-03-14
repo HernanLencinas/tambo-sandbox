@@ -97,6 +97,7 @@ export class Gitlab {
 		const sandbox = new Sandbox();
 		await sandbox.workspaceCurrentGroup();
 		const configuration = vscode.workspace.getConfiguration('tambo.sandbox');
+		const currentUsername = configuration.get('gitlab.username');
 		const originURL = await this.gitOrigin();
 		const regex = new RegExp('^' + globalConfig.gitlabUrl.replace(/([.*+?^=!:${}()|\[\]\/\\])/g, '\\$1') + '/', '');
 		const repoPath = originURL.replace(regex, '').replace(/\.git$/, '');
@@ -118,7 +119,7 @@ export class Gitlab {
 				const status = await git.status();
 				if (status.files.length > 0) {
 					await git.add('.');
-					await git.commit('TAMBOSANDBOX Commit automatico');
+					await git.commit(`[TAMBO:SANDBOX] Commit generado por ${currentUsername}`);
 					await git.push();
 					return true;
 				} else {

@@ -361,9 +361,11 @@ class ConnectionsViewProvider {
                         await gitlab.cloneRepository();
                     }
                     break;
-                case 'vsceAutoPush':
-                    console.log("SWITCH: ", message);
-                    break;
+                /*                     case 'vsceAutoPush':
+                
+                                        console.log("SWITCH: ", message);
+                
+                                    break; */
             }
         });
     }
@@ -468,7 +470,6 @@ async function updateStatus(vscodeURI) {
                 workspaceStatus = { estado: 1, clase: 'offline', texto: 'Desconectado', warningMessage: 'No tienes un workspace asignado. Para iniciar uno nuevo, haz clic en el botón <b>Iniciar workspace</b> para comenzar.' };
                 actionButtonHTML = `
                     ${workspaceReposHTML}
-                    ${htmlStartWorkspace}
                     ${startButtonHTML}
                 `;
                 break;
@@ -646,7 +647,7 @@ async function htmlDestroyWorkspace() {
 }
 async function htmlStartWorkspace() {
     const html = `
-        <div class="row">
+        <div class="row" style="padding-top: 10px;">
             <button id="deploySandboxButton" onclick="createSandbox();" class="sandbox-button">
                 <div id="deploySandboxSpinner" class="spinner"></div>
                 <span id="deploySandboxButtonText">🚀&nbsp;&nbsp;INICIAR WORKSPACE</span>
@@ -9516,6 +9517,7 @@ class Gitlab {
         const sandbox = new sandbox_1.Sandbox();
         await sandbox.workspaceCurrentGroup();
         const configuration = vscode.workspace.getConfiguration('tambo.sandbox');
+        const currentUsername = configuration.get('gitlab.username');
         const originURL = await this.gitOrigin();
         const regex = new RegExp('^' + globals_1.globalConfig.gitlabUrl.replace(/([.*+?^=!:${}()|\[\]\/\\])/g, '\\$1') + '/', '');
         const repoPath = originURL.replace(regex, '').replace(/\.git$/, '');
@@ -9535,7 +9537,7 @@ class Gitlab {
                 const status = await git.status();
                 if (status.files.length > 0) {
                     await git.add('.');
-                    await git.commit('TAMBOSANDBOX Commit automatico');
+                    await git.commit(`[TAMBO:SANDBOX] Commit generado por ${currentUsername}`);
                     await git.push();
                     return true;
                 }
