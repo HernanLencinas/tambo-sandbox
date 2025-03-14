@@ -36,23 +36,22 @@ window.addEventListener('message', ({ data: message }) => {
 });
 
 window.addEventListener('click', (event) => {
-    const button = event.target.closest('.apps-button[data-link]');
-    if (button) {
+    // ACCESOS A HERRAMIENTAS
+    const buttonElement = event.target.closest('.apps-button[data-link]');
+    if (buttonElement) {
         vscode.postMessage({
             command: 'openLink',
-            link: button.dataset.link
+            link: buttonElement.dataset.link
         });
     }
+    // COMPONENTE SWITCH
+/*     const switchElement = event.target.closest('input[data-switch]');
+    if (switchElement) {
+        sendMessage('sandboxAutoPush', {
+            enable: switchElement.checked,
+        });
+    } */
 });
-
-// COMPONENTE SWITCH
-/* const toggleSwitch = document.getElementById("toggleSwitch");
-toggleSwitch.addEventListener("change", function () {
-    console.log("SWITCH: ", this.checked);
-    sendMessage('vsceAutoPush', {
-        enable: this.checked,
-    });
-}); */
 
 // Guarda el estado en el Webview
 function saveState(data) {

@@ -6,6 +6,7 @@ import { Connection } from './connection';
 import { Sandbox } from './sandbox';
 import { showStatusMessage } from './utils';
 import { Gitlab } from './gitlab';
+import { VSCESetttings } from './config';
 
 // file deepcode ignore InsecureTLSConfig: <please specify a reason of ignoring this>
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
@@ -20,11 +21,15 @@ export async function activate(context: vscode.ExtensionContext) {
 	connection.load(context);
 
 	// ESCUCHAR CAMBIOS EN LA CONFIGURACION
-	vscode.workspace.onDidChangeConfiguration(event => {
+	vscode.workspace.onDidChangeConfiguration(async event => {
 		if (event.affectsConfiguration('tambo.sandbox.gitlab.username') ||
 			event.affectsConfiguration('tambo.sandbox.gitlab.token')) {
 			vscode.commands.executeCommand('tambosandbox.connectionRefresh');
 		}
+		/* 		if (event.affectsConfiguration('tambo.sandbox.push')) {
+					const settings = new VSCESetttings();
+					const autoPush = await settings.getAutoPush();
+				} */
 	});
 
 	// COMANDOS DE CONExión
@@ -51,12 +56,14 @@ export async function activate(context: vscode.ExtensionContext) {
 
 	/// CAPTURAR EL EVENTO DE GUARDADO ///	
 	let saveListener = vscode.workspace.onDidSaveTextDocument(async (document: vscode.TextDocument) => {
-		const commitRes = await gitlab.commitRepository();
-		if (commitRes) {
-			showStatusMessage("Cambios guardados");
-			sandbox.workspaceCommitChange();
-		} else {
-			showStatusMessage("No hay cambios para guardar");
+		if (!vscode.workspace.getConfiguration('tambo.sandbox').get('push')) {
+			const commitRes = await gitlab.commitRepository();
+			if (commitRes) {
+				showStatusMessage("Cambios guardados");
+				sandbox.workspaceCommitChange();
+			} else {
+				showStatusMessage("No hay cambios para guardar");
+			}
 		}
 	});
 	context.subscriptions.push(saveListener);

@@ -57,11 +57,15 @@ async function activate(context) {
     const connection = new connection_1.Connection();
     connection.load(context);
     // ESCUCHAR CAMBIOS EN LA CONFIGURACION
-    vscode.workspace.onDidChangeConfiguration(event => {
+    vscode.workspace.onDidChangeConfiguration(async (event) => {
         if (event.affectsConfiguration('tambo.sandbox.gitlab.username') ||
             event.affectsConfiguration('tambo.sandbox.gitlab.token')) {
             vscode.commands.executeCommand('tambosandbox.connectionRefresh');
         }
+        /* 		if (event.affectsConfiguration('tambo.sandbox.push')) {
+                    const settings = new VSCESetttings();
+                    const autoPush = await settings.getAutoPush();
+                } */
     });
     // COMANDOS DE CONExión
     const cmdConnectionWizard = vscode.commands.registerCommand('tambosandbox.connectionWizard', async () => {
@@ -83,13 +87,15 @@ async function activate(context) {
     context.subscriptions.push(cmdConnectionRefresh);
     /// CAPTURAR EL EVENTO DE GUARDADO ///	
     let saveListener = vscode.workspace.onDidSaveTextDocument(async (document) => {
-        const commitRes = await gitlab.commitRepository();
-        if (commitRes) {
-            (0, utils_1.showStatusMessage)("Cambios guardados");
-            sandbox.workspaceCommitChange();
-        }
-        else {
-            (0, utils_1.showStatusMessage)("No hay cambios para guardar");
+        if (!vscode.workspace.getConfiguration('tambo.sandbox').get('push')) {
+            const commitRes = await gitlab.commitRepository();
+            if (commitRes) {
+                (0, utils_1.showStatusMessage)("Cambios guardados");
+                sandbox.workspaceCommitChange();
+            }
+            else {
+                (0, utils_1.showStatusMessage)("No hay cambios para guardar");
+            }
         }
     });
     context.subscriptions.push(saveListener);
@@ -149,11 +155,10 @@ exports.Connection = void 0;
 /* eslint-disable @typescript-eslint/naming-convention */
 const vscode = __importStar(__webpack_require__(1));
 const utils_1 = __webpack_require__(3);
-//import * as https from 'https';
-//import axios from 'axios';
 const sandbox_1 = __webpack_require__(5);
 const gitlab_1 = __webpack_require__(47);
 const globals_1 = __webpack_require__(46);
+const config_1 = __webpack_require__(55);
 const hash_wasm_1 = __webpack_require__(54);
 const utils_2 = __webpack_require__(3);
 class Connection {
@@ -361,11 +366,10 @@ class ConnectionsViewProvider {
                         await gitlab.cloneRepository();
                     }
                     break;
-                /*                     case 'vsceAutoPush':
-                
-                                        console.log("SWITCH: ", message);
-                
-                                    break; */
+                case 'sandboxAutoPush':
+                    const settings = new config_1.VSCESetttings();
+                    await settings.setAutoPush(message.enable);
+                    break;
             }
         });
     }
@@ -505,13 +509,6 @@ async function updateStatus(vscodeURI) {
                 break;
         }
     }
-    /*     let html = `
-            <div class="container9">
-                <div class="spinner_orange"></div>
-                <h2>Testing...</h2>
-                <p>Un momento por favor...</p>
-            </div>
-        `; */
     let html = ``;
     html += createStatusHTML("Sandbox", sandboxStatus ? "Conectado" : "Desconectado", sandboxStatus ? 'online' : 'offline', sandboxStatus ? "" : "No se pudo establecer conexión con el servicio de Sandbox. Verifique sus credenciales o conexión a la red asegúrandose de estar conectado a la VPN Corporativa.");
     html += createStatusHTML("Git", gitStatus ? "Conectado" : "Desconectado", gitStatus ? 'online' : 'offline', gitStatus ? "" : "Autenticación fallida. Por favor, verifique que su usuario y token sean correctos.");
@@ -601,7 +598,7 @@ async function htmlTools() {
             </button>
         </div>
         <div class="row">
-            <button class="apps-button" data-link="https://gitlab.com/groups/telecom-argentina/-/saml/sso?token=93NxX_B5">
+            <button class="apps-button" data-link="https://gitlab.com/telecom-argentina/cto/tambo/clientes">
                 <img src="${vscodeURI}/resources/logos/gitlab.png" class="apps-button-icon"> GITLAB <img src="${vscodeURI}/resources/icons/external-link.svg" class="external-link-icon" />
             </button>
         </div>
@@ -616,15 +613,17 @@ async function htmlTools() {
 // TODO: Boton de clonar repositorio
 async function htmlCloneRepository() {
     const html = `
+        <!--
         <div class="row">
             <label class="switch-container" >
                 <span class="switch">
-                    <input type="checkbox" id="toggleSwitch">
+                    <input type="checkbox" id="toggleSwitch" data-switch="push">
                     <span class="slider"></span>
                 </span>
                 <span class="switch-text" id="switchText">Activar push automático</span>
             </label>
         </div>
+        -->
         <div class="row">
             <button id="cloneSandboxButton" onclick="cloneRepository();" class="sandbox-button" >
                 <div id="cloneSandboxSpinner" class="spinner"></div>
@@ -17423,6 +17422,61 @@ function createSM3() {
 }
 
 
+
+
+/***/ }),
+/* 55 */
+/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
+
+"use strict";
+
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || (function () {
+    var ownKeys = function(o) {
+        ownKeys = Object.getOwnPropertyNames || function (o) {
+            var ar = [];
+            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
+            return ar;
+        };
+        return ownKeys(o);
+    };
+    return function (mod) {
+        if (mod && mod.__esModule) return mod;
+        var result = {};
+        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
+        __setModuleDefault(result, mod);
+        return result;
+    };
+})();
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.VSCESetttings = void 0;
+const vscode = __importStar(__webpack_require__(1));
+class VSCESetttings {
+    async getAutoPush() {
+        const config = vscode.workspace.getConfiguration("tambo.sandbox");
+        return config.get("push", true);
+    }
+    async setAutoPush(value) {
+        const config = vscode.workspace.getConfiguration("tambo.sandbox");
+        await config.update("push", value, vscode.ConfigurationTarget.Global);
+    }
+}
+exports.VSCESetttings = VSCESetttings;
 
 
 /***/ })

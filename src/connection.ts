@@ -1,11 +1,10 @@
 /* eslint-disable @typescript-eslint/naming-convention */
 import * as vscode from 'vscode';
 import { encrypt } from './utils';
-//import * as https from 'https';
-//import axios from 'axios';
 import { Sandbox } from './sandbox';
 import { Gitlab } from './gitlab';
 import { globalConfig } from './globals';
+import { VSCESetttings } from './config';
 import { md5 } from "hash-wasm";
 import { showStatusMessage } from './utils';
 
@@ -161,12 +160,10 @@ class ConnectionsViewProvider implements vscode.WebviewViewProvider {
             switch (message.command) {
 
                 case 'sandboxStatus':
-
                     const htmlStatusSandbox = await updateStatus(this.context.extensionUri);
                     const hash = (await md5(htmlStatusSandbox)).slice(-5);
 
                     if (globalConfig.workspaceStatusHash !== hash) {
-
                         globalConfig.workspaceStatusHash = hash;
                         webviewView.webview.postMessage({
                             command: 'sandboxConnectionStatus',
@@ -177,7 +174,6 @@ class ConnectionsViewProvider implements vscode.WebviewViewProvider {
                     break;
 
                 case 'openLink':
-
                     if (message.link) {
                         const res = vscode.env.openExternal(vscode.Uri.parse(message.link));
                         if (!res) {
@@ -187,17 +183,14 @@ class ConnectionsViewProvider implements vscode.WebviewViewProvider {
                     break;
 
                 case 'sandboxWizard':
-
                     vscode.commands.executeCommand('tambosandbox.connectionWizard');
                     break;
 
                 case 'showMessage':
-
                     vscode.window.showInformationMessage(message.message);
                     break;
 
                 case 'sandboxCreate':
-
                     const createWorkspaceRes = await vscode.window.showInformationMessage(
                         '¿Desplegar un nuevo Workspace en Tambo Sandbox?',
                         { modal: true },
@@ -220,7 +213,6 @@ class ConnectionsViewProvider implements vscode.WebviewViewProvider {
                     break;
 
                 case 'sandboxDestroy':
-
                     const destroyWorkspaceRes = await vscode.window.showInformationMessage(
                         '¿Destruir el workspace actualmente en ejecuccion?',
                         { modal: true }, // Modal para la confirmación
@@ -243,7 +235,6 @@ class ConnectionsViewProvider implements vscode.WebviewViewProvider {
                     break;
 
                 case 'sandboxChangeGroup':
-
                     const configuration = vscode.workspace.getConfiguration('tambo.sandbox.gitlab');
                     const currentUsername = configuration.get('username');
 
@@ -300,7 +291,6 @@ class ConnectionsViewProvider implements vscode.WebviewViewProvider {
                     break;
 
                 case 'cloneRepository':
-
                     const cloneRepositoryRes = await vscode.window.showInformationMessage(
                         `¿Desea confirmar la clonación del repositorio localmente y abrirlo en el explorer de Visual Studio Code?"`,
                         { modal: true },
@@ -314,11 +304,11 @@ class ConnectionsViewProvider implements vscode.WebviewViewProvider {
 
                     break;
 
-/*                     case 'vsceAutoPush':
+                case 'sandboxAutoPush':
+                    const settings = new VSCESetttings();
+                    await settings.setAutoPush(message.enable);
 
-                        console.log("SWITCH: ", message);
-
-                    break; */
+                    break;
 
             }
 
@@ -494,14 +484,6 @@ async function updateStatus(vscodeURI: vscode.Uri) {
         }
     }
 
-    /*     let html = `
-            <div class="container9">
-                <div class="spinner_orange"></div>
-                <h2>Testing...</h2>
-                <p>Un momento por favor...</p>
-            </div>
-        `; */
-
     let html = ``;
 
     html += createStatusHTML("Sandbox", sandboxStatus ? "Conectado" : "Desconectado", sandboxStatus ? 'online' : 'offline', sandboxStatus ? "" : "No se pudo establecer conexión con el servicio de Sandbox. Verifique sus credenciales o conexión a la red asegúrandose de estar conectado a la VPN Corporativa.");
@@ -614,7 +596,7 @@ async function htmlTools(): Promise<string> {
             </button>
         </div>
         <div class="row">
-            <button class="apps-button" data-link="https://gitlab.com/groups/telecom-argentina/-/saml/sso?token=93NxX_B5">
+            <button class="apps-button" data-link="https://gitlab.com/telecom-argentina/cto/tambo/clientes">
                 <img src="${vscodeURI}/resources/logos/gitlab.png" class="apps-button-icon"> GITLAB <img src="${vscodeURI}/resources/icons/external-link.svg" class="external-link-icon" />
             </button>
         </div>
@@ -634,15 +616,17 @@ async function htmlTools(): Promise<string> {
 async function htmlCloneRepository(): Promise<string> {
 
     const html = `
+        <!--
         <div class="row">
             <label class="switch-container" >
                 <span class="switch">
-                    <input type="checkbox" id="toggleSwitch">
+                    <input type="checkbox" id="toggleSwitch" data-switch="push">
                     <span class="slider"></span>
                 </span>
                 <span class="switch-text" id="switchText">Activar push automático</span>
             </label>
         </div>
+        -->
         <div class="row">
             <button id="cloneSandboxButton" onclick="cloneRepository();" class="sandbox-button" >
                 <div id="cloneSandboxSpinner" class="spinner"></div>
