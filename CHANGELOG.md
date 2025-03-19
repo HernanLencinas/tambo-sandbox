@@ -9,3 +9,4 @@ VER: Release inicial.
 **1.0.5**  [ 19.03.2025]
 
 FIX: Se remueve de la vista de settings la configuracion de usuario y token de GitLab.
+FIX: No se guardaba en gitlab los cambios al guardar el documento.
