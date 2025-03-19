@@ -2,7 +2,7 @@
   "name": "tambo-sandbox",
   "displayName": "TAMBO",
   "description": "TAMBO Sandbox",
-  "version": "1.0.5",
+  "version": "1.0.6",
   "publisher": "HernanLencinas",
   "repository": {
     "type": "git",
@@ -90,11 +90,6 @@
     ],
     "menus": {
       "view/title": [
-        {
-          "command": "tambosandbox.connectionRefresh",
-          "group": "navigation",
-          "when": "view == tambo_viewport_connection"
-        },
         {
           "command": "tambosandbox.connectionEdit",
           "group": "navigation",

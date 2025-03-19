@@ -1,12 +1,16 @@
-# Change Log
+# Changelog
 
-Todas las cambios notables en este proyecto serán documentados en este archivo.
+Todas las modificaciones relevantes de este proyecto se documentarán en este archivo.
 
-**1.0.4**  [ 14.03.2025]
+## [1.0.6] - 2025-03-19
+### Fixed
+- Se eliminó el botón de "Actualizar" de la vista de conexión, ya que no era necesario y causaba confusión.
 
-VER: Release inicial.
+## [1.0.5] - 2025-03-18
+### Fixed
+- Se ocultaron de la interfaz gráfica de Settings las configuraciones de `usuario` y `token` de GitLab para mejorar la seguridad y reducir la exposición de información sensible.
+- Se solucionó un problema donde los cambios realizados al guardar un documento no se estaban enviando automáticamente a GitLab.
 
-**1.0.5**  [ 19.03.2025]
-
-FIX: Se remueve de la vista de settings la configuracion de usuario y token de GitLab.
-FIX: No se guardaba en gitlab los cambios al guardar el documento.
+## [1.0.4] - 2025-03-14
+### Added
+- Versión inicial de la extensión.
