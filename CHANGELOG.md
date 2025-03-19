@@ -2,6 +2,10 @@
 
 Todas las cambios notables en este proyecto serán documentados en este archivo.
 
-**Version 1.0.0**  [ Enero 30, 2025]
+**1.0.4**  [ 14.03.2025]
 
-- Release inicial.
+VER: Release inicial.
+
+**1.0.5**  [ 19.03.2025]
+
+FIX: Se remueve de la vista de settings la configuracion de usuario y token de GitLab.

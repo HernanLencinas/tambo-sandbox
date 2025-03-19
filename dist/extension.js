@@ -62,10 +62,6 @@ async function activate(context) {
             event.affectsConfiguration('tambo.sandbox.gitlab.token')) {
             vscode.commands.executeCommand('tambosandbox.connectionRefresh');
         }
-        /* 		if (event.affectsConfiguration('tambo.sandbox.push')) {
-                    const settings = new VSCESetttings();
-                    const autoPush = await settings.getAutoPush();
-                } */
     });
     // COMANDOS DE CONExión
     const cmdConnectionWizard = vscode.commands.registerCommand('tambosandbox.connectionWizard', async () => {
@@ -87,7 +83,7 @@ async function activate(context) {
     context.subscriptions.push(cmdConnectionRefresh);
     /// CAPTURAR EL EVENTO DE GUARDADO ///	
     let saveListener = vscode.workspace.onDidSaveTextDocument(async (document) => {
-        if (!vscode.workspace.getConfiguration('tambo.sandbox').get('push')) {
+        if (vscode.workspace.getConfiguration('tambo.sandbox').get('push')) {
             const commitRes = await gitlab.commitRepository();
             if (commitRes) {
                 (0, utils_1.showStatusMessage)("Cambios guardados");

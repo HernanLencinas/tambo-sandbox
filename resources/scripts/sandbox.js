@@ -44,13 +44,6 @@ window.addEventListener('click', (event) => {
             link: buttonElement.dataset.link
         });
     }
-    // COMPONENTE SWITCH
-/*     const switchElement = event.target.closest('input[data-switch]');
-    if (switchElement) {
-        sendMessage('sandboxAutoPush', {
-            enable: switchElement.checked,
-        });
-    } */
 });
 
 // Guarda el estado en el Webview
@@ -102,4 +95,4 @@ function sandboxChangeGroup(event, commit) {
 }
 
 // Actualizar datos del sandbox periódicamente
-setInterval(updateSandboxData, 4000);
+setInterval(updateSandboxData, 3000);
