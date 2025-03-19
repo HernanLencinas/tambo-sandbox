@@ -111,16 +111,6 @@
       "type": "object",
       "title": "TAMBO Sandbox",
       "properties": {
-        "tambo.sandbox.gitlab.username": {
-          "type": "string",
-          "default": "",
-          "description": "Usuario de Gitlab"
-        },
-        "tambo.sandbox.gitlab.token": {
-          "type": "string",
-          "default": "",
-          "description": "Token de Gitlab"
-        },
         "tambo.sandbox.push": {
           "type": "boolean",
           "default": true,
