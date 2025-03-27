@@ -10,9 +10,50 @@ if (previousState) {
 
 // Manejar mensajes entrantes desde VS Code
 window.addEventListener('message', ({ data: message }) => {
+    const handlers = {
+        sandboxConnectionStatus: () => {
+            updateSandboxPanelStatus(message.data);
+            saveState(message.data);
+        },
+        ping: () => {
+            sendMessage(message.data);
+        },
+        destroyingStatus: () => {
+            toggleButtonState('destroySandbox', true, 'DESTRUYENDO WORKSPACE...');
+        },
+        deployingStatus: () => {
+            toggleButtonState('deploySandbox', true, 'DEPLOYANDO WORKSPACE...');
+        },
+        revertStatus: () => {
+            revertSandboxPanelStatus();
+        }
+    };
+
+    const handler = handlers[message.command];
+    if (handler) {
+        handler();
+    }
+});
+
+function toggleButtonState(idPrefix, disabled, text) {
+    const button = document.getElementById(`${idPrefix}Button`);
+    const spinner = document.getElementById(`${idPrefix}Spinner`);
+    const buttonText = document.getElementById(`${idPrefix}ButtonText`);
+
+    if (button && spinner && buttonText) {
+        button.disabled = disabled;
+        spinner.style.display = disabled ? 'block' : 'none';
+        buttonText.textContent = text;
+    }
+}
+
+/* window.addEventListener('message', ({ data: message }) => {
     if (message.command === 'sandboxConnectionStatus') {
         updateSandboxPanelStatus(message.data);
         saveState(message.data);
+    }
+    if (message.command === 'ping') {
+        console.log("PING");
     }
     if (message.command === 'destroyingStatus') {
         const button = document.getElementById('destroySandboxButton');
@@ -33,7 +74,7 @@ window.addEventListener('message', ({ data: message }) => {
     if (message.command === 'revertStatus') {
         revertSandboxPanelStatus();
     }
-});
+}); */
 
 window.addEventListener('click', (event) => {
     // ACCESOS A HERRAMIENTAS

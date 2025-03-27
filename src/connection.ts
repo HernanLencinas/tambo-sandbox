@@ -25,9 +25,9 @@ export class Connection {
         });
 
         if (gitlabUsername && gitlabToken) {
-            const configuration = vscode.workspace.getConfiguration('tambo.sandbox.gitlab');
-            await configuration.update('username', gitlabUsername, vscode.ConfigurationTarget.Global);
-            await configuration.update('token', encrypt(gitlabToken), vscode.ConfigurationTarget.Global);
+            const configuration = vscode.workspace.getConfiguration('tambo.sandbox');
+            await configuration.update('gitlab.username', gitlabUsername, vscode.ConfigurationTarget.Global);
+            await configuration.update('gitlab.token', encrypt(gitlabToken), vscode.ConfigurationTarget.Global);
             vscode.window.showInformationMessage(`TAMBO-SANDBOX: Se configuró la conexión exitosamente`);
         }
 
@@ -63,7 +63,10 @@ export class Connection {
                 await configuration.update('token', encrypt(nuevoGitlabToken), vscode.ConfigurationTarget.Global);
             }
 
-            vscode.window.showInformationMessage(`TAMBO-SANDBOX: Se configuró la conexión exitosamente`);
+            globalConfig.contextConfigStatus = true;
+            vscode.commands.executeCommand('setContext', 'tambo.configDefined', true);
+            this.provider?.ping("sandboxStatus");
+            
         } else {
             vscode.window.showInformationMessage('TAMBO-SANDBOX: Fallo al intentar configurar la conexión');
         }
@@ -82,7 +85,7 @@ export class Connection {
             const configuration = vscode.workspace.getConfiguration('tambo.sandbox.gitlab');
             await configuration.update('username', undefined, vscode.ConfigurationTarget.Global);
             await configuration.update('token', undefined, vscode.ConfigurationTarget.Global);
-
+            vscode.commands.executeCommand('setContext', 'tambo.configDefined', false);
             vscode.window.showInformationMessage('TAMBO-SANDBOX: Se elimino la configuracion');
         }
 
@@ -92,7 +95,7 @@ export class Connection {
 
         try {
             // Crear una única instancia del proveedor
-            showStatusMessage("Activando extension...");
+            showStatusMessage("Cargando...");
             this.provider = new ConnectionsViewProvider(context);
 
             context.subscriptions.push(
@@ -109,13 +112,13 @@ export class Connection {
     }
 
     isConfigured(): boolean {
-
         const config = vscode.workspace.getConfiguration('tambo.sandbox');
-        return (
-            config.get<string>('gitlab.username')?.trim() !== "" &&
-            config.get<string>('gitlab.token')?.trim() !== ""
-        );
+        const username = config.get<string>('gitlab.username');
+        const token = config.get<string>('gitlab.token');
 
+        vscode.commands.executeCommand('setContext', 'tambo.configDefined', !!username && !!token);
+
+        return !!username && !!token;
     }
 
     refresh() {
@@ -127,6 +130,7 @@ export class Connection {
         }
 
     }
+
 }
 
 class ConnectionsViewProvider implements vscode.WebviewViewProvider {
@@ -153,22 +157,35 @@ class ConnectionsViewProvider implements vscode.WebviewViewProvider {
 
         this.updateWebviewContent();
 
-        vscode.commands.executeCommand('setContext', 'tambo.configDefined', new Connection().isConfigured());
+        new Connection().isConfigured();
 
         webviewView.webview.onDidReceiveMessage(async (message) => {
 
             switch (message.command) {
 
                 case 'sandboxStatus':
-                    const htmlStatusSandbox = await updateStatus(this.context.extensionUri);
-                    const hash = (await md5(htmlStatusSandbox)).slice(-5);
 
-                    if (globalConfig.workspaceStatusHash !== hash) {
-                        globalConfig.workspaceStatusHash = hash;
+                    if (globalConfig.contextConfigStatus) {
+
+                        const htmlStatusSandbox = await configureStatus();
+                        globalConfig.workspaceStatusHash = "";
+                        globalConfig.contextConfigStatus = false;
                         webviewView.webview.postMessage({
                             command: 'sandboxConnectionStatus',
                             data: htmlStatusSandbox
                         });
+
+                    } else {
+
+                        const htmlStatusSandbox = await updateStatus(this.context.extensionUri);
+                        const hash = (await md5(htmlStatusSandbox)).slice(-5);
+                        if (globalConfig.workspaceStatusHash !== hash) {
+                            globalConfig.workspaceStatusHash = hash;
+                            webviewView.webview.postMessage({
+                                command: 'sandboxConnectionStatus',
+                                data: htmlStatusSandbox
+                            });
+                        }
 
                     }
                     break;
@@ -325,6 +342,17 @@ class ConnectionsViewProvider implements vscode.WebviewViewProvider {
 
     }
 
+    ping(command: string): void {
+
+        if (this.webviewView) {
+            this.webviewView.webview.postMessage({
+                command: 'ping',
+                data: command
+            });
+        } 
+
+    }
+
     private updateWebviewContent(): void {
 
         if (!this.webviewView) {
@@ -385,8 +413,6 @@ class ConnectionsViewProvider implements vscode.WebviewViewProvider {
         const scriptUri = this.webviewView?.webview.asWebviewUri(
             vscode.Uri.joinPath(this.context.extensionUri, 'resources', 'scripts', 'sandbox.js')
         );
-
-        // BUG: al reingresar al viewport Panel
 
         return `
             <!DOCTYPE html>
@@ -662,6 +688,22 @@ async function htmlStartWorkspace(): Promise<string> {
                 <div id="deploySandboxSpinner" class="spinner"></div>
                 <span id="deploySandboxButtonText">🚀&nbsp;&nbsp;INICIAR WORKSPACE</span>
             </button>
+        </div>
+        `;
+
+    return html;
+
+}
+
+async function configureStatus(): Promise<string> {
+
+    const html = `
+        <div id="sandboxPanelStatus">
+            <div class="container">
+                <div class="spinner1"></div>
+                <h2>Configurando...</h2>
+                <p>Un momento por favor...</p>
+            </div>
         </div>
         `;
 

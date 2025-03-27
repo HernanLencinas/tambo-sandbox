@@ -2,7 +2,7 @@
   "name": "tambo-sandbox",
   "displayName": "TAMBO",
   "description": "TAMBO Sandbox",
-  "version": "1.0.6",
+  "version": "1.0.7",
   "publisher": "HernanLencinas",
   "repository": {
     "type": "git",
@@ -47,7 +47,7 @@
     "viewsWelcome": [
       {
         "view": "tambo_viewport_help",
-        "contents": "¡BIENVENIDO A TAMBO SANDBOX!\n\nAquí encontrarás una amplia fuente de información y accesos esenciales que te serán de gran utilidad en el desarrollo de tus proyectos de automatización.\n\n1. [Pregunta 1](command:cmd)\n2. [Pregunta 2](command:tambo.cmdAddEnvs)\n3. [Pregunta 3](command:tambo.cmd)\n4. [Pregunta 4](command:tambo.cmd)\n\nSi necesitas información adicional o asistencia, te invitamos a acceder a [iTicket](command:tambo.openItickets) y generar una nueva solicitud. Nos comprometemos a procesar tu solicitud rápidamente y a ponernos en contacto contigo lo antes posible. No dudes en aprovechar esta plataforma para obtener la información que necesitas o solicitar la ayuda que requieres. Estamos aquí para ayudarte y atender tus inquietudes.\n\n"
+        "contents": "¡BIENVENIDO A TAMBO SANDBOX!\n\nSi necesitas información adicional o asistencia, te invitamos a acceder a [iTicket](command:tambo.openItickets) y generar una nueva solicitud.\n\nNos comprometemos a procesar tu solicitud rápidamente y a ponernos en contacto contigo lo antes posible. No dudes en aprovechar esta plataforma para obtener la información que necesitas o solicitar la ayuda que requieres. Estamos aquí para ayudarte y atender tus inquietudes.\n\n"
       }
     ],
     "commands": [
@@ -106,6 +106,16 @@
       "type": "object",
       "title": "TAMBO Sandbox",
       "properties": {
+        "tambo.sandbox.gitlab.username": {
+          "type": "string",
+          "default": "",
+          "description": "Usuario de Gitlab"
+        },
+        "tambo.sandbox.gitlab.token": {
+          "type": "string",
+          "default": "",
+          "description": "Token de Gitlab"
+        },
         "tambo.sandbox.push": {
           "type": "boolean",
           "default": true,

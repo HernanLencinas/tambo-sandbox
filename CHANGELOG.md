@@ -2,6 +2,10 @@
 
 Todas las modificaciones relevantes de este proyecto se documentarán en este archivo.
 
+## [1.0.7] - 2025-03-19
+### Fixed
+- Falla al eliminar la configuracion de conexion. Se queda bloqueado sin respuesta desde Sandbox.
+
 ## [1.0.6] - 2025-03-19
 ### Fixed
 - Se eliminó el botón de "Actualizar" de la vista de conexión, ya que no era necesario y causaba confusión.

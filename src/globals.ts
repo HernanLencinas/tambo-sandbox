@@ -20,5 +20,6 @@ export const globalConfig = {
     workspaceStatusHash: undefined as string | undefined,
     workspaceRepositories: undefined as any | undefined,
     workspaceRepository: undefined as Repository | undefined, 
-    axiosTimeout: 30000 as number
+    axiosTimeout: 30000 as number,
+    contextConfigStatus: false as boolean,
 };

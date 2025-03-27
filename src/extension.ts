@@ -6,7 +6,7 @@ import { Connection } from './connection';
 import { Sandbox } from './sandbox';
 import { showStatusMessage } from './utils';
 import { Gitlab } from './gitlab';
-import { VSCESetttings } from './config';
+//import { VSCESetttings } from './config';
 
 // file deepcode ignore InsecureTLSConfig: <please specify a reason of ignoring this>
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
@@ -28,7 +28,7 @@ export async function activate(context: vscode.ExtensionContext) {
 		}
 	});
 
-	// COMANDOS DE CONExión
+	// COMANDOS DE CONEXION
 	const cmdConnectionWizard = vscode.commands.registerCommand('tambosandbox.connectionWizard', async () => {
 		connection.wizard();
 	});
@@ -63,6 +63,13 @@ export async function activate(context: vscode.ExtensionContext) {
 		}
 	});
 	context.subscriptions.push(saveListener);
+
+	// ABRIR ITICKET
+	const openItickets = vscode.commands.registerCommand('tambo.openItickets', () => {
+		const url = vscode.Uri.parse('https://telecomarg-dwp.onbmc.com/dwp/app/#/itemprofile/3110');
+		vscode.env.openExternal(url);
+	  });
+	  context.subscriptions.push(openItickets);
 
 	showStatusMessage("Listo");
 
