@@ -47,7 +47,7 @@
     "viewsWelcome": [
       {
         "view": "tambo_viewport_help",
-        "contents": "¡BIENVENIDO A TAMBO SANDBOX!\n\nSi necesitas información adicional o asistencia, te invitamos a acceder a [iTicket](command:tambo.openItickets) y generar una nueva solicitud.\n\nNos comprometemos a procesar tu solicitud rápidamente y a ponernos en contacto contigo lo antes posible. No dudes en aprovechar esta plataforma para obtener la información que necesitas o solicitar la ayuda que requieres. Estamos aquí para ayudarte y atender tus inquietudes.\n\n"
+        "contents": "¡BIENVENIDO A TAMBO SANDBOX!\n\nSi necesitas información adicional o asistencia, te invitamos a acceder a [iTicket](command:tambo.openItickets) y generar una nueva solicitud."
       }
     ],
     "commands": [
