@@ -222,7 +222,6 @@ class Connection {
             await configuration.update('username', undefined, vscode.ConfigurationTarget.Global);
             await configuration.update('token', undefined, vscode.ConfigurationTarget.Global);
             vscode.commands.executeCommand('setContext', 'tambo.configDefined', false);
-            vscode.window.showInformationMessage('TAMBO-SANDBOX: Se elimino la configuracion');
         }
     }
     load(context) {
@@ -9426,7 +9425,8 @@ exports.globalConfig = {
     sandboxUrl: 'https://backend-sandbox.dev.apps.automation.teco.com.ar',
     sandboxAPIStatus: '/status',
     sandboxAPISandbox: '/sandbox',
-    gitlabUrl: 'https://gitlab.com',
+    gitlabProtocol: "https://",
+    gitlabUrl: 'gitlab.com',
     gitlabAPIUser: '/api/v4/user',
     sandboxState: undefined,
     vscodeUri: undefined,
@@ -9497,7 +9497,7 @@ const os = __importStar(__webpack_require__(42));
 class Gitlab {
     async status() {
         try {
-            const gitlabUrl = globals_1.globalConfig.gitlabUrl + globals_1.globalConfig.gitlabAPIUser;
+            const gitlabUrl = globals_1.globalConfig.gitlabProtocol + globals_1.globalConfig.gitlabUrl + globals_1.globalConfig.gitlabAPIUser;
             const config = vscode.workspace.getConfiguration('tambo.sandbox.gitlab');
             const token = config.get('token') ? (0, utils_1.decrypt)(config.get('token')) : null;
             if (!token) {
@@ -9520,16 +9520,19 @@ class Gitlab {
         }
     }
     async cloneRepository() {
+        new sandbox_1.Sandbox().workspaceCurrentGroup();
         const configuration = vscode.workspace.getConfiguration('tambo.sandbox.gitlab');
         const currentUsername = configuration.get('username');
+        const gitlabToken = configuration.get('token') ? (0, utils_1.decrypt)(configuration.get('token')) : null;
         const git = (0, simple_git_1.default)();
         const repoBranch = `${globals_1.globalConfig.workspaceRepository?.branch ?? `airflow-sandbox-${currentUsername}`}`;
-        const repoUrl = `${globals_1.globalConfig.gitlabUrl}/${globals_1.globalConfig.workspaceRepository?.path}.git`;
+        const repoUrl = `${globals_1.globalConfig.gitlabProtocol}${currentUsername}:${gitlabToken}@${globals_1.globalConfig.gitlabUrl}/${globals_1.globalConfig.workspaceRepository?.path}.git`;
         const tempDir = path.join(os.tmpdir(), 'vscode-tambosandbox');
         if (fs.existsSync(tempDir)) {
             fs.rmSync(tempDir, { recursive: true, force: true });
         }
         (0, utils_1.showStatusMessage)('Clonando repositorio...');
+        console.log("REPOURL: ", repoUrl);
         // Clonar el repositorio
         git.clone(repoUrl, tempDir, ['--branch', repoBranch])
             .then(() => {
@@ -9556,10 +9559,11 @@ class Gitlab {
         await sandbox.workspaceCurrentGroup();
         const configuration = vscode.workspace.getConfiguration('tambo.sandbox');
         const currentUsername = configuration.get('gitlab.username');
-        const originURL = await this.gitOrigin();
-        const regex = new RegExp('^' + globals_1.globalConfig.gitlabUrl.replace(/([.*+?^=!:${}()|\[\]\/\\])/g, '\\$1') + '/', '');
-        const repoPath = originURL.replace(regex, '').replace(/\.git$/, '');
-        if (globals_1.globalConfig.workspaceRepository?.path.toLocaleLowerCase() !== repoPath.toLowerCase()) {
+        const originURL = await this.gitOrigin(); // Obtener URL del repositorio a partir de local
+        // --> Devuelve: https://u519277:supersecreto@gitlab.com/telecom-argentina/cto/tambo/clientes/gnoc/tambo.git
+        const originPath = originURL.split(globals_1.globalConfig.gitlabUrl + '/')[1].replace(/\.git$/, '').toLocaleLowerCase();
+        // --> Devuelve: telecom-argentina/cto/tambo/clientes/gnoc/tambo
+        if (globals_1.globalConfig.workspaceRepository?.path.toLocaleLowerCase() !== originPath) {
             (0, utils_1.showStatusMessage)("‼️ El workspace no esta sincronizado");
             return false;
         }

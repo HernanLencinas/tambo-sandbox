@@ -66,7 +66,7 @@ export class Connection {
             globalConfig.contextConfigStatus = true;
             vscode.commands.executeCommand('setContext', 'tambo.configDefined', true);
             this.provider?.ping("sandboxStatus");
-            
+
         } else {
             vscode.window.showInformationMessage('TAMBO-SANDBOX: Fallo al intentar configurar la conexión');
         }
@@ -86,7 +86,6 @@ export class Connection {
             await configuration.update('username', undefined, vscode.ConfigurationTarget.Global);
             await configuration.update('token', undefined, vscode.ConfigurationTarget.Global);
             vscode.commands.executeCommand('setContext', 'tambo.configDefined', false);
-            vscode.window.showInformationMessage('TAMBO-SANDBOX: Se elimino la configuracion');
         }
 
     }
