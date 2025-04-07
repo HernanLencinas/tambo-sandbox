@@ -2,7 +2,7 @@
 
 Todas las modificaciones relevantes de este proyecto se documentarán en este archivo.
 
-## [1.0.9] - 07.04.2025
+## [1.1.0] - 07.04.2025
 ### Fixed
 - Se valida el usuario y token de Gitlab correctamente.
 - Al guardar el nombre de usuario en la conexion en minusculas por default.
