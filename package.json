@@ -2,7 +2,7 @@
   "name": "tambo-sandbox",
   "displayName": "TAMBO",
   "description": "TAMBO Sandbox",
-  "version": "1.0.80",
+  "version": "1.0.9",
   "publisher": "HernanLencinas",
   "repository": {
     "type": "git",
@@ -25,7 +25,7 @@
       "activitybar": [
         {
           "id": "tambo-sandbox",
-          "title": "TAMBO SANDBOX",
+          "title": "TAMBO SANDBOX" ,
           "icon": "resources/logos/tambo.png"
         }
       ]
@@ -34,7 +34,7 @@
       "tambo-sandbox": [
         {
           "id": "tambo_viewport_connection",
-          "name": "Panel",
+          "name": "Estado",
           "type": "webview"
         },
         {
