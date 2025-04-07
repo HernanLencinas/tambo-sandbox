@@ -366,11 +366,14 @@ class ConnectionsViewProvider {
                             vscode.window.showErrorMessage("TAMBO: Ha ocurrido un error intentando cambiar de grupo en Sandbox");
                         }
                         else {
+                            webviewView.webview.postMessage({
+                                command: 'cloningStatus'
+                            });
                             const gitlab = new gitlab_1.Gitlab();
                             await gitlab.cloneRepository();
                         }
                     }
-                    else { // TODO: Agregar aqui que al cancelar se mantenga el grupo actual
+                    else {
                         webviewView.webview.postMessage({
                             command: 'revertStatus'
                         });
@@ -379,6 +382,9 @@ class ConnectionsViewProvider {
                 case 'cloneRepository':
                     const cloneRepositoryRes = await vscode.window.showInformationMessage(`¿Desea confirmar la clonación del repositorio localmente y abrirlo en el explorer de Visual Studio Code?"`, { modal: true }, 'Sí');
                     if (cloneRepositoryRes === 'Sí') {
+                        webviewView.webview.postMessage({
+                            command: 'cloningStatus'
+                        });
                         const gitlab = new gitlab_1.Gitlab();
                         await gitlab.cloneRepository();
                     }
@@ -536,7 +542,7 @@ async function updateStatus(vscodeURI) {
     let html = ``;
     const config = vscode.workspace.getConfiguration('tambo.sandbox.gitlab');
     const username = config.get('username');
-    html += createStatusHTML("Sandbox", sandboxStatus ? `Conectado como ${username}` : "Desconectado", sandboxStatus ? 'online' : 'offline', sandboxStatus ? "" : "No se pudo establecer conexión con el servicio de Sandbox. Verifique sus credenciales o conexión a la red asegúrandose de estar conectado a la VPN Corporativa.");
+    html += createStatusHTML("Sandbox", sandboxStatus ? `Conectado ${username}` : "Desconectado", sandboxStatus ? 'online' : 'offline', sandboxStatus ? "" : "No se pudo establecer conexión con el servicio de Sandbox. Verifique sus credenciales o conexión a la red asegúrandose de estar conectado a la VPN Corporativa.");
     html += createStatusHTML("Git", gitStatus ? "Conectado" : "Desconectado", gitStatus ? 'online' : 'offline', gitStatus ? "" : "Autenticación fallida. Por favor, verifique que su usuario y token sean correctos.");
     html += createStatusHTML("Workspace", workspaceStatus.texto, workspaceStatus.clase, workspaceStatus.warningMessage);
     html += actionButtonHTML;
@@ -577,7 +583,7 @@ async function htmlRepos(repositoriesList, commit, selectedGroup = "") {
     if (!Array.isArray(repositoriesList) || repositoriesList.length === 0) {
         return `
             <div class="row" style="padding: 5px 0px 0px 10px;">
-                <b>No se encontraron grupos disponibles</b>
+                <b>⚠️&nbsp;&nbsp;El listado de grupos no esta disponible en este momento</b>
             </div>
         `;
     }
@@ -646,20 +652,8 @@ async function htmlTools() {
         `;
     return html;
 }
-// TODO: Boton de clonar repositorio
 async function htmlCloneRepository() {
     const html = `
-        <!--
-        <div class="row">
-            <label class="switch-container" >
-                <span class="switch">
-                    <input type="checkbox" id="toggleSwitch" data-switch="push">
-                    <span class="slider"></span>
-                </span>
-                <span class="switch-text" id="switchText">Activar push automático</span>
-            </label>
-        </div>
-        -->
         <div class="row">
             <button id="cloneSandboxButton" onclick="cloneRepository();" class="sandbox-button" >
                 <div id="cloneSandboxSpinner" class="spinner"></div>
@@ -9535,14 +9529,14 @@ class Gitlab {
         }
     }
     async cloneRepository() {
-        new sandbox_1.Sandbox().workspaceCurrentGroup();
+        await new sandbox_1.Sandbox().workspaceCurrentGroup();
         const configuration = vscode.workspace.getConfiguration('tambo.sandbox.gitlab');
         const currentUsername = configuration.get('username');
         const gitlabToken = configuration.get('token') ? (0, utils_1.decrypt)(configuration.get('token')) : null;
         const git = (0, simple_git_1.default)();
         const repoBranch = `${globals_1.globalConfig.workspaceRepository?.branch ?? `airflow-sandbox-${currentUsername}`}`;
         const repoUrl = `${globals_1.globalConfig.gitlabProtocol}${currentUsername}:${gitlabToken}@${globals_1.globalConfig.gitlabUrl}/${globals_1.globalConfig.workspaceRepository?.path}.git`;
-        const tempDir = path.join(os.tmpdir(), 'vscode-tambosandbox');
+        const tempDir = path.join(os.tmpdir(), 'tambosandbox');
         if (fs.existsSync(tempDir)) {
             fs.rmSync(tempDir, { recursive: true, force: true });
         }
@@ -9550,19 +9544,18 @@ class Gitlab {
         // Clonar el repositorio
         git.clone(repoUrl, tempDir, ['--branch', repoBranch])
             .then(() => {
-            // Abrir el nuevo espacio de trabajo
-            vscode.workspace.updateWorkspaceFolders(0, null, { uri: vscode.Uri.file(tempDir), name: "TAMBOSANDBOX" });
-            // Establecer el rootPath en el explorador de archivos
-            const newWorkspace = vscode.workspace.workspaceFolders?.find(folder => folder.uri.fsPath === tempDir);
-            if (newWorkspace) {
-                vscode.workspace.updateWorkspaceFolders(0, null, { uri: newWorkspace.uri, name: "TAMBOSANDBOX" });
-            }
-            (0, utils_1.showStatusMessage)('Repositorio Clonado');
+            // Agregar el nuevo directorio clonado como workspace
+            vscode.workspace.updateWorkspaceFolders(0, vscode.workspace.workspaceFolders?.length ?? 0, {
+                uri: vscode.Uri.file(tempDir),
+                name: globals_1.globalConfig.workspaceRepository?.name.toUpperCase()
+            });
             // Cambiar a la vista de explorador
             vscode.commands.executeCommand('workbench.view.explorer');
+            (0, utils_1.showStatusMessage)('Repositorio Clonado');
+            (0, utils_1.showStatusMessage)('Repositorio Clonado');
         })
             .catch((error) => {
-            vscode.window.showErrorMessage(`Error al Clonar: ${error}`);
+            (0, utils_1.showStatusMessage)('Error al clonar repositorio');
         });
     }
     async closeRepository() {

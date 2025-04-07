@@ -291,11 +291,15 @@ class ConnectionsViewProvider implements vscode.WebviewViewProvider {
 
                         } else {
 
+                            webviewView.webview.postMessage({
+                                command: 'cloningStatus'
+                            });
+
                             const gitlab = new Gitlab();
                             await gitlab.cloneRepository();
 
                         }
-                    } else { // TODO: Agregar aqui que al cancelar se mantenga el grupo actual
+                    } else {
 
                         webviewView.webview.postMessage({
                             command: 'revertStatus'
@@ -313,6 +317,11 @@ class ConnectionsViewProvider implements vscode.WebviewViewProvider {
                     );
 
                     if (cloneRepositoryRes === 'Sí') {
+
+                        webviewView.webview.postMessage({
+                            command: 'cloningStatus'
+                        });
+
                         const gitlab = new Gitlab();
                         await gitlab.cloneRepository();
                     }
@@ -512,7 +521,7 @@ async function updateStatus(vscodeURI: vscode.Uri) {
     const config = vscode.workspace.getConfiguration('tambo.sandbox.gitlab');
     const username = config.get<string>('username');
 
-    html += createStatusHTML("Sandbox", sandboxStatus ? `Conectado como ${username}` : "Desconectado", sandboxStatus ? 'online' : 'offline', sandboxStatus ? "" : "No se pudo establecer conexión con el servicio de Sandbox. Verifique sus credenciales o conexión a la red asegúrandose de estar conectado a la VPN Corporativa.");
+    html += createStatusHTML("Sandbox", sandboxStatus ? `Conectado ${username}` : "Desconectado", sandboxStatus ? 'online' : 'offline', sandboxStatus ? "" : "No se pudo establecer conexión con el servicio de Sandbox. Verifique sus credenciales o conexión a la red asegúrandose de estar conectado a la VPN Corporativa.");
     html += createStatusHTML("Git", gitStatus ? "Conectado" : "Desconectado", gitStatus ? 'online' : 'offline', gitStatus ? "" : "Autenticación fallida. Por favor, verifique que su usuario y token sean correctos.");
     html += createStatusHTML("Workspace", workspaceStatus.texto, workspaceStatus.clase, workspaceStatus.warningMessage);
     html += actionButtonHTML;
@@ -566,7 +575,7 @@ async function htmlRepos(repositoriesList: any, commit: boolean, selectedGroup: 
     if (!Array.isArray(repositoriesList) || repositoriesList.length === 0) {
         return `
             <div class="row" style="padding: 5px 0px 0px 10px;">
-                <b>No se encontraron grupos disponibles</b>
+                <b>⚠️&nbsp;&nbsp;El listado de grupos no esta disponible en este momento</b>
             </div>
         `;
     }
@@ -648,22 +657,9 @@ async function htmlTools(): Promise<string> {
 
 }
 
-// TODO: Boton de clonar repositorio
-
 async function htmlCloneRepository(): Promise<string> {
 
     const html = `
-        <!--
-        <div class="row">
-            <label class="switch-container" >
-                <span class="switch">
-                    <input type="checkbox" id="toggleSwitch" data-switch="push">
-                    <span class="slider"></span>
-                </span>
-                <span class="switch-text" id="switchText">Activar push automático</span>
-            </label>
-        </div>
-        -->
         <div class="row">
             <button id="cloneSandboxButton" onclick="cloneRepository();" class="sandbox-button" >
                 <div id="cloneSandboxSpinner" class="spinner"></div>

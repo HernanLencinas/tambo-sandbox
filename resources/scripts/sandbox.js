@@ -24,6 +24,9 @@ window.addEventListener('message', ({ data: message }) => {
         deployingStatus: () => {
             toggleButtonState('deploySandbox', true, 'DEPLOYANDO WORKSPACE...');
         },
+        cloningStatus: () => {
+            toggleButtonState('cloneSandbox', true, 'CLONANDO REPOSITORIO...');
+        },
         revertStatus: () => {
             revertSandboxPanelStatus();
         }

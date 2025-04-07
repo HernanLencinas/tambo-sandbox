@@ -53,15 +53,14 @@ export class Gitlab {
 
 	async cloneRepository() {
 
-		new Sandbox().workspaceCurrentGroup();
-
+		await new Sandbox().workspaceCurrentGroup();
 		const configuration = vscode.workspace.getConfiguration('tambo.sandbox.gitlab');
 		const currentUsername = configuration.get('username');
 		const gitlabToken = configuration.get<string>('token') ? decrypt(configuration.get<string>('token')!) : null;
 		const git: SimpleGit = simpleGit();
 		const repoBranch = `${globalConfig.workspaceRepository?.branch ?? `airflow-sandbox-${currentUsername}`}`;
 		const repoUrl = `${globalConfig.gitlabProtocol}${currentUsername}:${gitlabToken}@${globalConfig.gitlabUrl}/${globalConfig.workspaceRepository?.path}.git`;
-		const tempDir = path.join(os.tmpdir(), 'vscode-tambosandbox');
+		const tempDir = path.join(os.tmpdir(), 'tambosandbox');
 
 		if (fs.existsSync(tempDir)) {
 			fs.rmSync(tempDir, { recursive: true, force: true });
@@ -73,23 +72,21 @@ export class Gitlab {
 		git.clone(repoUrl, tempDir, ['--branch', repoBranch])
 			.then(() => {
 
-				// Abrir el nuevo espacio de trabajo
-				vscode.workspace.updateWorkspaceFolders(0, null, { uri: vscode.Uri.file(tempDir), name: "TAMBOSANDBOX" });
-
-				// Establecer el rootPath en el explorador de archivos
-				const newWorkspace = vscode.workspace.workspaceFolders?.find(folder => folder.uri.fsPath === tempDir);
-				if (newWorkspace) {
-					vscode.workspace.updateWorkspaceFolders(0, null, { uri: newWorkspace.uri, name: "TAMBOSANDBOX" });
-				}
-
-				showStatusMessage('Repositorio Clonado');
+				// Agregar el nuevo directorio clonado como workspace
+				vscode.workspace.updateWorkspaceFolders(0, vscode.workspace.workspaceFolders?.length ?? 0, {
+					uri: vscode.Uri.file(tempDir),
+					name: globalConfig.workspaceRepository?.name.toUpperCase()
+				});
 
 				// Cambiar a la vista de explorador
 				vscode.commands.executeCommand('workbench.view.explorer');
+				showStatusMessage('Repositorio Clonado');
+
+				showStatusMessage('Repositorio Clonado');
 
 			})
 			.catch((error: any) => {
-				vscode.window.showErrorMessage(`Error al Clonar: ${error}`);
+				showStatusMessage('Error al clonar repositorio');
 			});
 
 	}

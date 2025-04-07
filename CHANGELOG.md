@@ -8,6 +8,7 @@ Todas las modificaciones relevantes de este proyecto se documentarán en este ar
 - Al guardar el nombre de usuario en la conexion en minusculas por default.
 - Se muestra en el panel de estado en nombre del usuario.
 - Se incluye una validacion y advertencia en caso que git no este instalado.
+- Se agrega nombre del grupo a la carpeta del workspace
 
 ## [1.0.7] - 19.03.2025
 ### Fixed
