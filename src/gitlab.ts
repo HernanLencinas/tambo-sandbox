@@ -18,6 +18,7 @@ export class Gitlab {
 
 			const gitlabUrl = globalConfig.gitlabProtocol + globalConfig.gitlabUrl + globalConfig.gitlabAPIUser;
 			const config = vscode.workspace.getConfiguration('tambo.sandbox.gitlab');
+			const username = config.get<string>('username');
 			const token = config.get<string>('token') ? decrypt(config.get<string>('token')!) : null;
 
 			if (!token) {
@@ -34,7 +35,12 @@ export class Gitlab {
 				validateStatus: (status: number) => [200].includes(status)
 			});
 
-			return [200].includes(response.status);
+			return (
+				[200].includes(response.status) &&
+				typeof username === "string" &&
+				typeof response.data.username === "string" &&
+				username.toLowerCase() === response.data.username.toLowerCase()
+			);
 
 		} catch (error) {
 
