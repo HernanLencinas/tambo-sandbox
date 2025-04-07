@@ -69,8 +69,6 @@ export class Gitlab {
 
 		showStatusMessage('Clonando repositorio...');
 
-		console.log("REPOURL: ", repoUrl);
-
 		// Clonar el repositorio
 		git.clone(repoUrl, tempDir, ['--branch', repoBranch])
 			.then(() => {

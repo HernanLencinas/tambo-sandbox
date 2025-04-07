@@ -9535,7 +9535,6 @@ class Gitlab {
             fs.rmSync(tempDir, { recursive: true, force: true });
         }
         (0, utils_1.showStatusMessage)('Clonando repositorio...');
-        console.log("REPOURL: ", repoUrl);
         // Clonar el repositorio
         git.clone(repoUrl, tempDir, ['--branch', repoBranch])
             .then(() => {

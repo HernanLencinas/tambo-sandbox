@@ -47,35 +47,6 @@ function toggleButtonState(idPrefix, disabled, text) {
     }
 }
 
-/* window.addEventListener('message', ({ data: message }) => {
-    if (message.command === 'sandboxConnectionStatus') {
-        updateSandboxPanelStatus(message.data);
-        saveState(message.data);
-    }
-    if (message.command === 'ping') {
-        console.log("PING");
-    }
-    if (message.command === 'destroyingStatus') {
-        const button = document.getElementById('destroySandboxButton');
-        const spinner = document.getElementById('destroySandboxSpinner');
-        const buttonText = document.getElementById('destroySandboxButtonText');
-        button.disabled = true;
-        spinner.style.display = 'block';
-        buttonText.textContent = 'DESTRUYENDO WORKSPACE...';
-    }
-    if (message.command === 'deployingStatus') {
-        const button = document.getElementById('deploySandboxButton');
-        const spinner = document.getElementById('deploySandboxSpinner');
-        const buttonText = document.getElementById('deploySandboxButtonText');
-        button.disabled = true;
-        spinner.style.display = 'block';
-        buttonText.textContent = 'DEPLOYANDO WORKSPACE...';
-    }
-    if (message.command === 'revertStatus') {
-        revertSandboxPanelStatus();
-    }
-}); */
-
 window.addEventListener('click', (event) => {
     // ACCESOS A HERRAMIENTAS
     const buttonElement = event.target.closest('.apps-button[data-link]');
