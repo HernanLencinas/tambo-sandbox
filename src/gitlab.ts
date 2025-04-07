@@ -166,4 +166,15 @@ export class Gitlab {
 
 	}
 
+	async isGitAvailable(): Promise<boolean> {
+
+		try {
+			const git: SimpleGit = simpleGit();
+			return (await git.version()).installed;
+		} catch (err) {
+			return false;
+		}
+
+	}
+
 }

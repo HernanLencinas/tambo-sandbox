@@ -26,7 +26,7 @@ export class Connection {
 
         if (gitlabUsername && gitlabToken) {
             const configuration = vscode.workspace.getConfiguration('tambo.sandbox');
-            await configuration.update('gitlab.username', gitlabUsername, vscode.ConfigurationTarget.Global);
+            await configuration.update('gitlab.username', gitlabUsername.toLowerCase(), vscode.ConfigurationTarget.Global);
             await configuration.update('gitlab.token', encrypt(gitlabToken), vscode.ConfigurationTarget.Global);
         }
 
@@ -347,7 +347,7 @@ class ConnectionsViewProvider implements vscode.WebviewViewProvider {
                 command: 'ping',
                 data: command
             });
-        } 
+        }
 
     }
 
@@ -509,8 +509,10 @@ async function updateStatus(vscodeURI: vscode.Uri) {
     }
 
     let html = ``;
+    const config = vscode.workspace.getConfiguration('tambo.sandbox.gitlab');
+    const username = config.get<string>('username');
 
-    html += createStatusHTML("Sandbox", sandboxStatus ? "Conectado" : "Desconectado", sandboxStatus ? 'online' : 'offline', sandboxStatus ? "" : "No se pudo establecer conexión con el servicio de Sandbox. Verifique sus credenciales o conexión a la red asegúrandose de estar conectado a la VPN Corporativa.");
+    html += createStatusHTML("Sandbox", sandboxStatus ? `Conectado como ${username}` : "Desconectado", sandboxStatus ? 'online' : 'offline', sandboxStatus ? "" : "No se pudo establecer conexión con el servicio de Sandbox. Verifique sus credenciales o conexión a la red asegúrandose de estar conectado a la VPN Corporativa.");
     html += createStatusHTML("Git", gitStatus ? "Conectado" : "Desconectado", gitStatus ? 'online' : 'offline', gitStatus ? "" : "Autenticación fallida. Por favor, verifique que su usuario y token sean correctos.");
     html += createStatusHTML("Workspace", workspaceStatus.texto, workspaceStatus.clase, workspaceStatus.warningMessage);
     html += actionButtonHTML;
@@ -533,11 +535,22 @@ async function updateStatus(vscodeURI: vscode.Uri) {
                                 </div>`;
         }
 
+        const isGitAvailable = gitlab.isGitAvailable();
+        if (title === "Git" && !isGitAvailable) {
+            additionalMessage = `<div class="row">
+                                    <div class="status-msg">
+                                        <span class="arrow">&#x21B3;</span>
+                                        <span class="icon">❌</span>
+                                        <span class="msg">El comando <b>git</b> no está disponible en el sistema. Por favor, asegurate de que esté instalado correctamente y que el ejecutable se encuentre incluido en la variable de entorno PATH.</span>
+                                    </div>
+                                </div>`;
+        }
+
         return `<div class="row">
                     <div class="status">
                         <span class="${clase}"></span>
                         <b>${title}: </b>
-                        <span>${status}</span>
+                        <span style="width:500px;">${status}</span>
                     </div>
                 </div>
                 ${additionalMessage}

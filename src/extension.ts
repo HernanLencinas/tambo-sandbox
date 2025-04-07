@@ -68,8 +68,8 @@ export async function activate(context: vscode.ExtensionContext) {
 	const openItickets = vscode.commands.registerCommand('tambo.openItickets', () => {
 		const url = vscode.Uri.parse('https://telecomarg-dwp.onbmc.com/dwp/app/#/itemprofile/3110');
 		vscode.env.openExternal(url);
-	  });
-	  context.subscriptions.push(openItickets);
+	});
+	context.subscriptions.push(openItickets);
 
 	showStatusMessage("Listo");
 
