@@ -54,17 +54,18 @@ export class Connection {
 
         // Actualiza la configuración si el usuario proporciona nuevos valores
         if (nuevoGitlabUsername || nuevoGitlabToken) {
+
+            globalConfig.contextConfigStatus = true;
+            vscode.commands.executeCommand('setContext', 'tambo.configDefined', true);
+            this.provider?.ping("sandboxStatus");
+            
             if (nuevoGitlabUsername) {
-                await configuration.update('username', nuevoGitlabUsername, vscode.ConfigurationTarget.Global);
+                await configuration.update('username', nuevoGitlabUsername.toLowerCase(), vscode.ConfigurationTarget.Global);
             }
 
             if (nuevoGitlabToken) {
                 await configuration.update('token', encrypt(nuevoGitlabToken), vscode.ConfigurationTarget.Global);
             }
-
-            globalConfig.contextConfigStatus = true;
-            vscode.commands.executeCommand('setContext', 'tambo.configDefined', true);
-            this.provider?.ping("sandboxStatus");
 
         } else {
             vscode.window.showInformationMessage('TAMBO-SANDBOX: Fallo al intentar configurar la conexión');
