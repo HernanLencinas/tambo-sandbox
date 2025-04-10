@@ -2,7 +2,7 @@
 
 Todas las modificaciones relevantes de este proyecto se documentarán en este archivo.
 
-## [1.1.2] - 10.04.2025
+## [1.1.3] - 10.04.2025
 ### Fixed
 - Se reemplazo la libreria fs por rimraf para eliminar carpetas temporales.
 
