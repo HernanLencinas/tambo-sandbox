@@ -1004,9 +1004,11 @@ class Sandbox {
                 data: "{}",
                 timeout: globals_1.globalConfig.axiosTimeout
             });
+            (0, utils_1.showStatusMessage)("Se elimino el workspace");
             return true;
         }
         catch (error) {
+            (0, utils_1.showStatusMessage)("Error intentando eliminar el workspace.");
             return false;
         }
     }
@@ -1038,11 +1040,11 @@ class Sandbox {
                 },
             };
             await axios_1.default.patch(`${sandboxUrl}?usuario=${encodeURIComponent(username ?? "")}`, requestData, axiosConfig);
-            (0, utils_1.showStatusMessage)("Cambios informados");
+            (0, utils_1.showStatusMessage)("Cambios actualizados");
             return true;
         }
         catch (error) {
-            (0, utils_1.showStatusMessage)("Error intentando cambiar el grupo activo.");
+            (0, utils_1.showStatusMessage)("Error intentando guardar los cambios");
             console.error("TAMBOSANDBOX.sandbox.workspaceCommitChange:", error);
             return false;
         }

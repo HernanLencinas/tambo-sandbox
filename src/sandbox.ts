@@ -212,9 +212,11 @@ export class Sandbox {
                 timeout: globalConfig.axiosTimeout
             });
 
+            showStatusMessage("Se elimino el workspace");
             return true;
 
         } catch (error) {
+            showStatusMessage("Error intentando eliminar el workspace.");
             return false;
         }
 
@@ -256,11 +258,11 @@ export class Sandbox {
                 axiosConfig
             );
 
-            showStatusMessage("Cambios informados");
+            showStatusMessage("Cambios actualizados");
             return true;
 
         } catch (error) {
-            showStatusMessage("Error intentando cambiar el grupo activo.");
+            showStatusMessage("Error intentando guardar los cambios");
             console.error("TAMBOSANDBOX.sandbox.workspaceCommitChange:", error);
             return false;
         }
