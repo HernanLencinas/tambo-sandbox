@@ -6,7 +6,7 @@ import * as https from 'https';
 import axios from 'axios';
 import { globalConfig } from './globals';
 import simpleGit, { RemoteWithRefs, SimpleGit, SimpleGitOptions } from 'simple-git';
-import * as fs from 'fs';
+/* import * as fs from 'fs'; */
 import * as path from 'path';
 import * as os from 'os';
 import { rimraf } from 'rimraf';

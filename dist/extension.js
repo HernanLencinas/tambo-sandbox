@@ -9502,6 +9502,7 @@ const https = __importStar(__webpack_require__(6));
 const axios_1 = __importDefault(__webpack_require__(7));
 const globals_1 = __webpack_require__(46);
 const simple_git_1 = __importDefault(__webpack_require__(48));
+/* import * as fs from 'fs'; */
 const path = __importStar(__webpack_require__(13));
 const os = __importStar(__webpack_require__(42));
 const rimraf_1 = __webpack_require__(54);
