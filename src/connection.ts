@@ -289,7 +289,7 @@ class ConnectionsViewProvider implements vscode.WebviewViewProvider {
                         };
 
                         const sandbox = new Sandbox();
-                        const response = await sandbox.workspaceCommitChange();
+                        const response = await sandbox.commitWorkspaceChanges();
                         if (!response) {
 
                             await updateStatus(this.context.extensionUri);

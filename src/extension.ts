@@ -6,7 +6,6 @@ import { Connection } from './connection';
 import { Sandbox } from './sandbox';
 import { showStatusMessage } from './utils';
 import { Gitlab } from './gitlab';
-//import { VSCESetttings } from './config';
 
 // file deepcode ignore InsecureTLSConfig: <please specify a reason of ignoring this>
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
@@ -56,7 +55,7 @@ export async function activate(context: vscode.ExtensionContext) {
 			const commitRes = await gitlab.commitRepository();
 			if (commitRes) {
 				showStatusMessage("Cambios guardados");
-				sandbox.workspaceCommitChange();
+				sandbox.commitWorkspaceChanges();
 			} else {
 				showStatusMessage("No hay cambios para guardar");
 			}

@@ -2,6 +2,10 @@
 
 Todas las modificaciones relevantes de este proyecto se documentarán en este archivo.
 
+## [1.1.2] - 10.04.2025
+### Fixed
+- Se reemplazo la libreria fs por rimraf para eliminar carpetas temporales.
+
 ## [1.1.0] - 07.04.2025
 ### Fixed
 - Se valida el usuario y token de Gitlab correctamente.

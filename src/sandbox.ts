@@ -11,21 +11,13 @@ export class Sandbox {
 
         try {
             const sandboxUrl = `${globalConfig.sandboxUrl}${globalConfig.sandboxAPISandbox}`;
-            const config = vscode.workspace.getConfiguration('tambo.sandbox.gitlab');
-            const username = config.get<string>('username');
+            const username = this.getUsername();
 
             if (!username) {
                 return false;
             }
 
-            const axiosConfig = {
-                httpsAgent: new https.Agent({ rejectUnauthorized: false }),
-                timeout: globalConfig.axiosTimeout,
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                validateStatus: (status: number) => [200, 404].includes(status)
-            };
+            const axiosConfig = this.getAxiosConfig([200, 404]);
 
             const response = await axios.get(`${sandboxUrl}?usuario=${encodeURIComponent(username)}`, axiosConfig);
 
@@ -42,21 +34,13 @@ export class Sandbox {
 
         try {
             const sandboxUrl = `${globalConfig.sandboxUrl}${globalConfig.sandboxAPISandbox}`;
-            const config = vscode.workspace.getConfiguration('tambo.sandbox.gitlab');
-            const username = config.get<string>('username');
+            const username = this.getUsername();
 
             if (!username) {
                 return 1;
             }
 
-            const axiosConfig = {
-                httpsAgent: new https.Agent({ rejectUnauthorized: false }),
-                timeout: globalConfig.axiosTimeout,
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                validateStatus: (status: number) => [200].includes(status)
-            };
+            const axiosConfig = this.getAxiosConfig([200]);
 
             return (await axios.get(`${sandboxUrl}?usuario=${encodeURIComponent(username)}`, axiosConfig)).data.estado;
 
@@ -70,18 +54,8 @@ export class Sandbox {
 
         try {
             const sandboxUrl = `${globalConfig.sandboxUrl}${globalConfig.sandboxAPISandbox}`;
-            const config = vscode.workspace.getConfiguration('tambo.sandbox.gitlab');
-            const username = config.get<string>('username');
-
-            const axiosConfig = {
-                httpsAgent: new https.Agent({ rejectUnauthorized: false }),
-                timeout: globalConfig.axiosTimeout,
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                validateStatus: (status: number) => [200].includes(status)
-            };
-
+            const username = this.getUsername();
+            const axiosConfig = this.getAxiosConfig([200]);
             const response = await axios.get(`${sandboxUrl}?usuario=${encodeURIComponent(username ?? "")}`, axiosConfig);
 
             globalConfig.workspaceRepository = {
@@ -102,27 +76,16 @@ export class Sandbox {
 
         try {
             const sandboxUrl = `${globalConfig.sandboxUrl}${globalConfig.sandboxAPIStatus}`;
-            const config = vscode.workspace.getConfiguration('tambo.sandbox.gitlab');
-            const username = config.get<string>('username');
-            const encryptedToken = config.get<string>('token');
-            const token = encryptedToken ? decrypt(encryptedToken) : null;
+            const username = this.getUsername();
+            const token = this.getToken();
 
             if (!username || !token) {
                 return {};
             }
 
-            const axiosConfig = {
-                httpsAgent: new https.Agent({ rejectUnauthorized: false }),
-                timeout: globalConfig.axiosTimeout,
-                headers: {
-                    'Content-Type': 'application/json',
-                    usuario: username,
-                    token: token,
-                },
-                validateStatus: (status: number) => [200].includes(status),
-            };
+            const axiosConfig = this.getAxiosConfig([200]);
 
-            let response = (await axios.get(sandboxUrl, axiosConfig)).data.repos_disponibles;
+            let response = (await axios.get(sandboxUrl, { ...axiosConfig, headers: { ...axiosConfig.headers, usuario: username, token: token } })).data.repos_disponibles;
 
             if (Array.isArray(response)) {
                 response = response.sort((a: { path: string }, b: { path: string }) =>
@@ -152,22 +115,14 @@ export class Sandbox {
 
         try {
             const sandboxUrl = `${globalConfig.sandboxUrl}${globalConfig.sandboxAPISandbox}`;
-            const config = vscode.workspace.getConfiguration('tambo.sandbox.gitlab');
-            const username = config.get<string>('username');
-            const encryptedToken = config.get<string>('token');
-            const token = encryptedToken ? decrypt(encryptedToken) : null;
+            const username = this.getUsername();
+            const token = this.getToken();
 
             if (!username || !token || !globalConfig.workspaceRepository) {
                 return false;
             }
 
-            const axiosConfig = {
-                httpsAgent: new https.Agent({ rejectUnauthorized: false }),
-                timeout: globalConfig.axiosTimeout,
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-            };
+            const axiosConfig = this.getAxiosConfig();
 
             const body = {
                 id: `airflow-sandbox-${username}`,
@@ -176,7 +131,6 @@ export class Sandbox {
                 repositorio: {
                     id: globalConfig.workspaceRepository.repoid,
                     path: globalConfig.workspaceRepository.path,
-                    //branch: globalConfig.workspaceRepository.branch,
                 },
             };
 
@@ -199,8 +153,7 @@ export class Sandbox {
 
         try {
             const sandboxUrl = globalConfig.sandboxUrl + globalConfig.sandboxAPISandbox;
-            const config = vscode.workspace.getConfiguration('tambo.sandbox.gitlab');
-            const username = config.get<string>('username');
+            const username = this.getUsername();
 
             if (!username) {
                 return false;
@@ -222,38 +175,32 @@ export class Sandbox {
 
     }
 
-    // BUG: CAMBIAR NOMBRE DE LA FUNCION
-    
-    async workspaceCommitChange(): Promise<boolean> {
+    async commitWorkspaceChanges(): Promise<boolean> {
 
         try {
-            const sandboxUrl = `${globalConfig.sandboxUrl}${globalConfig.sandboxAPISandbox}`;
-            const config = vscode.workspace.getConfiguration('tambo.sandbox.gitlab');
-            const username = config.get<string>('username');
-            const encryptedToken = config.get<string>('token');
-            const token = encryptedToken ? decrypt(encryptedToken) : null;
-            const axiosConfig = {
-                httpsAgent: new https.Agent({ rejectUnauthorized: false }),
-                timeout: globalConfig.axiosTimeout,
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                validateStatus: (status: number) => [200, 204].includes(status),
-            };
+            const username = this.getUsername();
+            const token = this.getToken();
+
+            if (!username || !token || !globalConfig.workspaceRepository) {
+                return false;
+            }
+
+            const axiosConfig = this.getAxiosConfig([200, 204]);
+
             const requestData = {
                 id: `airflow-sandbox-${username}`,
-                equipo: globalConfig.workspaceRepository?.name.toLowerCase(),
+                equipo: globalConfig.workspaceRepository.name.toLowerCase(),
                 token: token,
                 estado: 0,
                 repositorio: {
-                    id: globalConfig.workspaceRepository?.repoid,
-                    path: globalConfig.workspaceRepository?.path,
-                    branch: globalConfig.workspaceRepository?.branch
+                    id: globalConfig.workspaceRepository.repoid,
+                    path: globalConfig.workspaceRepository.path,
+                    branch: globalConfig.workspaceRepository.branch
                 },
             };
 
             await axios.patch(
-                `${sandboxUrl}?usuario=${encodeURIComponent(username ?? "")}`,
+                `${globalConfig.sandboxUrl}${globalConfig.sandboxAPISandbox}?usuario=${encodeURIComponent(username)}`,
                 requestData,
                 axiosConfig
             );
@@ -263,10 +210,34 @@ export class Sandbox {
 
         } catch (error) {
             showStatusMessage("Error intentando guardar los cambios");
-            console.error("TAMBOSANDBOX.sandbox.workspaceCommitChange:", error);
+            console.error("TAMBOSANDBOX.sandbox.commitWorkspaceChanges:", error);
             return false;
         }
-        
+
+    }
+
+    private getGitlabConfig() {
+        return vscode.workspace.getConfiguration('tambo.sandbox.gitlab');
+    }
+
+    private getUsername(): string | null {
+        return this.getGitlabConfig().get<string>('username') ?? null;
+    }
+
+    private getToken(): string | null {
+        const encryptedToken = this.getGitlabConfig().get<string>('token');
+        return encryptedToken ? decrypt(encryptedToken) : null;
+    }
+
+    private getAxiosConfig(validStatuses: number[] = [200]): any {
+        return {
+            httpsAgent: new https.Agent({ rejectUnauthorized: false }),
+            timeout: globalConfig.axiosTimeout,
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            validateStatus: (status: number) => validStatuses.includes(status),
+        };
     }
 
 }

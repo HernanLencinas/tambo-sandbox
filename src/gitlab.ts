@@ -1,99 +1,102 @@
 /* eslint-disable @typescript-eslint/naming-convention */
 import * as vscode from 'vscode';
-import { decrypt, showStatusMessage } from './utils';
-import { Sandbox } from './sandbox';
 import * as https from 'https';
-import axios from 'axios';
-import { globalConfig } from './globals';
-import simpleGit, { RemoteWithRefs, SimpleGit, SimpleGitOptions } from 'simple-git';
-/* import * as fs from 'fs'; */
 import * as path from 'path';
 import * as os from 'os';
+import axios from 'axios';
 import { rimraf } from 'rimraf';
+import simpleGit, { SimpleGit, SimpleGitOptions } from 'simple-git';
+import { decrypt, showStatusMessage } from './utils';
+import { Sandbox } from './sandbox';
+import { globalConfig } from './globals';
 
 export class Gitlab {
 
-	async status(): Promise<boolean> {
+	private getGitlabCredentials() {
 
-		try {
-
-			const gitlabUrl = globalConfig.gitlabProtocol + globalConfig.gitlabUrl + globalConfig.gitlabAPIUser;
-			const config = vscode.workspace.getConfiguration('tambo.sandbox.gitlab');
-			const username = config.get<string>('username');
-			const token = config.get<string>('token') ? decrypt(config.get<string>('token')!) : null;
-
-			if (!token) {
-				return false;
-			}
-
-			const response = await axios.get(gitlabUrl, {
-				httpsAgent: new https.Agent({ rejectUnauthorized: false }),
-				headers: {
-					'Content-Type': 'application/json',
-					Authorization: `Bearer ${token}`
-				},
-				timeout: globalConfig.axiosTimeout,
-				validateStatus: (status: number) => [200].includes(status)
-			});
-
-			return (
-				[200].includes(response.status) &&
-				typeof username === "string" &&
-				typeof response.data.username === "string" &&
-				username.toLowerCase() === response.data.username.toLowerCase()
-			);
-
-		} catch (error) {
-
-			console.error("TAMBOSANDBOX.gitlab.status: ", error);
-			return false;
-
-		}
+		const config = vscode.workspace.getConfiguration('tambo.sandbox.gitlab');
+		const username = config.get<string>('username') ?? '';
+		const token = config.get<string>('token') ? decrypt(config.get<string>('token')!) : null;
+		return { username, token };
 
 	}
 
-	async cloneRepository() {
+	private getTempDir() {
 
-		await new Sandbox().workspaceCurrentGroup();
-		const configuration = vscode.workspace.getConfiguration('tambo.sandbox.gitlab');
-		const currentUsername = configuration.get('username');
-		const gitlabToken = configuration.get<string>('token') ? decrypt(configuration.get<string>('token')!) : null;
-		const git: SimpleGit = simpleGit();
-		const repoBranch = `${globalConfig.workspaceRepository?.branch ?? `airflow-sandbox-${currentUsername}`}`;
-		const repoUrl = `${globalConfig.gitlabProtocol}${currentUsername}:${gitlabToken}@${globalConfig.gitlabUrl}/${globalConfig.workspaceRepository?.path}.git`;
-		const tempDir = path.join(os.tmpdir(), 'tambosandbox');
+		return path.join(os.tmpdir(), 'tambosandbox');
 
-		// Borrar carpeta temporal
+	}
+
+	private async deleteTempDir(tempDir: string) {
+		
 		try {
 			showStatusMessage('Eliminando carpeta temporal');
 			await rimraf(tempDir, { maxRetries: 5, retryDelay: 200 });
 		} catch (err) {
 			showStatusMessage('Error al eliminar carpeta temporal');
 			console.error('No se pudo eliminar el directorio temporal:', err);
-			return;
+			throw err;
 		}
 
-		// Clonar el repositorio
-		showStatusMessage('Clonando repositorio...');
-		git.clone(repoUrl, tempDir, ['--branch', repoBranch])
-			.then(() => {
+	}
 
-				// Agregar el nuevo directorio clonado como workspace
-				vscode.workspace.updateWorkspaceFolders(0, vscode.workspace.workspaceFolders?.length ?? 0, {
-					uri: vscode.Uri.file(tempDir),
-					name: globalConfig.workspaceRepository?.name.toUpperCase()
-				});
+	async status(): Promise<boolean> {
 
-				// Cambiar a la vista de explorador
-				vscode.commands.executeCommand('workbench.view.explorer');
-				showStatusMessage('Repositorio Clonado');
+		try {
+			const { username, token } = this.getGitlabCredentials();
+			if (!token) {
+				return false;
+			}
 
-				showStatusMessage('Repositorio Clonado');
-
-			})
-			.catch((error: any) => {
-				showStatusMessage('Error al clonar repositorio');
+			const url = `${globalConfig.gitlabProtocol}${globalConfig.gitlabUrl}${globalConfig.gitlabAPIUser}`;
+			const response = await axios.get(url, {
+				httpsAgent: new https.Agent({ rejectUnauthorized: false }),
+				headers: {
+					'Content-Type': 'application/json',
+					Authorization: `Bearer ${token}`
+				},
+				timeout: globalConfig.axiosTimeout,
+				validateStatus: (status) => status === 200
 			});
+
+			return response.status === 200 &&
+				username &&
+				response.data.username &&
+				username.toLowerCase() === response.data.username.toLowerCase();
+		} catch (error) {
+			console.error("TAMBOSANDBOX.gitlab.status:", error);
+			return false;
+		}
+	}
+
+	async cloneRepository() {
+
+		try {
+			await new Sandbox().workspaceCurrentGroup();
+
+			const { username, token } = this.getGitlabCredentials();
+			const git: SimpleGit = simpleGit();
+			const repoBranch = `${globalConfig.workspaceRepository?.branch ?? `airflow-sandbox-${username}`}`;
+			const repoUrl = `${globalConfig.gitlabProtocol}${username}:${token}@${globalConfig.gitlabUrl}/${globalConfig.workspaceRepository?.path}.git`;
+			const tempDir = this.getTempDir();
+
+			await this.deleteTempDir(tempDir);
+
+			showStatusMessage('Clonando repositorio...');
+			await git.clone(repoUrl, tempDir, ['--branch', repoBranch]);
+
+			vscode.workspace.updateWorkspaceFolders(0, vscode.workspace.workspaceFolders?.length ?? 0, {
+				uri: vscode.Uri.file(tempDir),
+				name: globalConfig.workspaceRepository?.name.toUpperCase()
+			});
+
+			await vscode.commands.executeCommand('workbench.view.explorer');
+			showStatusMessage('Repositorio Clonado');
+
+		} catch (error) {
+			console.error('TAMBOSANDBOX.gitlab.cloneRepository:', error);
+			showStatusMessage('Error al clonar repositorio');
+		}
 
 	}
 
@@ -101,68 +104,58 @@ export class Gitlab {
 
 		showStatusMessage('Cerrando repositorio...');
 		vscode.workspace.updateWorkspaceFolders(0, 1);
-
+	
 	}
 
 	async commitRepository(): Promise<boolean> {
 
 		const sandbox = new Sandbox();
 		await sandbox.workspaceCurrentGroup();
-		const configuration = vscode.workspace.getConfiguration('tambo.sandbox');
-		const currentUsername = configuration.get('gitlab.username');
-		const originURL = await this.gitOrigin(); // Obtener URL del repositorio a partir de local
-		// --> Devuelve: https://u519277:supersecreto@gitlab.com/telecom-argentina/cto/tambo/clientes/gnoc/tambo.git
-		const originPath = originURL.split(globalConfig.gitlabUrl + '/')[1].replace(/\.git$/, '').toLocaleLowerCase();
-		// --> Devuelve: telecom-argentina/cto/tambo/clientes/gnoc/tambo
 
-		if (globalConfig.workspaceRepository?.path.toLocaleLowerCase() !== originPath) {
-			showStatusMessage("‼️ El workspace no esta sincronizado");
+		const config = vscode.workspace.getConfiguration('tambo.sandbox');
+		const currentUsername = config.get('gitlab.username');
+		const originURL = await this.gitOrigin();
+		const originPath = originURL.split(globalConfig.gitlabUrl + '/')[1]?.replace(/\.git$/, '').toLowerCase();
+
+		if (globalConfig.workspaceRepository?.path.toLowerCase() !== originPath) {
+			showStatusMessage("‼️ El workspace no está sincronizado");
 			return false;
 		}
 
-		if (configuration.get('push')) {
-			try {
-				// Configuración de simple-git
-				const options: Partial<SimpleGitOptions> = {
-					baseDir: vscode.workspace.rootPath,
-					binary: 'git',
-					config: ['core.autocrlf=false'],
-				};
-				const git: SimpleGit = simpleGit(options);
-				const status = await git.status();
-				if (status.files.length > 0) {
-					await git.add('.');
-					await git.commit(`[TAMBO:SANDBOX] Commit generado por ${currentUsername}`);
-					await git.push();
-					return true;
-				} else {
-					return false;
-				}
-			} catch (error) {
-				showStatusMessage("Error al guardar los cambios");
-				return false;
-			}
+		if (!config.get('push')) {
+			return true;
 		}
 
-		return true;
+		try {
+			const git: SimpleGit = simpleGit({
+				baseDir: vscode.workspace.rootPath,
+				binary: 'git',
+				config: ['core.autocrlf=false'],
+			});
 
+			const status = await git.status();
+			if (status.files.length > 0) {
+				await git.add('.');
+				await git.commit(`[TAMBO:SANDBOX] Commit generado por ${currentUsername}`);
+				await git.push();
+				return true;
+			}
+		} catch (error) {
+			showStatusMessage("Error al guardar los cambios");
+			console.error('commitRepository error:', error);
+		}
+
+		return false;
 	}
 
 	async gitOrigin(): Promise<string> {
-
+		
 		try {
-			// Obtener la URL del repositorio remoto "origin"
 			const git: SimpleGit = simpleGit(vscode.workspace.rootPath);
-			const remotes = await git.getRemotes(true); // Devuelve un array de remotos
-			const origin = remotes.find(remote => remote.name === 'origin');
-
-			if (origin) {
-				return origin.refs.fetch; // Devuelve la URL del repositorio remoto "origin"
-			} else {
-				return '';
-			}
+			const remotes = await git.getRemotes(true);
+			return remotes.find(r => r.name === 'origin')?.refs.fetch ?? '';
 		} catch (error) {
-			console.error(error);
+			console.error('gitOrigin error:', error);
 			return '';
 		}
 
@@ -173,10 +166,10 @@ export class Gitlab {
 		try {
 			const git: SimpleGit = simpleGit();
 			return (await git.version()).installed;
-		} catch (err) {
+		} catch {
 			return false;
 		}
 
 	}
-
+	
 }
