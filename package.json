@@ -2,7 +2,7 @@
   "name": "tambo-sandbox",
   "displayName": "TAMBO",
   "description": "TAMBO Sandbox",
-  "version": "1.1.1",
+  "version": "1.1.2",
   "publisher": "HernanLencinas",
   "repository": {
     "type": "git",
@@ -25,7 +25,7 @@
       "activitybar": [
         {
           "id": "tambo-sandbox",
-          "title": "TAMBO SANDBOX" ,
+          "title": "TAMBO SANDBOX",
           "icon": "resources/logos/tambo.png"
         }
       ]
@@ -138,6 +138,7 @@
     "@types/axios": "^0.14.4",
     "@types/mocha": "^10.0.2",
     "@types/node": "18.x",
+    "@types/rimraf": "^3.0.2",
     "@types/vscode": "^1.94.0",
     "@typescript-eslint/eslint-plugin": "^6.7.3",
     "@typescript-eslint/parser": "^6.7.3",
@@ -156,7 +157,8 @@
     "webpack-cli": "^5.1.4"
   },
   "dependencies": {
-    "axios": "^1.8.3",
-    "https": "1.0.0"
+    "axios": "^1.8.4",
+    "https": "1.0.0",
+    "rimraf": "6.0.1"
   }
 }

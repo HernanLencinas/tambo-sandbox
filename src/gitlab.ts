@@ -9,6 +9,7 @@ import simpleGit, { RemoteWithRefs, SimpleGit, SimpleGitOptions } from 'simple-g
 import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
+import { rimraf } from 'rimraf';
 
 export class Gitlab {
 
@@ -62,13 +63,18 @@ export class Gitlab {
 		const repoUrl = `${globalConfig.gitlabProtocol}${currentUsername}:${gitlabToken}@${globalConfig.gitlabUrl}/${globalConfig.workspaceRepository?.path}.git`;
 		const tempDir = path.join(os.tmpdir(), 'tambosandbox');
 
-		if (fs.existsSync(tempDir)) {
-			fs.rmSync(tempDir, { recursive: true, force: true });
+		// Borrar carpeta temporal
+		try {
+			showStatusMessage('Eliminando carpeta temporal');
+			await rimraf(tempDir, { maxRetries: 5, retryDelay: 200 });
+		} catch (err) {
+			showStatusMessage('Error al eliminar carpeta temporal');
+			console.error('No se pudo eliminar el directorio temporal:', err);
+			return;
 		}
 
-		showStatusMessage('Clonando repositorio...');
-
 		// Clonar el repositorio
+		showStatusMessage('Clonando repositorio...');
 		git.clone(repoUrl, tempDir, ['--branch', repoBranch])
 			.then(() => {
 
@@ -93,6 +99,7 @@ export class Gitlab {
 
 	async closeRepository() {
 
+		showStatusMessage('Cerrando repositorio...');
 		vscode.workspace.updateWorkspaceFolders(0, 1);
 
 	}
@@ -101,10 +108,8 @@ export class Gitlab {
 
 		const sandbox = new Sandbox();
 		await sandbox.workspaceCurrentGroup();
-
 		const configuration = vscode.workspace.getConfiguration('tambo.sandbox');
 		const currentUsername = configuration.get('gitlab.username');
-
 		const originURL = await this.gitOrigin(); // Obtener URL del repositorio a partir de local
 		// --> Devuelve: https://u519277:supersecreto@gitlab.com/telecom-argentina/cto/tambo/clientes/gnoc/tambo.git
 		const originPath = originURL.split(globalConfig.gitlabUrl + '/')[1].replace(/\.git$/, '').toLocaleLowerCase();

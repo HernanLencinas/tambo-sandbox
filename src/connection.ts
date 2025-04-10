@@ -28,6 +28,7 @@ export class Connection {
             const configuration = vscode.workspace.getConfiguration('tambo.sandbox');
             await configuration.update('gitlab.username', gitlabUsername.toLowerCase(), vscode.ConfigurationTarget.Global);
             await configuration.update('gitlab.token', encrypt(gitlabToken), vscode.ConfigurationTarget.Global);
+            showStatusMessage('Se configuro la conexión');
         }
 
     }
@@ -67,8 +68,11 @@ export class Connection {
                 await configuration.update('token', encrypt(nuevoGitlabToken), vscode.ConfigurationTarget.Global);
             }
 
+            showStatusMessage('Se edito correctamente la conexión');
+
         } else {
             vscode.window.showInformationMessage('TAMBO-SANDBOX: Fallo al intentar configurar la conexión');
+            showStatusMessage('Error al configurar la conexión');
         }
 
     }
@@ -86,6 +90,7 @@ export class Connection {
             await configuration.update('username', undefined, vscode.ConfigurationTarget.Global);
             await configuration.update('token', undefined, vscode.ConfigurationTarget.Global);
             vscode.commands.executeCommand('setContext', 'tambo.configDefined', false);
+            showStatusMessage('Se elimino correctamente la conexión');
         }
 
     }
