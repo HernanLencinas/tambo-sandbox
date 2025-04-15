@@ -6,7 +6,7 @@ import * as os from 'os';
 import axios from 'axios';
 import { rimraf } from 'rimraf';
 import simpleGit, { SimpleGit, SimpleGitOptions } from 'simple-git';
-import { decrypt, showStatusMessage } from './utils';
+import { decrypt, showStatusMessage, generateRandom } from './utils';
 import { Sandbox } from './sandbox';
 import { globalConfig } from './globals';
 
@@ -23,7 +23,7 @@ export class Gitlab {
 
 	private getTempDir() {
 
-		return path.join(os.tmpdir(), 'tambosandbox');
+		return path.join(os.tmpdir(), `tambosandbox-${globalConfig.workspaceRepository?.name ?? 'default'}-${generateRandom(12)}`);
 
 	}
 
@@ -80,7 +80,8 @@ export class Gitlab {
 			const repoUrl = `${globalConfig.gitlabProtocol}${username}:${token}@${globalConfig.gitlabUrl}/${globalConfig.workspaceRepository?.path}.git`;
 			const tempDir = this.getTempDir();
 
-			await this.deleteTempDir(tempDir);
+			//await this.deleteTempDir(tempDir);
+			console.log("REPOPATH: ", tempDir);
 
 			showStatusMessage('Clonando repositorio...');
 			await git.clone(repoUrl, tempDir, ['--branch', repoBranch]);

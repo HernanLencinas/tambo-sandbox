@@ -57,3 +57,18 @@ export function showStatusMessage(message: string) {
     statusBarItem.show();
 
 }
+
+export function generateRandom(length: number): string {
+
+    const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    let result = '';
+    const charactersLength = characters.length;
+
+    for (let i = 0; i < length; i++) {
+        const randomIndex = crypto.randomInt(0, charactersLength);
+        result += characters.charAt(randomIndex);
+    }
+
+    return result;
+
+}
