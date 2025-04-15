@@ -39,7 +39,7 @@ export class Gitlab {
 		}
 
 	}
-
+	
 	async status(): Promise<boolean> {
 
 		try {
