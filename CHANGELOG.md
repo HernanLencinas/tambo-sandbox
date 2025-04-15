@@ -2,6 +2,10 @@
 
 Todas las modificaciones relevantes de este proyecto se documentarán en este archivo.
 
+## [1.1.4] - 15.04.2025
+### Fixed
+- Nuevo fix al error intentando clonar el repositorio al cambiar de grupo.
+
 ## [1.1.3] - 10.04.2025
 ### Fixed
 - Se reemplazo la libreria fs por rimraf para eliminar carpetas temporales.
