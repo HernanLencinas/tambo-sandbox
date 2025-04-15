@@ -81,8 +81,6 @@ export class Gitlab {
 			const tempDir = this.getTempDir();
 
 			//await this.deleteTempDir(tempDir);
-			console.log("REPOPATH: ", tempDir);
-
 			showStatusMessage('Clonando repositorio...');
 			await git.clone(repoUrl, tempDir, ['--branch', repoBranch]);
 
