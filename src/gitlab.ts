@@ -79,6 +79,9 @@ export class Gitlab {
 			const repoBranch = `${globalConfig.workspaceRepository?.branch ?? `airflow-sandbox-${username}`}`;
 			const repoUrl = `${globalConfig.gitlabProtocol}${username}:${token}@${globalConfig.gitlabUrl}/${globalConfig.workspaceRepository?.path}.git`;
 			const tempDir = this.getTempDir();
+		
+			showStatusMessage('Cerrando archivos abiertos...');
+		    await vscode.commands.executeCommand('workbench.action.closeAllEditors');
 
 			//await this.deleteTempDir(tempDir);
 			showStatusMessage('Clonando repositorio...');
