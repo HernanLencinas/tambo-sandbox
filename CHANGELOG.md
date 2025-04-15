@@ -2,7 +2,7 @@
 
 Todas las modificaciones relevantes de este proyecto se documentarán en este archivo.
 
-## [1.1.4] - 15.04.2025
+## [1.1.6] - 15.04.2025
 ### Fixed
 - Nuevo fix al error intentando clonar el repositorio al cambiar de grupo.
 
