@@ -190,11 +190,9 @@ export class Sandbox {
             const fecha_creacion = () => {
                 const d = new Date();
                 const p = (n: number) => n.toString().padStart(2, '0');
-                return `"fecha_creacion": "${p(d.getDate())}-${p(d.getMonth() + 1)}-${d.getFullYear()} ${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}"`;
+                return `${p(d.getDate())}-${p(d.getMonth() + 1)}-${d.getFullYear()} ${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`;
               };
               
-            console.log(fecha_creacion());
-
             const requestData = {
                 id: `airflow-sandbox-${username}`,
                 equipo: globalConfig.workspaceRepository.name.toLowerCase(),
@@ -205,7 +203,11 @@ export class Sandbox {
                     path: globalConfig.workspaceRepository.path,
                     branch: globalConfig.workspaceRepository.branch
                 },
+                fecha_creacion: fecha_creacion(),
+                clonado: "si"
             };
+
+            console.log(requestData);
 
             await axios.patch(
                 `${globalConfig.sandboxUrl}${globalConfig.sandboxAPISandbox}?usuario=${encodeURIComponent(username)}`,
