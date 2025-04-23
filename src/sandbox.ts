@@ -201,6 +201,8 @@ export class Sandbox {
  //               fecha_creacion: ""
             };
 
+            console.log();
+            
             await axios.patch(
                 `${globalConfig.sandboxUrl}${globalConfig.sandboxAPISandbox}?usuario=${encodeURIComponent(username)}`,
                 requestData,
