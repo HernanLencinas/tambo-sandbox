@@ -197,6 +197,8 @@ export class Sandbox {
                     path: globalConfig.workspaceRepository.path,
                     branch: globalConfig.workspaceRepository.branch
                 },
+                clonado: "si",
+                fecha_creacion: ""
             };
 
             await axios.patch(
