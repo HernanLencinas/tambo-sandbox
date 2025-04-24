@@ -491,7 +491,7 @@ async function updateStatus(vscodeURI: vscode.Uri) {
                 `;
                 break;
             case 2:
-                workspaceStatus = { estado: 2, clase: 'deploying', texto: 'Deployando', warningMessage: 'Se está deployando su espacio de trabajo, esto puede demorar aproximadamente 3 minutos.' };
+                workspaceStatus = { estado: 2, clase: 'deploying', texto: 'Deployando', warningMessage: 'Se está deployando su espacio de trabajo, esto puede demorar aproximadamente 3 minutos ☕️' };
                 actionButtonHTML = `
                     <div class="container9">
                         <div class="spinner_orange"></div>
