@@ -462,19 +462,20 @@ async function updateStatus(vscodeURI: vscode.Uri) {
 
         const sandbox = new Sandbox();
         const workspaceEffectiveStatus = await sandbox.workspaceStatus();
+        
         switch (workspaceEffectiveStatus) {
             case 0:
                 workspaceStatus = { estado: 0, clase: 'online', texto: 'Conectado' };
                 globalConfig.workspaceRepositories = await sandbox.respositories();
                 const workspaceToolsHTML = await htmlTools();
                 await sandbox.workspaceCurrentGroup();
-                
+
                 const cloneButtonHTML = await htmlCloneRepository();
                 const destroyButtonHTML = await htmlDestroyWorkspace();
-               // const {workspaceReposHTML, workspaceReposError} = await htmlRepos(globalConfig.workspaceRepositories, true);
+                const {html: workspaceReposHTML0, error: workspaceReposError0 } = await htmlRepos(globalConfig.workspaceRepositories, true);
 
                 actionButtonHTML = `
-             
+                    ${workspaceReposError0 ? '' : workspaceReposHTML0}
                     ${workspaceToolsHTML}
                     ${cloneButtonHTML}
                     ${destroyButtonHTML}
@@ -482,11 +483,11 @@ async function updateStatus(vscodeURI: vscode.Uri) {
                 break;
             case 1:
                 globalConfig.workspaceRepositories = await sandbox.respositories();
-                const { workspaceReposHTML, workspaceReposError } = await htmlRepos(globalConfig.workspaceRepositories, false);
+                const { html: workspaceReposHTML1, error: workspaceReposError1 } = await htmlRepos(globalConfig.workspaceRepositories, false);
                 workspaceStatus = { estado: 1, clase: 'offline', texto: 'Desconectado', warningMessage: 'No tienes un workspace asignado. Para iniciar uno nuevo, haz clic en el botón <b>Iniciar workspace</b> para comenzar.' };
                 actionButtonHTML = `
-                    ${workspaceReposHTML}
-                    ${workspaceReposError ? '' : await htmlStartWorkspace()}
+                    ${workspaceReposHTML1}
+                    ${workspaceReposError1 ? '' : await htmlStartWorkspace()}
                 `;
                 break;
             case 2:
@@ -575,16 +576,16 @@ async function updateStatus(vscodeURI: vscode.Uri) {
 
 }
 
-async function htmlRepos(repositoriesList: any, commit: boolean, selectedGroup: string = ""): Promise<{ workspaceReposHTML: string; workspaceReposError: boolean }> {
+async function htmlRepos(repositoriesList: any, commit: boolean, selectedGroup: string = ""): Promise<{ html: string; error: boolean }> {
 
     if (!Array.isArray(repositoriesList) || repositoriesList.length === 0) {
         return {
-            workspaceReposHTML: `
+            html: `
             <div class="row" style="padding: 5px 0px 0px 10px;">
               <b>⚠️&nbsp;&nbsp;El listado de grupos no está disponible en este momento</b>
             </div>
           `,
-            workspaceReposError: true
+          error: true
         };
     }
 
@@ -603,12 +604,12 @@ async function htmlRepos(repositoriesList: any, commit: boolean, selectedGroup: 
 
     if (groups.length === 0) {
         return {
-            workspaceReposHTML: `
+            html: `
                 <div class="row" style="padding: 5px 0px 0px 10px;">
                   <b>No se encontraron grupos válidos</b>
                 </div>
               `,
-            workspaceReposError: true
+              error: true
         };
     }
 
@@ -622,7 +623,7 @@ async function htmlRepos(repositoriesList: any, commit: boolean, selectedGroup: 
         .join("\n");
 
     return {
-        workspaceReposHTML: `
+        html: `
               <div class="row" style="padding: 20px 0px 0px 10px;">
                 <b>Grupos:</b>
               </div>
@@ -635,7 +636,7 @@ async function htmlRepos(repositoriesList: any, commit: boolean, selectedGroup: 
                 </div>
               </div>
             `,
-        workspaceReposError: false
+            error: false
     };
 
 }
@@ -645,7 +646,6 @@ async function htmlTools(): Promise<string> {
     const vscodeURI = globalConfig.vscodeUri;
     const configuration = vscode.workspace.getConfiguration('tambo.sandbox.gitlab');
     const currentUsername = configuration.get('username');
-
     const html = `
         <div class="row" style="padding: 10px 0px 10px 10px;">
             <b>Herramientas:</b>
@@ -656,7 +656,7 @@ async function htmlTools(): Promise<string> {
             </button>
         </div>
         <div class="row">
-            <button class="apps-button" data-link="https://gitlab.com/telecom-argentina/cto/tambo/clientes">
+            <button class="apps-button" data-link="${globalConfig.gitlabProtocol + globalConfig.gitlabUrl + "/" + globalConfig.workspaceRepository?.path}">
                 <img src="${vscodeURI}/resources/logos/gitlab.png" class="apps-button-icon"> GITLAB <img src="${vscodeURI}/resources/icons/external-link.svg" class="external-link-icon" />
             </button>
         </div>

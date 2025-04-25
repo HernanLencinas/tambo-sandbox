@@ -492,9 +492,9 @@ async function updateStatus(vscodeURI) {
                 await sandbox.workspaceCurrentGroup();
                 const cloneButtonHTML = await htmlCloneRepository();
                 const destroyButtonHTML = await htmlDestroyWorkspace();
-                // const {workspaceReposHTML, workspaceReposError} = await htmlRepos(globalConfig.workspaceRepositories, true);
+                const { html: workspaceReposHTML0, error: workspaceReposError0 } = await htmlRepos(globals_1.globalConfig.workspaceRepositories, true);
                 actionButtonHTML = `
-             
+                    ${workspaceReposError0 ? '' : workspaceReposHTML0}
                     ${workspaceToolsHTML}
                     ${cloneButtonHTML}
                     ${destroyButtonHTML}
@@ -502,11 +502,11 @@ async function updateStatus(vscodeURI) {
                 break;
             case 1:
                 globals_1.globalConfig.workspaceRepositories = await sandbox.respositories();
-                const { workspaceReposHTML, workspaceReposError } = await htmlRepos(globals_1.globalConfig.workspaceRepositories, false);
+                const { html: workspaceReposHTML1, error: workspaceReposError1 } = await htmlRepos(globals_1.globalConfig.workspaceRepositories, false);
                 workspaceStatus = { estado: 1, clase: 'offline', texto: 'Desconectado', warningMessage: 'No tienes un workspace asignado. Para iniciar uno nuevo, haz clic en el botón <b>Iniciar workspace</b> para comenzar.' };
                 actionButtonHTML = `
-                    ${workspaceReposHTML}
-                    ${workspaceReposError ? '' : await htmlStartWorkspace()}
+                    ${workspaceReposHTML1}
+                    ${workspaceReposError1 ? '' : await htmlStartWorkspace()}
                 `;
                 break;
             case 2:
@@ -584,12 +584,12 @@ async function updateStatus(vscodeURI) {
 async function htmlRepos(repositoriesList, commit, selectedGroup = "") {
     if (!Array.isArray(repositoriesList) || repositoriesList.length === 0) {
         return {
-            workspaceReposHTML: `
+            html: `
             <div class="row" style="padding: 5px 0px 0px 10px;">
               <b>⚠️&nbsp;&nbsp;El listado de grupos no está disponible en este momento</b>
             </div>
           `,
-            workspaceReposError: true
+            error: true
         };
     }
     const groups = repositoriesList
@@ -606,12 +606,12 @@ async function htmlRepos(repositoriesList, commit, selectedGroup = "") {
         .filter((item) => item !== null);
     if (groups.length === 0) {
         return {
-            workspaceReposHTML: `
+            html: `
                 <div class="row" style="padding: 5px 0px 0px 10px;">
                   <b>No se encontraron grupos válidos</b>
                 </div>
               `,
-            workspaceReposError: true
+            error: true
         };
     }
     const optionsHtml = groups
@@ -621,7 +621,7 @@ async function htmlRepos(repositoriesList, commit, selectedGroup = "") {
         </option>`)
         .join("\n");
     return {
-        workspaceReposHTML: `
+        html: `
               <div class="row" style="padding: 20px 0px 0px 10px;">
                 <b>Grupos:</b>
               </div>
@@ -634,7 +634,7 @@ async function htmlRepos(repositoriesList, commit, selectedGroup = "") {
                 </div>
               </div>
             `,
-        workspaceReposError: false
+        error: false
     };
 }
 async function htmlTools() {
@@ -651,7 +651,7 @@ async function htmlTools() {
             </button>
         </div>
         <div class="row">
-            <button class="apps-button" data-link="https://gitlab.com/telecom-argentina/cto/tambo/clientes">
+            <button class="apps-button" data-link="${globals_1.globalConfig.gitlabProtocol + globals_1.globalConfig.gitlabUrl + "/" + globals_1.globalConfig.workspaceRepository?.path}">
                 <img src="${vscodeURI}/resources/logos/gitlab.png" class="apps-button-icon"> GITLAB <img src="${vscodeURI}/resources/icons/external-link.svg" class="external-link-icon" />
             </button>
         </div>
