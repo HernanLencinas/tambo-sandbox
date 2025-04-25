@@ -462,19 +462,19 @@ async function updateStatus(vscodeURI: vscode.Uri) {
 
         const sandbox = new Sandbox();
         const workspaceEffectiveStatus = await sandbox.workspaceStatus();
-
         switch (workspaceEffectiveStatus) {
             case 0:
                 workspaceStatus = { estado: 0, clase: 'online', texto: 'Conectado' };
                 globalConfig.workspaceRepositories = await sandbox.respositories();
                 const workspaceToolsHTML = await htmlTools();
                 await sandbox.workspaceCurrentGroup();
-                const workspaceChangeReposHTML = await htmlRepos(globalConfig.workspaceRepositories, true);
+                
                 const cloneButtonHTML = await htmlCloneRepository();
                 const destroyButtonHTML = await htmlDestroyWorkspace();
+               // const {workspaceReposHTML, workspaceReposError} = await htmlRepos(globalConfig.workspaceRepositories, true);
 
                 actionButtonHTML = `
-                    ${workspaceChangeReposHTML}
+             
                     ${workspaceToolsHTML}
                     ${cloneButtonHTML}
                     ${destroyButtonHTML}

@@ -14,7 +14,10 @@ La extensión TAMBO para Visual Studio Code es una herramienta diseñada para op
 Antes de comenzar, asegúrate de tener instalados los siguientes requisitos:
 
 - Visual Studio Code (versión 1.8.2)
-- Acceso VPN
+- Acceso VPN Corporativa
+- Usuario con perfil de Automatizacion Redes y Cloud en TuID. Haber accedido al menos 1 vez al ambiente de Playground.
+- Acceso a Gitlab con Token.
+- Tener el cliente de git instalado localmente.
 
 Sigue estos sencillos pasos para instalar la extensión:
 
