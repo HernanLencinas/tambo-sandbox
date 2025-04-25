@@ -59,7 +59,7 @@ export class Connection {
             globalConfig.contextConfigStatus = true;
             vscode.commands.executeCommand('setContext', 'tambo.configDefined', true);
             this.provider?.ping("sandboxStatus");
-            
+
             if (nuevoGitlabUsername) {
                 await configuration.update('username', nuevoGitlabUsername.toLowerCase(), vscode.ConfigurationTarget.Global);
             }
@@ -482,12 +482,11 @@ async function updateStatus(vscodeURI: vscode.Uri) {
                 break;
             case 1:
                 globalConfig.workspaceRepositories = await sandbox.respositories();
-                const workspaceReposHTML = await htmlRepos(globalConfig.workspaceRepositories, false);
-                const startButtonHTML = await htmlStartWorkspace();
+                const { workspaceReposHTML, workspaceReposError } = await htmlRepos(globalConfig.workspaceRepositories, false);
                 workspaceStatus = { estado: 1, clase: 'offline', texto: 'Desconectado', warningMessage: 'No tienes un workspace asignado. Para iniciar uno nuevo, haz clic en el botón <b>Iniciar workspace</b> para comenzar.' };
                 actionButtonHTML = `
                     ${workspaceReposHTML}
-                    ${startButtonHTML}
+                    ${workspaceReposError ? '' : await htmlStartWorkspace()}
                 `;
                 break;
             case 2:
@@ -576,14 +575,17 @@ async function updateStatus(vscodeURI: vscode.Uri) {
 
 }
 
-async function htmlRepos(repositoriesList: any, commit: boolean, selectedGroup: string = ""): Promise<string> {
+async function htmlRepos(repositoriesList: any, commit: boolean, selectedGroup: string = ""): Promise<{ workspaceReposHTML: string; workspaceReposError: boolean }> {
 
     if (!Array.isArray(repositoriesList) || repositoriesList.length === 0) {
-        return `
+        return {
+            workspaceReposHTML: `
             <div class="row" style="padding: 5px 0px 0px 10px;">
-                <b>⚠️&nbsp;&nbsp;El listado de grupos no esta disponible en este momento</b>
+              <b>⚠️&nbsp;&nbsp;El listado de grupos no está disponible en este momento</b>
             </div>
-        `;
+          `,
+            workspaceReposError: true
+        };
     }
 
     const groups = repositoriesList
@@ -600,11 +602,14 @@ async function htmlRepos(repositoriesList: any, commit: boolean, selectedGroup: 
         .filter((item): item is { name: string; grupo: string; path: string; id: number } => item !== null);
 
     if (groups.length === 0) {
-        return `
-            <div class="row" style="padding: 5px 0px 0px 10px;">
-                <b>No se encontraron grupos válidos</b>
-            </div>
-        `;
+        return {
+            workspaceReposHTML: `
+                <div class="row" style="padding: 5px 0px 0px 10px;">
+                  <b>No se encontraron grupos válidos</b>
+                </div>
+              `,
+            workspaceReposError: true
+        };
     }
 
     const optionsHtml = groups
@@ -616,19 +621,22 @@ async function htmlRepos(repositoriesList: any, commit: boolean, selectedGroup: 
         )
         .join("\n");
 
-    return `
-        <div class="row" style="padding: 20px 0px 0px 10px;">
-            <b>Grupos:</b>
-        </div>
-        <div class="row" style="padding: 5px 10px 5px 10px;">
-            <div class="select-container">
-                <select class="custom-select" onchange="sandboxChangeGroup(event, ${commit});">
+    return {
+        workspaceReposHTML: `
+              <div class="row" style="padding: 20px 0px 0px 10px;">
+                <b>Grupos:</b>
+              </div>
+              <div class="row" style="padding: 5px 10px 5px 10px;">
+                <div class="select-container">
+                  <select class="custom-select" onchange="sandboxChangeGroup(event, ${commit});">
                     ${optionsHtml}
-                </select>
-                <div class="custom-select-arrow"></div>
-            </div>
-        </div>
-        `;
+                  </select>
+                  <div class="custom-select-arrow"></div>
+                </div>
+              </div>
+            `,
+        workspaceReposError: false
+    };
 
 }
 
