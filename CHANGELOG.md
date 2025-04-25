@@ -2,9 +2,10 @@
 
 Todas las modificaciones relevantes de este proyecto se documentarán en este archivo.
 
-## [1.1.8] - 25.04.2025
+## [1.1.9] - 25.04.2025
 ### Fixed
 - Se corrige que no se muestre el boton de iniciar sandbox si no se cargan correctamente los grupos.
+- Se modifica en el boton de Gitlab que habra en el navegador el repositorio activo.
 
 ## [1.1.6] - 15.04.2025
 ### Fixed
