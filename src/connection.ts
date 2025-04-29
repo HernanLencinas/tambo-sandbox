@@ -646,12 +646,14 @@ async function htmlTools(): Promise<string> {
     const vscodeURI = globalConfig.vscodeUri;
     const configuration = vscode.workspace.getConfiguration('tambo.sandbox.gitlab');
     const currentUsername = configuration.get('username');
+    // PLAY: https://airflow-${currentUsername}.sandbox.automation.teco.com.ar/airflow/home
+    // DEV:  https://airflow-sandbox-${currentUsername}.dev.apps.automation.teco.com.ar/airflow/home
     const html = `
         <div class="row" style="padding: 10px 0px 10px 10px;">
             <b>Herramientas:</b>
         </div>
         <div class="row">
-            <button class="apps-button" data-link="https://airflow-sandbox-${currentUsername}.dev.apps.automation.teco.com.ar/airflow/home">
+            <button class="apps-button" data-link="https://airflow-${currentUsername}.sandbox.automation.teco.com.ar/airflow/home">
                 <img src="${vscodeURI}/resources/logos/airflow.png" class="apps-button-icon"> AIRFLOW <img src="${vscodeURI}/resources/icons/external-link.svg" class="external-link-icon" />
             </button>
         </div>
