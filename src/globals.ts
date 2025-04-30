@@ -22,7 +22,9 @@ export const globalConfig = {
     workspaceStatus: 1 as number,
     workspaceStatusHash: undefined as string | undefined,
     workspaceRepositories: undefined as any | undefined,
-    workspaceRepository: undefined as Repository | undefined, 
+    workspaceRepository: undefined as Repository | undefined,
     axiosTimeout: 30000 as number,
     contextConfigStatus: false as boolean,
+    iTicketUrl: 'https://telecomarg-dwp.onbmc.com/dwp/app/#/itemprofile/3110' as string,
+    automationUrl: 'https://automation.telecom.com.ar' as string
 };

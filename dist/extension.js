@@ -103,7 +103,7 @@ async function activate(context) {
     context.subscriptions.push(saveListener);
     // ABRIR ITICKET
     const openItickets = vscode.commands.registerCommand('tambo.openItickets', () => {
-        const url = vscode.Uri.parse('https://telecomarg-dwp.onbmc.com/dwp/app/#/itemprofile/3110');
+        const url = vscode.Uri.parse(globals_1.globalConfig.iTicketUrl);
         vscode.env.openExternal(url);
     });
     context.subscriptions.push(openItickets);
@@ -118,15 +118,19 @@ async function activate(context) {
             canPickMany: false
         });
         if (selected) {
-            switch (selected) {
-                case 'Desarrollo':
-                    await config.update('tambo.sandbox.developer', true, vscode.ConfigurationTarget.Global);
-                    vscode.window.showInformationMessage('TAMBO: Configurando conexión con el ambiente de Desarrollo.');
-                    break;
-                case 'Playground':
-                    await config.update('tambo.sandbox.developer', false, vscode.ConfigurationTarget.Global);
-                    vscode.window.showInformationMessage('TAMBO: Configurando conexión con el ambiente de Playground.');
-                    break;
+            const confirm = await vscode.window.showWarningMessage(`¿Estás seguro que deseas cambiar el ambiente a "${selected}"?`, { modal: true }, 'Sí', 'No');
+            if (confirm === 'Sí') {
+                switch (selected) {
+                    case 'Desarrollo':
+                        await config.update('tambo.sandbox.developer', true, vscode.ConfigurationTarget.Global);
+                        vscode.window.showInformationMessage('TAMBO: Configurando conexión con el ambiente de Desarrollo.');
+                        break;
+                    case 'Playground':
+                        await config.update('tambo.sandbox.developer', false, vscode.ConfigurationTarget.Global);
+                        vscode.window.showInformationMessage('TAMBO: Configurando conexión con el ambiente de Playground.');
+                        break;
+                }
+                gitlab.closeRepository();
             }
         }
     });
@@ -671,14 +675,15 @@ async function htmlTools() {
     const vscodeURI = globals_1.globalConfig.vscodeUri;
     const configuration = vscode.workspace.getConfiguration('tambo.sandbox.gitlab');
     const currentUsername = configuration.get('username');
-    // PLAY: https://airflow-${currentUsername}.sandbox.automation.teco.com.ar/airflow/home
-    // DEV:  https://airflow-sandbox-${currentUsername}.dev.apps.automation.teco.com.ar/airflow/home
+    const airflowUrl = vscode.workspace.getConfiguration().get('tambo.sandbox.developer')
+        ? `https://airflow-sandbox-${currentUsername}.dev.apps.automation.teco.com.ar/airflow/home`
+        : `https://airflow-${currentUsername}.sandbox.automation.teco.com.ar/airflow/home`;
     const html = `
         <div class="row" style="padding: 10px 0px 10px 10px;">
             <b>Herramientas:</b>
         </div>
         <div class="row">
-            <button class="apps-button" data-link="https://airflow-${currentUsername}.sandbox.automation.teco.com.ar/airflow/home">
+            <button class="apps-button" data-link="${airflowUrl}">
                 <img src="${vscodeURI}/resources/logos/airflow.png" class="apps-button-icon"> AIRFLOW <img src="${vscodeURI}/resources/icons/external-link.svg" class="external-link-icon" />
             </button>
         </div>
@@ -688,7 +693,7 @@ async function htmlTools() {
             </button>
         </div>
         <div class="row">
-            <button class="apps-button" data-link="https://automation.telecom.com.ar">
+            <button class="apps-button" data-link="${globals_1.globalConfig.automationUrl}">
                 <img src="${vscodeURI}/resources/logos/automation.svg" class="apps-button-icon"> PORTAL AUTOMATIZACION <img src="${vscodeURI}/resources/icons/external-link.svg" class="external-link-icon" />
             </button>
         </div>
@@ -823,7 +828,7 @@ function showStatusMessage(message) {
     }
     statusBarItem.color = isDev ? '#ffffff' : '#ffffff';
     statusBarItem.backgroundColor = new vscode.ThemeColor(isDev ? 'statusBarItem.errorBackground' : 'statusBarItem.warningBackground');
-    statusBarItem.text = `TAMBO-SANDBOX${isDev ? ' [DESARROLLO]' : ''}: ${message}`;
+    statusBarItem.text = `TAMBO-SANDBOX${isDev ? '-DEV' : ''}: ${message}`;
     statusBarItem.show();
 }
 function generateRandom(length) {
@@ -9475,6 +9480,8 @@ exports.globalConfig = {
     workspaceRepository: undefined,
     axiosTimeout: 30000,
     contextConfigStatus: false,
+    iTicketUrl: 'https://telecomarg-dwp.onbmc.com/dwp/app/#/itemprofile/3110',
+    automationUrl: 'https://automation.telecom.com.ar'
 };
 
 

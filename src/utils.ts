@@ -57,7 +57,7 @@ export function showStatusMessage(message: string) {
 
     statusBarItem.color = isDev ? '#ffffff' : '#ffffff';
     statusBarItem.backgroundColor = new vscode.ThemeColor(isDev ? 'statusBarItem.errorBackground' : 'statusBarItem.warningBackground');
-    statusBarItem.text = `TAMBO-SANDBOX${isDev ? ' [DESARROLLO]' : ''}: ${message}`;
+    statusBarItem.text = `TAMBO-SANDBOX${isDev ? '-DEV' : ''}: ${message}`;
     statusBarItem.show();
 
 }

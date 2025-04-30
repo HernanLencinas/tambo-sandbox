@@ -71,7 +71,7 @@ export async function activate(context: vscode.ExtensionContext) {
 
 	// ABRIR ITICKET
 	const openItickets = vscode.commands.registerCommand('tambo.openItickets', () => {
-		const url = vscode.Uri.parse('https://telecomarg-dwp.onbmc.com/dwp/app/#/itemprofile/3110');
+		const url = vscode.Uri.parse(globalConfig.iTicketUrl);
 		vscode.env.openExternal(url);
 	});
 	context.subscriptions.push(openItickets);
@@ -90,16 +90,27 @@ export async function activate(context: vscode.ExtensionContext) {
 		});
 
 		if (selected) {
-			switch (selected) {
-				case 'Desarrollo':
-					await config.update('tambo.sandbox.developer', true, vscode.ConfigurationTarget.Global);
-					vscode.window.showInformationMessage('TAMBO: Configurando conexión con el ambiente de Desarrollo.');
-					break;
-				case 'Playground':
-					await config.update('tambo.sandbox.developer', false, vscode.ConfigurationTarget.Global);
-					vscode.window.showInformationMessage('TAMBO: Configurando conexión con el ambiente de Playground.');
-					break;
+
+			const confirm = await vscode.window.showWarningMessage(
+				`¿Estás seguro que deseas cambiar el ambiente a "${selected}"?`,
+				{ modal: true },
+				'Sí', 'No'
+			);
+
+			if (confirm === 'Sí') {
+				switch (selected) {
+					case 'Desarrollo':
+						await config.update('tambo.sandbox.developer', true, vscode.ConfigurationTarget.Global);
+						vscode.window.showInformationMessage('TAMBO: Configurando conexión con el ambiente de Desarrollo.');
+						break;
+					case 'Playground':
+						await config.update('tambo.sandbox.developer', false, vscode.ConfigurationTarget.Global);
+						vscode.window.showInformationMessage('TAMBO: Configurando conexión con el ambiente de Playground.');
+						break;
+				}
+				gitlab.closeRepository();
 			}
+
 		}
 	});
 	context.subscriptions.push(developerMode);
