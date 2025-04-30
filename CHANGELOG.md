@@ -2,6 +2,11 @@
 
 Todas las modificaciones relevantes de este proyecto se documentarán en este archivo.
 
+## [1.1.11] - 30.04.2025
+### Fixed
+- Se modifica el nombre del parametro airflow-sandbox por airflow para ajustar a los cambios aplicados en la nueva version del servicio.
+- Se incluye la posibilidad de seleccionar el ambiente a conectar la extension de vscode.
+
 ## [1.1.9] - 25.04.2025
 ### Fixed
 - Se corrige que no se muestre el boton de iniciar sandbox si no se cargan correctamente los grupos.
