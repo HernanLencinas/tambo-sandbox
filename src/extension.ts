@@ -6,6 +6,7 @@ import { Connection } from './connection';
 import { Sandbox } from './sandbox';
 import { showStatusMessage } from './utils';
 import { Gitlab } from './gitlab';
+import { globalConfig } from './globals';
 
 // file deepcode ignore InsecureTLSConfig: <please specify a reason of ignoring this>
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
@@ -24,6 +25,11 @@ export async function activate(context: vscode.ExtensionContext) {
 		if (event.affectsConfiguration('tambo.sandbox.gitlab.username') ||
 			event.affectsConfiguration('tambo.sandbox.gitlab.token')) {
 			vscode.commands.executeCommand('tambosandbox.connectionRefresh');
+		}
+		if (event.affectsConfiguration('tambo.sandbox.developer')) {
+			globalConfig.sandboxUrl = vscode.workspace.getConfiguration().get('tambo.sandbox.developer')
+				? 'https://backend-sandbox.dev.apps.automation.teco.com.ar'
+				: 'https://backend.sandbox.automation.teco.com.ar';
 		}
 	});
 
@@ -69,6 +75,34 @@ export async function activate(context: vscode.ExtensionContext) {
 		vscode.env.openExternal(url);
 	});
 	context.subscriptions.push(openItickets);
+
+	const developerMode = vscode.commands.registerCommand('tambosandbox.developerMode', async () => {
+		const config = vscode.workspace.getConfiguration();
+		const isDeveloper = config.get<boolean>('tambo.sandbox.developer', false);
+
+		const options = isDeveloper
+			? ['Desarrollo', 'Playground']
+			: ['Playground', 'Desarrollo'];
+
+		const selected = await vscode.window.showQuickPick(options, {
+			placeHolder: 'Selecciona el Ambiente',
+			canPickMany: false
+		});
+
+		if (selected) {
+			switch (selected) {
+				case 'Desarrollo':
+					await config.update('tambo.sandbox.developer', true, vscode.ConfigurationTarget.Global);
+					vscode.window.showInformationMessage('TAMBO: Configurando conexión con el ambiente de Desarrollo.');
+					break;
+				case 'Playground':
+					await config.update('tambo.sandbox.developer', false, vscode.ConfigurationTarget.Global);
+					vscode.window.showInformationMessage('TAMBO: Configurando conexión con el ambiente de Playground.');
+					break;
+			}
+		}
+	});
+	context.subscriptions.push(developerMode);
 
 	showStatusMessage("Listo");
 

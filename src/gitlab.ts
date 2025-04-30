@@ -76,7 +76,7 @@ export class Gitlab {
 
 			const { username, token } = this.getGitlabCredentials();
 			const git: SimpleGit = simpleGit();
-			const repoBranch = `${globalConfig.workspaceRepository?.branch ?? `airflow-sandbox-${username}`}`;
+			const repoBranch = `${globalConfig.workspaceRepository?.branch ?? `airflow-${username}`}`;
 			const repoUrl = `${globalConfig.gitlabProtocol}${username}:${token}@${globalConfig.gitlabUrl}/${globalConfig.workspaceRepository?.path}.git`;
 			const tempDir = this.getTempDir();
 		

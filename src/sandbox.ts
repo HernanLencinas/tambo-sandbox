@@ -125,7 +125,7 @@ export class Sandbox {
             const axiosConfig = this.getAxiosConfig();
 
             const body = {
-                id: `airflow-sandbox-${username}`,
+                id: `airflow-${username}`,
                 equipo: globalConfig.workspaceRepository.name.toLowerCase(),
                 token: token,
                 repositorio: {
@@ -194,7 +194,7 @@ export class Sandbox {
               };
               
             const requestData = {
-                id: `airflow-sandbox-${username}`,
+                id: `airflow-${username}`,
                 equipo: globalConfig.workspaceRepository.name.toLowerCase(),
                 token: token,
                 estado: 0,

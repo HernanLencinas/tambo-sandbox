@@ -2,7 +2,7 @@
   "name": "tambo-sandbox",
   "displayName": "TAMBO",
   "description": "TAMBO Sandbox",
-  "version": "1.1.10",
+  "version": "1.1.11",
   "publisher": "HernanLencinas",
   "repository": {
     "type": "git",
@@ -86,6 +86,10 @@
           "light": "resources/icons/trash_light.svg",
           "dark": "resources/icons/trash_dark.svg"
         }
+      },
+      {
+        "command": "tambosandbox.developerMode",
+        "title": "TAMBO Sandbox: Activar Desarrollador"
       }
     ],
     "menus": {
@@ -120,6 +124,11 @@
           "type": "boolean",
           "default": true,
           "description": "Realizar push automatico de los cambios a Gitlab"
+        },
+        "tambo.sandbox.developer": {
+          "type": "boolean",
+          "default": false,
+          "description": "Establecer conexion con el ambiente de desarrollo"
         }
       }
     }

@@ -49,11 +49,15 @@ export function decrypt(text: string | undefined): string {
 
 export function showStatusMessage(message: string) {
 
+    const isDev = vscode.workspace.getConfiguration().get('tambo.sandbox.developer');
+
     if (!statusBarItem) {
         statusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 100);
     }
 
-    statusBarItem.text = `🚀 TAMBO-SANDBOX: ${message}`;
+    statusBarItem.color = isDev ? '#ffffff' : '#ffffff';
+    statusBarItem.backgroundColor = new vscode.ThemeColor(isDev ? 'statusBarItem.errorBackground' : 'statusBarItem.warningBackground');
+    statusBarItem.text = `TAMBO-SANDBOX${isDev ? ' [DESARROLLO]' : ''}: ${message}`;
     statusBarItem.show();
 
 }

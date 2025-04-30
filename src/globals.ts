@@ -8,6 +8,8 @@ export type Repository = {
     commit: boolean;
 };
 
+
+
 export const globalConfig = {
     sandboxUrl: 'https://backend.sandbox.automation.teco.com.ar' as string, // DEV: https://backend-sandbox.dev.apps.automation.teco.com.ar PLAY: https://backend.sandbox.automation.teco.com.ar
     sandboxAPIStatus: '/status' as string,

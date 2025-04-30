@@ -71,7 +71,7 @@ export class Connection {
             showStatusMessage('Se edito correctamente la conexión');
 
         } else {
-            vscode.window.showInformationMessage('TAMBO-SANDBOX: Fallo al intentar configurar la conexión');
+            vscode.window.showInformationMessage('TAMBO: Fallo al intentar configurar la conexión');
             showStatusMessage('Error al configurar la conexión');
         }
 
@@ -198,7 +198,7 @@ class ConnectionsViewProvider implements vscode.WebviewViewProvider {
                     if (message.link) {
                         const res = vscode.env.openExternal(vscode.Uri.parse(message.link));
                         if (!res) {
-                            vscode.window.showErrorMessage("TAMBO-SANDBOX: No se pudo abrir el enlace.");
+                            vscode.window.showErrorMessage("TAMBO: No se pudo abrir el enlace.");
                         }
                     }
                     break;
@@ -263,7 +263,7 @@ class ConnectionsViewProvider implements vscode.WebviewViewProvider {
                         globalConfig.workspaceRepository = {
                             name: message.data.name,
                             path: message.data.path,
-                            branch: `airflow-sandbox-${currentUsername}`,
+                            branch: `airflow-${currentUsername}`,
                             repoid: message.data.repoid,
                             commit: message.data.commit
                         };
@@ -283,7 +283,7 @@ class ConnectionsViewProvider implements vscode.WebviewViewProvider {
                         globalConfig.workspaceRepository = {
                             name: message.data.name,
                             path: message.data.path,
-                            branch: `airflow-sandbox-${currentUsername}`,
+                            branch: `airflow-${currentUsername}`,
                             repoid: message.data.repoid,
                             commit: message.data.commit
                         };
