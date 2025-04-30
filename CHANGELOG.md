@@ -5,7 +5,7 @@ Todas las modificaciones relevantes de este proyecto se documentarán en este ar
 ## [1.1.11] - 30.04.2025
 ### Fixed
 - Se modifica el nombre del parametro airflow-sandbox por airflow para ajustar a los cambios aplicados en la nueva version del servicio.
-- Se incluye la posibilidad de seleccionar el ambiente a conectar la extension de vscode.
+- Se incluye la posibilidad de permitir seleccionar el ambiente al cual conectarse desde la extension.
 
 ## [1.1.9] - 25.04.2025
 ### Fixed
