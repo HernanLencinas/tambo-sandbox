@@ -14,22 +14,70 @@ export class Connection {
 
     async wizard() {
 
-        const gitlabUsername = await vscode.window.showInputBox({
-            prompt: 'Usuario de Gitlab: ',
-            placeHolder: ''
-        });
-        const gitlabToken = await vscode.window.showInputBox({
-            prompt: 'Token de Gitlab: ',
-            placeHolder: '',
-            password: true
-        });
 
-        if (gitlabUsername && gitlabToken) {
-            const configuration = vscode.workspace.getConfiguration('tambo.sandbox');
-            await configuration.update('gitlab.username', gitlabUsername.toLowerCase(), vscode.ConfigurationTarget.Global);
-            await configuration.update('gitlab.token', encrypt(gitlabToken), vscode.ConfigurationTarget.Global);
-            showStatusMessage('Se configuro la conexión');
+        async function pedirUsuarioGitlab(): Promise<string | undefined> {
+            const regexUsuario = /^u\d{6}$/;
+
+            while (true) {
+                const username = await vscode.window.showInputBox({
+                    prompt: 'Usuario de Gitlab:',
+                    placeHolder: '',
+                    ignoreFocusOut: true,
+                });
+
+                if (username === undefined) {
+                    return undefined; // Cancelado
+                }
+
+                if (!regexUsuario.test(username)) {
+                    vscode.window.showErrorMessage('El usuario debe tener el formato uXXXXXX (ej: u123456).');
+                    continue;
+                }
+
+                return username;
+            }
         }
+
+        async function pedirTokenGitlab(): Promise<string | undefined> {
+            while (true) {
+                const token = await vscode.window.showInputBox({
+                    prompt: 'Token de Gitlab:',
+                    placeHolder: '',
+                    password: true,
+                    ignoreFocusOut: true,
+                });
+
+                if (token === undefined) {
+                    return undefined; // Cancelado
+                }
+
+                if (token.trim() === '') {
+                    vscode.window.showErrorMessage('El token no puede estar vacío.');
+                    continue;
+                }
+
+                return token;
+            }
+        }
+
+        const gitlabUsername = await pedirUsuarioGitlab();
+        if (!gitlabUsername) {
+            vscode.window.showWarningMessage('TAMBO-SANDBOX: Configuración cancelada.');
+            return;
+        }
+
+        const gitlabToken = await pedirTokenGitlab();
+        if (!gitlabToken) {
+            vscode.window.showWarningMessage('TAMBO-SANDBOX: Configuración cancelada.');
+            return;
+        }
+
+        // Guardar configuración
+        const configuration = vscode.workspace.getConfiguration('tambo.sandbox');
+        await configuration.update('gitlab.username', gitlabUsername.toLowerCase(), vscode.ConfigurationTarget.Global);
+        await configuration.update('gitlab.token', encrypt(gitlabToken), vscode.ConfigurationTarget.Global);
+
+        showStatusMessage('TAMBO-SANDBOX:  Se configuró la conexión');
 
     }
 
@@ -39,23 +87,61 @@ export class Connection {
         const currentUsername = configuration.get('username');
         const currentToken = configuration.get('token'); // Desencripta si es necesario
 
+        const regexUsuario = /^u\d{6}$/;
+
         // Solicita el nuevo usuario
-        const nuevoGitlabUsername = await vscode.window.showInputBox({
-            prompt: 'Usuario de Gitlab: ',
-            placeHolder: 'Deja en blanco para mantener el actual',
-            value: currentUsername ? String(currentUsername) : '' // Asegura que siempre sea un string
-        });
+        let nuevoGitlabUsername: string | undefined;
+        while (true) {
+            nuevoGitlabUsername = await vscode.window.showInputBox({
+                prompt: 'Usuario de Gitlab:',
+                placeHolder: 'Deja en blanco para mantener el actual',
+                value: currentUsername ? String(currentUsername) : '',
+                ignoreFocusOut: true
+            });
+
+            if (nuevoGitlabUsername === undefined) {
+                vscode.window.showWarningMessage('Edición cancelada.');
+                return;
+            }
+
+            if (nuevoGitlabUsername.trim() === '') {
+                nuevoGitlabUsername = undefined; // Mantener actual
+                break;
+            }
+
+            if (!regexUsuario.test(nuevoGitlabUsername)) {
+                vscode.window.showErrorMessage('El usuario debe tener el formato uXXXXXX (ej: u123456).');
+                continue;
+            }
+
+            break;
+        }
 
         // Solicita el nuevo token
-        const nuevoGitlabToken = await vscode.window.showInputBox({
-            prompt: 'Token de Gitlab: ',
-            placeHolder: 'Deja en blanco para mantener el actual',
-            password: true
-        });
+        let nuevoGitlabToken: string | undefined;
+        while (true) {
+            nuevoGitlabToken = await vscode.window.showInputBox({
+                prompt: 'Token de Gitlab:',
+                placeHolder: 'Deja en blanco para mantener el actual',
+                password: true,
+                ignoreFocusOut: true
+            });
 
-        // Actualiza la configuración si el usuario proporciona nuevos valores
+            if (nuevoGitlabToken === undefined) {
+                vscode.window.showWarningMessage('Edición cancelada.');
+                return;
+            }
+
+            if (nuevoGitlabToken.trim() === '') {
+                nuevoGitlabToken = undefined; // Mantener actual
+                break;
+            }
+
+            // Token válido
+            break;
+        }
+
         if (nuevoGitlabUsername || nuevoGitlabToken) {
-
             globalConfig.contextConfigStatus = true;
             vscode.commands.executeCommand('setContext', 'tambo.configDefined', true);
             this.provider?.ping("sandboxStatus");
@@ -68,11 +154,10 @@ export class Connection {
                 await configuration.update('token', encrypt(nuevoGitlabToken), vscode.ConfigurationTarget.Global);
             }
 
-            showStatusMessage('Se edito correctamente la conexión');
-
+            showStatusMessage('Se editó correctamente la conexión');
         } else {
-            vscode.window.showInformationMessage('TAMBO: Fallo al intentar configurar la conexión');
-            showStatusMessage('Error al configurar la conexión');
+            vscode.window.showInformationMessage('TAMBO: No se realizaron cambios.');
+            showStatusMessage('Sin cambios en la configuración');
         }
 
     }
@@ -108,6 +193,7 @@ export class Connection {
                     this.provider
                 )
             );
+
         } catch (error) {
             showStatusMessage("Error activando la extension.");
             console.error("TAMBOSANDBOX.connection.load: ", error);
@@ -462,7 +548,7 @@ async function updateStatus(vscodeURI: vscode.Uri) {
 
         const sandbox = new Sandbox();
         const workspaceEffectiveStatus = await sandbox.workspaceStatus();
-        
+
         switch (workspaceEffectiveStatus) {
             case 0:
                 workspaceStatus = { estado: 0, clase: 'online', texto: 'Conectado' };
@@ -472,7 +558,7 @@ async function updateStatus(vscodeURI: vscode.Uri) {
 
                 const cloneButtonHTML = await htmlCloneRepository();
                 const destroyButtonHTML = await htmlDestroyWorkspace();
-                const {html: workspaceReposHTML0, error: workspaceReposError0 } = await htmlRepos(globalConfig.workspaceRepositories, true);
+                const { html: workspaceReposHTML0, error: workspaceReposError0 } = await htmlRepos(globalConfig.workspaceRepositories, true);
 
                 actionButtonHTML = `
                     ${workspaceReposError0 ? '' : workspaceReposHTML0}
@@ -528,7 +614,7 @@ async function updateStatus(vscodeURI: vscode.Uri) {
     const username = config.get<string>('username');
 
     html += createStatusHTML("Sandbox", sandboxStatus ? `Conectado ${username}` : "Desconectado", sandboxStatus ? 'online' : 'offline', sandboxStatus ? "" : "No se pudo establecer conexión con el servicio de Sandbox. Verifique sus credenciales o conexión a la red asegúrandose de estar conectado a la VPN Corporativa.");
-    html += createStatusHTML("Git", gitStatus ? "Conectado" : "Desconectado", gitStatus ? 'online' : 'offline', gitStatus ? "" : "Autenticación fallida. Por favor, verifique que su usuario y token sean correctos.");
+    html += createStatusHTML("Git", gitStatus ? "Conectado" : "Desconectado", gitStatus ? 'online' : 'offline', gitStatus ? "" : "Autenticación Fallida. Por favor, verifique que su token sea valido y no se encuentre expirado.");
     html += createStatusHTML("Workspace", workspaceStatus.texto, workspaceStatus.clase, workspaceStatus.warningMessage);
     html += actionButtonHTML;
 
@@ -585,7 +671,7 @@ async function htmlRepos(repositoriesList: any, commit: boolean, selectedGroup: 
               <b>⚠️&nbsp;&nbsp;El listado de grupos no está disponible en este momento</b>
             </div>
           `,
-          error: true
+            error: true
         };
     }
 
@@ -609,7 +695,7 @@ async function htmlRepos(repositoriesList: any, commit: boolean, selectedGroup: 
                   <b>No se encontraron grupos válidos</b>
                 </div>
               `,
-              error: true
+            error: true
         };
     }
 
@@ -636,7 +722,7 @@ async function htmlRepos(repositoriesList: any, commit: boolean, selectedGroup: 
                 </div>
               </div>
             `,
-            error: false
+        error: false
     };
 
 }
@@ -647,8 +733,8 @@ async function htmlTools(): Promise<string> {
     const configuration = vscode.workspace.getConfiguration('tambo.sandbox.gitlab');
     const currentUsername = configuration.get('username');
     const airflowUrl = vscode.workspace.getConfiguration().get('tambo.sandbox.developer')
-    ? `https://airflow-sandbox-${currentUsername}.dev.apps.automation.teco.com.ar/airflow/home`
-    : `https://airflow-${currentUsername}.sandbox.automation.teco.com.ar/airflow/home`;
+        ? `https://airflow-sandbox-${currentUsername}.dev.apps.automation.teco.com.ar/airflow/home`
+        : `https://airflow-${currentUsername}.sandbox.automation.teco.com.ar/airflow/home`;
 
     const html = `
         <div class="row" style="padding: 10px 0px 10px 10px;">
@@ -660,7 +746,7 @@ async function htmlTools(): Promise<string> {
             </button>
         </div>
         <div class="row">
-            <button class="apps-button" data-link="${globalConfig.gitlabProtocol + globalConfig.gitlabUrl + "/" + globalConfig.workspaceRepository?.path}">
+            <button class="apps-button" data-link="${globalConfig.gitlabProtocol + globalConfig.gitlabUrl + "/" + globalConfig.workspaceRepository?.path}/-/tree/airflow-${currentUsername}">
                 <img src="${vscodeURI}/resources/logos/gitlab.png" class="apps-button-icon"> GITLAB <img src="${vscodeURI}/resources/icons/external-link.svg" class="external-link-icon" />
             </button>
         </div>

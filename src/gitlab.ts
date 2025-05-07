@@ -63,8 +63,9 @@ export class Gitlab {
 				username &&
 				response.data.username &&
 				username.toLowerCase() === response.data.username.toLowerCase();
-		} catch (error) {
-			console.error("TAMBOSANDBOX.gitlab.status:", error);
+		} catch (error: any) {
+			showStatusMessage(error.response.statusText); // response.data.error_description
+			console.log(error);
 			return false;
 		}
 	}
@@ -142,7 +143,7 @@ export class Gitlab {
 				await git.push();
 				return true;
 			}
-		} catch (error) {
+		} catch (error: any) {
 			showStatusMessage("Error al guardar los cambios");
 			console.error('commitRepository error:', error);
 		}

@@ -207,8 +207,6 @@ export class Sandbox {
                 clonado: "si"
             };
 
-            console.log(requestData);
-
             await axios.patch(
                 `${globalConfig.sandboxUrl}${globalConfig.sandboxAPISandbox}?usuario=${encodeURIComponent(username)}`,
                 requestData,

@@ -2,6 +2,11 @@
 
 Todas las modificaciones relevantes de este proyecto se documentarán en este archivo.
 
+## [1.1.12] - 07.05.2025
+### Fixed
+- A define que al hacer clic en el acceso a Gitlab ingrese al branch correspondiente al usuario.
+- Se agregan validaciones adicionales en el asistente de conexion.
+
 ## [1.1.11] - 30.04.2025
 ### Fixed
 - Se modifica el nombre del parametro airflow-sandbox por airflow para ajustar a los cambios aplicados en la nueva version del servicio.
