@@ -49,9 +49,12 @@ const sandbox_1 = __webpack_require__(5);
 const utils_1 = __webpack_require__(3);
 const gitlab_1 = __webpack_require__(47);
 const globals_1 = __webpack_require__(46);
+const help_1 = __webpack_require__(96);
 // file deepcode ignore InsecureTLSConfig: <please specify a reason of ignoring this>
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
 async function activate(context) {
+    const provider = new help_1.TamboSidebarProvider();
+    context.subscriptions.push(vscode.window.registerWebviewViewProvider('tambo_viewport_help', provider));
     // CARGAR CONFIGURACION DE CONExión A TAMBO SANDBOX
     const gitlab = new gitlab_1.Gitlab();
     const sandbox = new sandbox_1.Sandbox();
@@ -101,12 +104,7 @@ async function activate(context) {
         }
     });
     context.subscriptions.push(saveListener);
-    // ABRIR ITICKET
-    const openItickets = vscode.commands.registerCommand('tambo.openItickets', () => {
-        const url = vscode.Uri.parse(globals_1.globalConfig.iTicketUrl);
-        vscode.env.openExternal(url);
-    });
-    context.subscriptions.push(openItickets);
+    // MODO DEVELOPER
     const developerMode = vscode.commands.registerCommand('tambosandbox.developerMode', async () => {
         const config = vscode.workspace.getConfiguration();
         const isDeveloper = config.get('tambo.sandbox.developer', false);
@@ -26969,6 +26967,84 @@ function createSM3() {
 }
 
 
+
+
+/***/ }),
+/* 96 */
+/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
+
+"use strict";
+
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || (function () {
+    var ownKeys = function(o) {
+        ownKeys = Object.getOwnPropertyNames || function (o) {
+            var ar = [];
+            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
+            return ar;
+        };
+        return ownKeys(o);
+    };
+    return function (mod) {
+        if (mod && mod.__esModule) return mod;
+        var result = {};
+        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
+        __setModuleDefault(result, mod);
+        return result;
+    };
+})();
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.TamboSidebarProvider = void 0;
+const vscode = __importStar(__webpack_require__(1));
+const globals_1 = __webpack_require__(46);
+class TamboSidebarProvider {
+    resolveWebviewView(webviewView, context, _token) {
+        const extension = vscode.extensions.getExtension('HernanLencinas.tambo-sandbox');
+        const version = extension?.packageJSON.version ?? 'v?';
+        webviewView.webview.options = {
+            enableScripts: true
+        };
+        webviewView.webview.html = `
+      <!DOCTYPE html>
+      <html lang="es">
+        <head>
+          <meta charset="UTF-8">
+          <title>Ayuda</title>
+        </head>
+        <body style="font-family:sans-serif">
+
+          <h3 style="color:orange;">¡BIENVENIDO A TAMBO SANDBOX!</h3>
+
+          <p style="font-size:14px;color:#ccc;line-height:1.4;">
+          Si necesitás ayuda adicional, soporte técnico o tenés alguna consulta, podés acceder a la plataforma <a href="${globals_1.globalConfig.iTicketUrl}" onclick1="vscode.postMessage({ command: 'openItickets' })" style="font-weight:1000;color:orange;">iTickets</a> para generar una nueva solicitud. Nuestro equipo estará disponible para ayudarte a resolver cualquier inconveniente o responder tus preguntas a la brevedad.
+          </p>
+
+          <p style="font-size:12px;color:#777;">Version: ${version}</p>
+
+          <script>
+            const vscode = acquireVsCodeApi();
+          </script>
+        </body>
+      </html>
+    `;
+    }
+}
+exports.TamboSidebarProvider = TamboSidebarProvider;
 
 
 /***/ })

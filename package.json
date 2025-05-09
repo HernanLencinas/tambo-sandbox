@@ -40,16 +40,11 @@
         {
           "id": "tambo_viewport_help",
           "name": "Ayuda",
+          "type": "webview",
           "visibility": "collapsed"
         }
       ]
     },
-    "viewsWelcome": [
-      {
-        "view": "tambo_viewport_help",
-        "contents": "¡BIENVENIDO A TAMBO SANDBOX!\n\nSi necesitas información adicional o asistencia, te invitamos a acceder a [iTickets](command:tambo.openItickets) y generar una nueva solicitud."
-      }
-    ],
     "commands": [
       {
         "command": "tambosandbox.connectionWizard",

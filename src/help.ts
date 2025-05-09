@@ -1,7 +1,8 @@
 import * as vscode from 'vscode';
+import { globalConfig } from './globals';
 
 export class TamboSidebarProvider implements vscode.WebviewViewProvider {
-  public resolveWebviewView(
+  resolveWebviewView(
     webviewView: vscode.WebviewView,
     context: vscode.WebviewViewResolveContext,
     _token: vscode.CancellationToken
@@ -16,10 +17,23 @@ export class TamboSidebarProvider implements vscode.WebviewViewProvider {
     webviewView.webview.html = `
       <!DOCTYPE html>
       <html lang="es">
-        <body style="font-family:sans-serif; padding: 10px;">
-          <h3>¡BIENVENIDO A TAMBO SANDBOX!!! <small style="color:gray;">v${version}</small></h3>
-          <p>Si necesitás información adicional o asistencia, te invitamos a acceder a 
-            <a href="https://tusitio/tickets" target="_blank">Tickets</a> y generar una nueva solicitud.</p>
+        <head>
+          <meta charset="UTF-8">
+          <title>Ayuda</title>
+        </head>
+        <body style="font-family:sans-serif">
+
+          <h3 style="color:orange;">¡BIENVENIDO A TAMBO SANDBOX!</h3>
+
+          <p style="font-size:14px;color:#ccc;line-height:1.4;">
+          Si necesitás ayuda adicional, soporte técnico o tenés alguna consulta, podés acceder a la plataforma <a href="${globalConfig.iTicketUrl}" onclick1="vscode.postMessage({ command: 'openItickets' })" style="font-weight:1000;color:orange;">iTickets</a> para generar una nueva solicitud. Nuestro equipo estará disponible para ayudarte a resolver cualquier inconveniente o responder tus preguntas a la brevedad.
+          </p>
+
+          <p style="font-size:12px;color:#777;">Version: ${version}</p>
+
+          <script>
+            const vscode = acquireVsCodeApi();
+          </script>
         </body>
       </html>
     `;
