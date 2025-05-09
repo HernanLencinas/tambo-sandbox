@@ -7,6 +7,7 @@ import { globalConfig } from './globals';
 import { VSCESetttings } from './config';
 import { md5 } from "hash-wasm";
 import { showStatusMessage } from './utils';
+import { TamboSidebarProvider } from './help';
 
 export class Connection {
 
@@ -181,6 +182,16 @@ export class Connection {
     }
 
     load(context: vscode.ExtensionContext) {
+
+
+        const provider = new TamboSidebarProvider();
+
+        context.subscriptions.push(
+            vscode.window.registerWebviewViewProvider(
+                'tambo_viewport_help',
+                provider
+            )
+        );
 
         try {
             // Crear una única instancia del proveedor

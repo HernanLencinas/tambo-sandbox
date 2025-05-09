@@ -7,25 +7,11 @@ import { Sandbox } from './sandbox';
 import { showStatusMessage } from './utils';
 import { Gitlab } from './gitlab';
 import { globalConfig } from './globals';
-import { TamboSidebarProvider } from './help';
 
 // file deepcode ignore InsecureTLSConfig: <please specify a reason of ignoring this>
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
 
 export async function activate(context: vscode.ExtensionContext) {
-
-
-	const provider = new TamboSidebarProvider();
-
-	context.subscriptions.push(
-		vscode.window.registerWebviewViewProvider(
-			'tambo_viewport_help',
-			provider
-		)
-	);
-
-
-
 
 	// CARGAR CONFIGURACION DE CONExión A TAMBO SANDBOX
 	const gitlab = new Gitlab();

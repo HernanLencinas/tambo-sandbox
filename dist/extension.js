@@ -49,12 +49,9 @@ const sandbox_1 = __webpack_require__(5);
 const utils_1 = __webpack_require__(3);
 const gitlab_1 = __webpack_require__(47);
 const globals_1 = __webpack_require__(46);
-const help_1 = __webpack_require__(96);
 // file deepcode ignore InsecureTLSConfig: <please specify a reason of ignoring this>
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
 async function activate(context) {
-    const provider = new help_1.TamboSidebarProvider();
-    context.subscriptions.push(vscode.window.registerWebviewViewProvider('tambo_viewport_help', provider));
     // CARGAR CONFIGURACION DE CONExión A TAMBO SANDBOX
     const gitlab = new gitlab_1.Gitlab();
     const sandbox = new sandbox_1.Sandbox();
@@ -195,6 +192,7 @@ const globals_1 = __webpack_require__(46);
 const config_1 = __webpack_require__(94);
 const hash_wasm_1 = __webpack_require__(95);
 const utils_2 = __webpack_require__(3);
+const help_1 = __webpack_require__(96);
 class Connection {
     async wizard() {
         async function pedirUsuarioGitlab() {
@@ -326,6 +324,8 @@ class Connection {
         }
     }
     load(context) {
+        const provider = new help_1.TamboSidebarProvider();
+        context.subscriptions.push(vscode.window.registerWebviewViewProvider('tambo_viewport_help', provider));
         try {
             // Crear una única instancia del proveedor
             (0, utils_2.showStatusMessage)("Cargando...");
