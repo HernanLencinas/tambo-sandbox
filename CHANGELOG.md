@@ -6,6 +6,7 @@ Todas las modificaciones relevantes de este proyecto se documentarán en este ar
 ### Fixed
 - A define que al hacer clic en el acceso a Gitlab ingrese al branch correspondiente al usuario.
 - Se agregan validaciones adicionales en el asistente de conexion.
+- Se mejoro la vista de ayuda.
 
 ## [1.1.11] - 30.04.2025
 ### Fixed
