@@ -93,4 +93,16 @@ tmp-63899-rrZhN8E9wu0x
  DONE  Published HernanLencinas.tambo-sandbox v1.0.3.
 ```
 
+### Visual Studio Code Marketplace
+
+Puedes gestionar y publicar tus extensiones directamente desde el portal oficial del Marketplace de Visual Studio Code:
+
+🔗 https://marketplace.visualstudio.com/manage/publishers/hernanlencinas
+
+Desde esta URL podrás:
+
+- Visualizar todas tus extensiones publicadas.
+- Actualizar descripciones, íconos y metadatos.
+- Consultar estadísticas de instalación y uso.
+- Iniciar el proceso de publicación o actualización de nuevas versiones.
 
