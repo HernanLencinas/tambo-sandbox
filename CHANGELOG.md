@@ -2,6 +2,11 @@
 
 Todas las modificaciones relevantes de este proyecto se documentarán en este archivo.
 
+## [1.1.13] - 22.05.2025
+### Fixed
+- Se corrige en el patch al backend se sandbox la fecha_creacion para que no se actualice con cada commit.
+- Se corrige falla al switchear el parametro developer Mode ya que no accedia al endpoint correcto.
+
 ## [1.1.12] - 07.05.2025
 ### Fixed
 - A define que al hacer clic en el acceso a Gitlab ingrese al branch correspondiente al usuario.

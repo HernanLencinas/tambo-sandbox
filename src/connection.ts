@@ -183,8 +183,10 @@ export class Connection {
 
     load(context: vscode.ExtensionContext) {
 
-
+        const connection = new Connection();
         const provider = new TamboSidebarProvider();
+
+        connection.developerMode();
 
         context.subscriptions.push(
             vscode.window.registerWebviewViewProvider(
@@ -211,6 +213,12 @@ export class Connection {
         }
 
     }
+
+    developerMode() {
+        globalConfig.sandboxUrl = vscode.workspace.getConfiguration().get('tambo.sandbox.developer')
+            ? 'https://backend-sandbox.dev.apps.automation.teco.com.ar'
+            : 'https://backend.sandbox.automation.teco.com.ar';
+    };
 
     isConfigured(): boolean {
         const config = vscode.workspace.getConfiguration('tambo.sandbox');
@@ -362,7 +370,8 @@ class ConnectionsViewProvider implements vscode.WebviewViewProvider {
                             path: message.data.path,
                             branch: `airflow-${currentUsername}`,
                             repoid: message.data.repoid,
-                            commit: message.data.commit
+                            commit: message.data.commit,
+                            fechaCreacion: message.data.fecha_creacion
                         };
                         break;
                     }
@@ -382,7 +391,8 @@ class ConnectionsViewProvider implements vscode.WebviewViewProvider {
                             path: message.data.path,
                             branch: `airflow-${currentUsername}`,
                             repoid: message.data.repoid,
-                            commit: message.data.commit
+                            commit: message.data.commit,
+                            fechaCreacion: message.data.fecha_creacion
                         };
 
                         const sandbox = new Sandbox();

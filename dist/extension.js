@@ -48,7 +48,6 @@ const connection_1 = __webpack_require__(2);
 const sandbox_1 = __webpack_require__(5);
 const utils_1 = __webpack_require__(3);
 const gitlab_1 = __webpack_require__(47);
-const globals_1 = __webpack_require__(46);
 // file deepcode ignore InsecureTLSConfig: <please specify a reason of ignoring this>
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
 async function activate(context) {
@@ -64,9 +63,7 @@ async function activate(context) {
             vscode.commands.executeCommand('tambosandbox.connectionRefresh');
         }
         if (event.affectsConfiguration('tambo.sandbox.developer')) {
-            globals_1.globalConfig.sandboxUrl = vscode.workspace.getConfiguration().get('tambo.sandbox.developer')
-                ? 'https://backend-sandbox.dev.apps.automation.teco.com.ar'
-                : 'https://backend.sandbox.automation.teco.com.ar';
+            connection.developerMode();
         }
     });
     // COMANDOS DE CONEXION
@@ -324,7 +321,9 @@ class Connection {
         }
     }
     load(context) {
+        const connection = new Connection();
         const provider = new help_1.TamboSidebarProvider();
+        connection.developerMode();
         context.subscriptions.push(vscode.window.registerWebviewViewProvider('tambo_viewport_help', provider));
         try {
             // Crear una única instancia del proveedor
@@ -337,6 +336,12 @@ class Connection {
             console.error("TAMBOSANDBOX.connection.load: ", error);
         }
     }
+    developerMode() {
+        globals_1.globalConfig.sandboxUrl = vscode.workspace.getConfiguration().get('tambo.sandbox.developer')
+            ? 'https://backend-sandbox.dev.apps.automation.teco.com.ar'
+            : 'https://backend.sandbox.automation.teco.com.ar';
+    }
+    ;
     isConfigured() {
         const config = vscode.workspace.getConfiguration('tambo.sandbox');
         const username = config.get('gitlab.username');
@@ -446,7 +451,8 @@ class ConnectionsViewProvider {
                             path: message.data.path,
                             branch: `airflow-${currentUsername}`,
                             repoid: message.data.repoid,
-                            commit: message.data.commit
+                            commit: message.data.commit,
+                            fechaCreacion: message.data.fecha_creacion
                         };
                         break;
                     }
@@ -459,7 +465,8 @@ class ConnectionsViewProvider {
                             path: message.data.path,
                             branch: `airflow-${currentUsername}`,
                             repoid: message.data.repoid,
-                            commit: message.data.commit
+                            commit: message.data.commit,
+                            fechaCreacion: message.data.fecha_creacion
                         };
                         const sandbox = new sandbox_1.Sandbox();
                         const response = await sandbox.commitWorkspaceChanges();
@@ -1007,7 +1014,8 @@ class Sandbox {
                 path: response.data.repositorio.path,
                 branch: response.data.repositorio.branch,
                 repoid: response.data.repositorio.id,
-                commit: false
+                commit: false,
+                fechaCreacion: response.data.fecha_creacion
             };
         }
         catch (error) {
@@ -1035,6 +1043,7 @@ class Sandbox {
                     branch: defaultRepo.branch,
                     repoid: defaultRepo.id,
                     commit: false,
+                    fechaCreacion: defaultRepo.fecha_creacion || ''
                 };
             }
             return response;
@@ -1053,7 +1062,7 @@ class Sandbox {
                 return false;
             }
             const axiosConfig = this.getAxiosConfig();
-            const body = {
+            const requestBody = {
                 id: `airflow-${username}`,
                 equipo: globals_1.globalConfig.workspaceRepository.name.toLowerCase(),
                 token: token,
@@ -1062,7 +1071,8 @@ class Sandbox {
                     path: globals_1.globalConfig.workspaceRepository.path,
                 },
             };
-            await axios_1.default.post(`${sandboxUrl}?usuario=${encodeURIComponent(username)}`, body, axiosConfig);
+            console.log("TAMBOSANDBOX.sandbox.config:", globals_1.globalConfig);
+            await axios_1.default.post(`${sandboxUrl}?usuario=${encodeURIComponent(username)}`, requestBody, axiosConfig);
             return true;
         }
         catch (error) {
@@ -1098,11 +1108,13 @@ class Sandbox {
                 return false;
             }
             const axiosConfig = this.getAxiosConfig([200, 204]);
+            /*
             const fecha_creacion = () => {
                 const d = new Date();
-                const p = (n) => n.toString().padStart(2, '0');
+                const p = (n: number) => n.toString().padStart(2, '0');
                 return `${p(d.getDate())}-${p(d.getMonth() + 1)}-${d.getFullYear()} ${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`;
-            };
+              };
+            */
             const requestData = {
                 id: `airflow-${username}`,
                 equipo: globals_1.globalConfig.workspaceRepository.name.toLowerCase(),
@@ -1113,9 +1125,13 @@ class Sandbox {
                     path: globals_1.globalConfig.workspaceRepository.path,
                     branch: globals_1.globalConfig.workspaceRepository.branch
                 },
+                /*
                 fecha_creacion: fecha_creacion(),
+                */
+                fecha_creacion: globals_1.globalConfig.workspaceRepository.fechaCreacion,
                 clonado: "si"
             };
+            console.log("TAMBOSANDBOX.sandbox.commitWorkspaceChanges:", requestData);
             await axios_1.default.patch(`${globals_1.globalConfig.sandboxUrl}${globals_1.globalConfig.sandboxAPISandbox}?usuario=${encodeURIComponent(username)}`, requestData, axiosConfig);
             (0, utils_1.showStatusMessage)("Cambios actualizados");
             return true;

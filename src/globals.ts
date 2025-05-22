@@ -6,6 +6,7 @@ export type Repository = {
     branch: string;
     repoid: string;
     commit: boolean;
+    fechaCreacion: string;
 };
 
 

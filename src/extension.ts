@@ -27,9 +27,7 @@ export async function activate(context: vscode.ExtensionContext) {
 			vscode.commands.executeCommand('tambosandbox.connectionRefresh');
 		}
 		if (event.affectsConfiguration('tambo.sandbox.developer')) {
-			globalConfig.sandboxUrl = vscode.workspace.getConfiguration().get('tambo.sandbox.developer')
-				? 'https://backend-sandbox.dev.apps.automation.teco.com.ar'
-				: 'https://backend.sandbox.automation.teco.com.ar';
+			connection.developerMode();
 		}
 	});
 

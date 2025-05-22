@@ -63,7 +63,8 @@ export class Sandbox {
                 path: response.data.repositorio.path,
                 branch: response.data.repositorio.branch,
                 repoid: response.data.repositorio.id,
-                commit: false
+                commit: false,
+                fechaCreacion: response.data.fecha_creacion
             };
 
         } catch (error) {
@@ -101,6 +102,7 @@ export class Sandbox {
                     branch: defaultRepo.branch,
                     repoid: defaultRepo.id,
                     commit: false,
+                    fechaCreacion: defaultRepo.fecha_creacion || ''
                 };
             }
 
@@ -124,7 +126,7 @@ export class Sandbox {
 
             const axiosConfig = this.getAxiosConfig();
 
-            const body = {
+            const requestBody = {
                 id: `airflow-${username}`,
                 equipo: globalConfig.workspaceRepository.name.toLowerCase(),
                 token: token,
@@ -134,9 +136,11 @@ export class Sandbox {
                 },
             };
 
+            console.log("TAMBOSANDBOX.sandbox.config:", globalConfig);
+
             await axios.post(
                 `${sandboxUrl}?usuario=${encodeURIComponent(username)}`,
-                body,
+                requestBody,
                 axiosConfig
             );
 
@@ -186,12 +190,13 @@ export class Sandbox {
             }
 
             const axiosConfig = this.getAxiosConfig([200, 204]);
-
+            /*
             const fecha_creacion = () => {
                 const d = new Date();
                 const p = (n: number) => n.toString().padStart(2, '0');
                 return `${p(d.getDate())}-${p(d.getMonth() + 1)}-${d.getFullYear()} ${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`;
-              };
+              }; 
+            */
               
             const requestData = {
                 id: `airflow-${username}`,
@@ -203,9 +208,14 @@ export class Sandbox {
                     path: globalConfig.workspaceRepository.path,
                     branch: globalConfig.workspaceRepository.branch
                 },
+                /* 
                 fecha_creacion: fecha_creacion(),
+                */
+                fecha_creacion: globalConfig.workspaceRepository.fechaCreacion,
                 clonado: "si"
             };
+
+            console.log("TAMBOSANDBOX.sandbox.commitWorkspaceChanges:", requestData);
 
             await axios.patch(
                 `${globalConfig.sandboxUrl}${globalConfig.sandboxAPISandbox}?usuario=${encodeURIComponent(username)}`,
