@@ -59,8 +59,3 @@ Si todos los parámetros son correctos, se mostrará el panel de estado, donde e
 ## Contacto
 
 Si deseas contribuir para mejorar la experiencia en TAMBO con Visual Studio Code, te invitamos a ponerte en contacto con nosotros directamente a traves de nuestro correo frameautomation@teco.com.ar. Tu participación es valiosa para perfeccionar esta integración y enriquecer la comunidad de usuarios. ¡Esperamos con interés tu colaboración y aportes!
-
-
-
-
-
